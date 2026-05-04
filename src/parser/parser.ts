@@ -2,6 +2,7 @@ import { Token, TokenType } from "../lexer/tokens";
 import {
   AssignmentExpressionNode,
   BinaryExpressionNode,
+  BooleanLiteralNode,
   BlockStatementNode,
   CallExpressionNode,
   ConditionalStatementNode,
@@ -518,6 +519,15 @@ export class Parser {
 
     if (this.match(TokenType.Identifier)) {
       const name: Token = this.previous();
+
+      if (name.lexeme === "true" || name.lexeme === "false") {
+        return {
+          kind: "BooleanLiteral",
+          location: this.locationFrom(name),
+          token: name,
+          value: name.lexeme === "true",
+        } satisfies BooleanLiteralNode;
+      }
 
       return {
         kind: "IdentifierExpression",

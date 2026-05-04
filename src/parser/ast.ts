@@ -178,6 +178,15 @@ export interface StringLiteralNode extends BaseNode {
 }
 
 /**
+ * BooleanLiteralNode stores the built-in true and false literals.
+ */
+export interface BooleanLiteralNode extends BaseNode {
+  readonly kind: "BooleanLiteral";
+  readonly token: Token;
+  readonly value: boolean;
+}
+
+/**
  * UnaryExpressionNode stores prefix operators such as !value or -value.
  */
 export interface UnaryExpressionNode extends BaseNode {
@@ -247,6 +256,7 @@ export type ExpressionNode =
   | IdentifierExpressionNode
   | NumberLiteralNode
   | StringLiteralNode
+  | BooleanLiteralNode
   | UnaryExpressionNode
   | BinaryExpressionNode
   | AssignmentExpressionNode
