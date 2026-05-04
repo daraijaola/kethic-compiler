@@ -1,0 +1,12 @@
+Ovrin chant from "river-gongs";
+
+Torūn greeting = "The river reflects the stars";
+Navā count = 0;
+
+Kelthar speak(name) {
+  Ikhshev count == 0 {
+    Umkel chant(greeting);
+  }
+
+  Duren name;
+}

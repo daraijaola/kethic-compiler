@@ -1,0 +1,17 @@
+{
+  "name": "kethic-compiler",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Private Kethic compiler.",
+  "main": "dist/src/index.js",
+  "scripts": {
+    "build": "tsc",
+    "test": "vitest run",
+    "lexer": "ts-node src/index.ts"
+  },
+  "devDependencies": {
+    "ts-node": "^10.9.2",
+    "typescript": "^5.8.3",
+    "vitest": "^3.1.2"
+  }
+}
