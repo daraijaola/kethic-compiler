@@ -6,6 +6,7 @@ import { SourceMapEntry } from "../codegen/types";
 export interface ObfuscationInput {
   readonly code: string;
   readonly sourceMap: SourceMapEntry[];
+  readonly seed?: string;
 }
 
 /**

@@ -4,3 +4,4 @@ export * from "./parser";
 export * from "./typechecker";
 export * from "./codegen";
 export * from "./obfuscator";
+export * from "./rotator";

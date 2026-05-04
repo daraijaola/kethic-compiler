@@ -7,6 +7,7 @@ import { LineTransform, ObfuscationInput, ObfuscationResult } from "./types";
  */
 export class Obfuscator {
   private readonly identifierMap: Map<string, string> = new Map<string, string>();
+  private random: SeededRandom = new SeededRandom(`${Date.now()}-${Math.random()}`);
   private readonly reservedWords: ReadonlySet<string> = new Set<string>([
     "break",
     "case",
@@ -39,6 +40,7 @@ export class Obfuscator {
    */
   public obfuscate(input: ObfuscationInput): ObfuscationResult {
     this.identifierMap.clear();
+    this.random = new SeededRandom(input.seed ?? `${Date.now()}-${Math.random()}`);
     this.collectDeclaredIdentifiers(input.code);
 
     const transformedLines: LineTransform[] = this.transformLines(input.code);
@@ -287,7 +289,7 @@ export class Obfuscator {
    * randomHexIdentifier creates JavaScript-safe randomized hex identifiers.
    */
   private randomHexIdentifier(): string {
-    const value: number = Math.floor(Math.random() * 0xfffff);
+    const value: number = Math.floor(this.random.next() * 0xfffff);
     return `_0x${value.toString(16).padStart(5, "0")}`;
   }
 
@@ -337,4 +339,39 @@ export class Obfuscator {
 interface StringScanResult {
   readonly value: string;
   readonly nextIndex: number;
+}
+
+/**
+ * SeededRandom is a tiny deterministic PRNG used only for rotation-local names.
+ */
+class SeededRandom {
+  private state: number;
+
+  public constructor(seed: string) {
+    this.state = this.hashSeed(seed);
+  }
+
+  /**
+   * next returns a deterministic number in the range [0, 1).
+   */
+  public next(): number {
+    this.state ^= this.state << 13;
+    this.state ^= this.state >>> 17;
+    this.state ^= this.state << 5;
+    return (this.state >>> 0) / 0x100000000;
+  }
+
+  /**
+   * hashSeed converts an arbitrary key into a non-zero 32-bit state.
+   */
+  private hashSeed(seed: string): number {
+    let hash: number = 2166136261;
+
+    for (let index: number = 0; index < seed.length; index += 1) {
+      hash ^= seed.charCodeAt(index);
+      hash = Math.imul(hash, 16777619);
+    }
+
+    return hash === 0 ? 0x811c9dc5 : hash >>> 0;
+  }
 }

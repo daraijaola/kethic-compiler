@@ -1,0 +1,17 @@
+Navā price = 100;
+Torūn tax = 0.2;
+
+Kelthar calculate(price, tax) {
+  Duren price + tax;
+}
+
+Kelthar run() {
+  Eshnak {
+    Navā result = Umkel calculate(100, 0.2);
+    Duren result;
+  } Ikhshev {
+    Duren 0;
+  }
+}
+
+Umkel run();
