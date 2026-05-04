@@ -359,6 +359,8 @@ export class TypeChecker {
         return this.inferAssignmentExpression(expression, contextKeyword);
       case "CallExpression":
         return this.inferCallExpression(expression, contextKeyword);
+      case "UmkelCallExpression":
+        return this.inferUmkelCallExpression(expression);
     }
   }
 
@@ -471,6 +473,25 @@ export class TypeChecker {
 
     for (const argument of expression.arguments) {
       this.inferExpression(argument, contextKeyword);
+    }
+
+    return symbol.returnType;
+  }
+
+  /**
+   * inferUmkelCallExpression validates expression-level Umkel calls.
+   */
+  private inferUmkelCallExpression(expression: ExpressionNode & { kind: "UmkelCallExpression" }): PrimitiveTypeName {
+    const symbol: KethicSymbol | null = this.symbols.resolve(expression.callee.lexeme);
+    if (symbol === null || symbol.kind !== "Function") {
+      this.report(expression.keyword, `Kelthar "${expression.callee.lexeme}" does not exist`);
+      return "Unknown";
+    }
+
+    this.checkArgumentCount(expression.keyword, expression.callee.lexeme, symbol, expression.arguments.length);
+
+    for (const argument of expression.arguments) {
+      this.inferExpression(argument, expression.keyword);
     }
 
     return symbol.returnType;

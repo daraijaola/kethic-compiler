@@ -225,6 +225,16 @@ export interface CallExpressionNode extends BaseNode {
 }
 
 /**
+ * UmkelCallExpressionNode stores expression-level Kethic invocation syntax.
+ */
+export interface UmkelCallExpressionNode extends BaseNode {
+  readonly kind: "UmkelCallExpression";
+  readonly keyword: Token;
+  readonly callee: Token;
+  readonly arguments: ExpressionNode[];
+}
+
+/**
  * GroupingExpressionNode preserves explicit parentheses in the source.
  */
 export interface GroupingExpressionNode extends BaseNode {
@@ -261,6 +271,7 @@ export type ExpressionNode =
   | BinaryExpressionNode
   | AssignmentExpressionNode
   | CallExpressionNode
+  | UmkelCallExpressionNode
   | GroupingExpressionNode;
 
 /**

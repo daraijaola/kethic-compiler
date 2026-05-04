@@ -24,6 +24,7 @@ import {
   StringLiteralNode,
   TypeDefinitionNode,
   TypeFieldNode,
+  UmkelCallExpressionNode,
   UnaryExpressionNode,
   VariableDeclarationNode,
 } from "./ast";
@@ -312,6 +313,19 @@ export class Parser {
    */
   private parseErrorHandlingStatement(keyword: Token): ErrorHandlingStatementNode {
     const guardedBody: BlockStatementNode = this.parseRequiredBlock("Expected guarded block after Eshnak.");
+
+    if (this.match(TokenType.Ikhshev)) {
+      const recoveryBodyWithIkhshev: BlockStatementNode = this.parseRequiredBlock("Expected recovery block after Eshnak Ikhshev.");
+
+      return {
+        kind: "ErrorHandlingStatement",
+        location: this.locationFrom(keyword),
+        keyword,
+        guardedBody,
+        recoveryBody: recoveryBodyWithIkhshev,
+      };
+    }
+
     const recoveryBody: BlockStatementNode = this.parseRequiredBlock("Expected recovery block after Eshnak guarded block.");
 
     return {
@@ -501,6 +515,20 @@ export class Parser {
    * parsePrimary handles literals, identifiers, and grouped expressions.
    */
   private parsePrimary(): ExpressionNode {
+    if (this.match(TokenType.Umkel)) {
+      const keyword: Token = this.previous();
+      const callee: Token = this.consume(TokenType.Identifier, "Expected function name after Umkel.");
+      const args: ExpressionNode[] = this.parseArgumentList();
+
+      return {
+        kind: "UmkelCallExpression",
+        location: this.locationFrom(keyword),
+        keyword,
+        callee,
+        arguments: args,
+      } satisfies UmkelCallExpressionNode;
+    }
+
     if (this.match(TokenType.Number)) {
       const token: Token = this.previous();
       const value: number = Number(token.lexeme);
