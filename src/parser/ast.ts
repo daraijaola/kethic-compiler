@@ -150,6 +150,28 @@ export interface LoopStatementNode extends BaseNode {
 }
 
 /**
+ * Ikhselthar examines one expression and routes control through Selikhshev
+ * branches or an optional Ovikhnak default.
+ */
+export interface SwitchStatementNode extends BaseNode {
+  readonly kind: "SwitchStatement";
+  readonly keyword: Token;
+  readonly expression: ExpressionNode;
+  readonly cases: SwitchCaseNode[];
+}
+
+/**
+ * SwitchCaseNode stores one Selikhshev branch or the Ovikhnak default branch.
+ * A null matchValue marks the default branch.
+ */
+export interface SwitchCaseNode extends BaseNode {
+  readonly kind: "SwitchCase";
+  readonly keyword: Token;
+  readonly matchValue: ExpressionNode | null;
+  readonly body: BlockStatementNode;
+}
+
+/**
  * BreakStatementNode exits the nearest Rukhar loop.
  */
 export interface BreakStatementNode extends BaseNode {
@@ -349,6 +371,7 @@ export type StatementNode =
   | ReturnStatementNode
   | ConditionalStatementNode
   | LoopStatementNode
+  | SwitchStatementNode
   | BreakStatementNode
   | ContinueStatementNode
   | ErrorHandlingStatementNode

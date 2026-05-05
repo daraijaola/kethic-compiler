@@ -29,6 +29,8 @@ import {
   SourceLocation,
   StatementNode,
   StringLiteralNode,
+  SwitchCaseNode,
+  SwitchStatementNode,
   TemplateExpressionPartNode,
   TemplateStaticPartNode,
   TemplateStringNode,
@@ -136,6 +138,10 @@ export class Parser {
 
     if (this.match(TokenType.Rukhar)) {
       return this.parseLoopStatement(this.previous());
+    }
+
+    if (this.match(TokenType.Ikhselthar)) {
+      return this.parseSwitchStatement(this.previous());
     }
 
     if (this.match(TokenType.Duruk)) {
@@ -348,6 +354,61 @@ export class Parser {
       location: this.locationFrom(keyword),
       keyword,
       condition,
+      body,
+    };
+  }
+
+  /**
+   * parseSwitchStatement parses Ikhselthar expression { Selikhshev value { ... } Ovikhnak { ... } }
+   */
+  private parseSwitchStatement(keyword: Token): SwitchStatementNode {
+    const expression: ExpressionNode = this.parseExpression();
+    this.consume(TokenType.LeftBrace, "Expected '{' before Ikhselthar body.");
+
+    const cases: SwitchCaseNode[] = [];
+    while (!this.check(TokenType.RightBrace) && !this.isAtEnd()) {
+      if (this.match(TokenType.Selikhshev)) {
+        cases.push(this.parseSwitchCase(this.previous(), false));
+        continue;
+      }
+
+      if (this.match(TokenType.Ovikhnak)) {
+        cases.push(this.parseSwitchCase(this.previous(), true));
+        continue;
+      }
+
+      throw new ParserError(this.peek(), "Expected Selikhshev or Ovikhnak in Ikhselthar body.");
+    }
+
+    this.consume(TokenType.RightBrace, "Expected '}' after Ikhselthar body.");
+
+    if (cases.length === 0) {
+      throw new ParserError(keyword, "Expected at least one Selikhshev or Ovikhnak branch.");
+    }
+
+    return {
+      kind: "SwitchStatement",
+      location: this.locationFrom(keyword),
+      keyword,
+      expression,
+      cases,
+    };
+  }
+
+  /**
+   * parseSwitchCase parses either a Selikhshev match block or an Ovikhnak default block.
+   */
+  private parseSwitchCase(keyword: Token, isDefault: boolean): SwitchCaseNode {
+    const matchValue: ExpressionNode | null = isDefault ? null : this.parseExpression();
+    const body: BlockStatementNode = this.parseRequiredBlock(
+      isDefault ? "Expected Ovikhnak body." : "Expected Selikhshev body.",
+    );
+
+    return {
+      kind: "SwitchCase",
+      location: this.locationFrom(keyword),
+      keyword,
+      matchValue,
       body,
     };
   }

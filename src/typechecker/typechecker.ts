@@ -23,6 +23,7 @@ import {
   ProgramNode,
   ReturnStatementNode,
   StatementNode,
+  SwitchStatementNode,
   TypeDefinitionNode,
   TemplateStringNode,
   UnaryExpressionNode,
@@ -68,6 +69,7 @@ export class TypeChecker {
   private readonly diagnostics: TypeCheckDiagnostic[] = [];
   private currentFunction: FunctionSymbol | null = null;
   private loopDepth: number = 0;
+  private switchDepth: number = 0;
 
   /**
    * check returns all type-checking errors found in a full Program AST.
@@ -134,6 +136,9 @@ export class TypeChecker {
         return;
       case "LoopStatement":
         this.checkLoopStatement(statement);
+        return;
+      case "SwitchStatement":
+        this.checkSwitchStatement(statement);
         return;
       case "BreakStatement":
         this.checkBreakStatement(statement);
@@ -368,11 +373,42 @@ export class TypeChecker {
   }
 
   /**
-   * checkBreakStatement validates Duruk appears inside Rukhar.
+   * checkSwitchStatement validates Ikhselthar case values and scoped branches.
+   */
+  private checkSwitchStatement(statement: SwitchStatementNode): void {
+    const switchType: KethicType = this.inferExpression(statement.expression, statement.keyword);
+    let defaultCount: number = 0;
+
+    this.switchDepth += 1;
+
+    for (const switchCase of statement.cases) {
+      if (switchCase.matchValue === null) {
+        defaultCount += 1;
+        if (defaultCount > 1) {
+          this.report(switchCase.keyword, "only one Ovikhnak default case is allowed per Ikhselthar");
+        }
+      } else {
+        const caseType: KethicType = this.inferExpression(switchCase.matchValue, switchCase.keyword);
+        if (!this.typesCompatible(switchType, caseType)) {
+          this.report(
+            switchCase.keyword,
+            `Selikhshev value must match Ikhselthar type ${typeToString(switchType)} but received ${typeToString(caseType)}`,
+          );
+        }
+      }
+
+      this.checkBlock(switchCase.body, true);
+    }
+
+    this.switchDepth -= 1;
+  }
+
+  /**
+   * checkBreakStatement validates Duruk appears inside Rukhar or Ikhselthar.
    */
   private checkBreakStatement(statement: BreakStatementNode): void {
-    if (this.loopDepth === 0) {
-      this.report(statement.keyword, "Duruk cannot appear outside a Rukhar loop");
+    if (this.loopDepth === 0 && this.switchDepth === 0) {
+      this.report(statement.keyword, "Duruk cannot appear outside a Rukhar loop or Ikhselthar switch");
     }
   }
 

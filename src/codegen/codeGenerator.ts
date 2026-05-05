@@ -8,6 +8,7 @@ import {
   OvrinDeclarationNode,
   ProgramNode,
   StatementNode,
+  SwitchStatementNode,
   TemplateStringNode,
   TypeDefinitionNode,
 } from "../parser/ast";
@@ -90,6 +91,9 @@ export class CodeGenerator {
         this.emitBlockBody(statement.body);
         this.emitRawLine(`${this.indent()}}`);
         return;
+      case "SwitchStatement":
+        this.emitSwitchStatement(statement);
+        return;
       case "BreakStatement":
         this.emitMappedLine("break;", statement.keyword.line);
         return;
@@ -150,6 +154,28 @@ export class CodeGenerator {
 
     this.emitRawLine(`${this.indent()}} else {`);
     this.emitBlockBody(statement.elseBranch);
+    this.emitRawLine(`${this.indent()}}`);
+  }
+
+  /**
+   * emitSwitchStatement emits Ikhselthar branches as JavaScript switch cases.
+   */
+  private emitSwitchStatement(statement: SwitchStatementNode): void {
+    this.emitMappedLine(`switch (${this.emitExpression(statement.expression)}) {`, statement.keyword.line);
+    this.indentLevel += 1;
+
+    for (const switchCase of statement.cases) {
+      if (switchCase.matchValue === null) {
+        this.emitMappedLine("default: {", switchCase.keyword.line);
+      } else {
+        this.emitMappedLine(`case ${this.emitExpression(switchCase.matchValue)}: {`, switchCase.keyword.line);
+      }
+
+      this.emitBlockBody(switchCase.body);
+      this.emitRawLine(`${this.indent()}}`);
+    }
+
+    this.indentLevel -= 1;
     this.emitRawLine(`${this.indent()}}`);
   }
 
@@ -317,6 +343,8 @@ export class CodeGenerator {
         );
       case "LoopStatement":
         return this.statementContainsTopLevelReturn(statement.body);
+      case "SwitchStatement":
+        return statement.cases.some((switchCase) => this.statementContainsTopLevelReturn(switchCase.body));
       case "ErrorHandlingStatement":
         return (
           this.statementContainsTopLevelReturn(statement.guardedBody) ||
