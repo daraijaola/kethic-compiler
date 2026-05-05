@@ -1,6 +1,7 @@
 import { Token, TokenType } from "../lexer/tokens";
 import {
   AssignmentExpressionNode,
+  ArrayLiteralNode,
   BinaryExpressionNode,
   BreakStatementNode,
   BlockStatementNode,
@@ -42,6 +43,8 @@ import {
   KethicSymbol,
   KethicType,
   NUMBER_TYPE,
+  NULL_TYPE,
+  createObjectType,
   STRING_TYPE,
   TypeCheckDiagnostic,
   typeToString,
@@ -506,6 +509,12 @@ export class TypeChecker {
         return NUMBER_TYPE;
       case "StringLiteral":
         return STRING_TYPE;
+      case "NullLiteral":
+        return NULL_TYPE;
+      case "ArrayLiteral":
+        return this.inferArrayLiteral(expression, contextKeyword);
+      case "ObjectLiteral":
+        return this.inferObjectLiteral(expression, contextKeyword);
       case "FunctionExpression":
         return this.inferFunctionExpression(expression);
       case "ArrowFunctionExpression":
@@ -641,6 +650,40 @@ export class TypeChecker {
     }
 
     return isUnknownType(trueType) ? falseType : trueType;
+  }
+
+  /**
+   * inferArrayLiteral returns a homogeneous array type or Unknown[] for mixed arrays.
+   */
+  private inferArrayLiteral(expression: ArrayLiteralNode, contextKeyword: Token): KethicType {
+    if (expression.elements.length === 0) {
+      return createArrayType(UNKNOWN_TYPE);
+    }
+
+    const elementTypes: KethicType[] = expression.elements.map((element: ExpressionNode) =>
+      this.inferExpression(element, contextKeyword),
+    );
+    const firstType: KethicType = elementTypes[0];
+
+    if (elementTypes.every((elementType: KethicType) => this.typesCompatible(firstType, elementType))) {
+      return createArrayType(firstType);
+    }
+
+    return createArrayType(UNKNOWN_TYPE);
+  }
+
+  /**
+   * inferObjectLiteral creates an anonymous object shape from literal properties.
+   */
+  private inferObjectLiteral(expression: ExpressionNode & { kind: "ObjectLiteral" }, contextKeyword: Token): KethicType {
+    const properties: Record<string, KethicType> = {};
+
+    for (const property of expression.properties) {
+      const key: string = this.objectPropertyName(property.key);
+      properties[key] = this.inferExpression(property.value, contextKeyword);
+    }
+
+    return createObjectType(properties);
   }
 
   /**
@@ -787,6 +830,14 @@ export class TypeChecker {
       return NUMBER_TYPE;
     }
 
+    if (objectType.kind === "Array" && expression.property.lexeme === "length") {
+      return NUMBER_TYPE;
+    }
+
+    if (objectType.kind === "Object") {
+      return objectType.properties[expression.property.lexeme] ?? UNKNOWN_TYPE;
+    }
+
     this.report(
       contextKeyword,
       `type ${typeToString(objectType)} has no member "${expression.property.lexeme}"`,
@@ -811,6 +862,10 @@ export class TypeChecker {
 
     if (this.isPrimitive(objectType, "String")) {
       return STRING_TYPE;
+    }
+
+    if (objectType.kind === "Array") {
+      return objectType.elementType;
     }
 
     this.report(contextKeyword, `type ${typeToString(objectType)} cannot be indexed`);
@@ -893,6 +948,19 @@ export class TypeChecker {
       return this.typesCompatible(expected.elementType, actual.elementType);
     }
 
+    if (expected.kind === "Object" && actual.kind === "Object") {
+      const expectedKeys: string[] = Object.keys(expected.properties);
+      const actualKeys: string[] = Object.keys(actual.properties);
+
+      return (
+        expectedKeys.length === actualKeys.length &&
+        expectedKeys.every((key: string) =>
+          Object.prototype.hasOwnProperty.call(actual.properties, key) &&
+          this.typesCompatible(expected.properties[key], actual.properties[key]),
+        )
+      );
+    }
+
     if (expected.kind === "Function" && actual.kind === "Function") {
       return (
         expected.parameters.length === actual.parameters.length &&
@@ -908,8 +976,15 @@ export class TypeChecker {
   /**
    * isPrimitive checks for a specific primitive type name.
    */
-  private isPrimitive(type: KethicType, name: "Number" | "String" | "Boolean" | "Void"): boolean {
+  private isPrimitive(type: KethicType, name: "Number" | "String" | "Boolean" | "Void" | "Null"): boolean {
     return type.kind === "Primitive" && type.name === name;
+  }
+
+  /**
+   * objectPropertyName normalizes identifier and quoted object keys.
+   */
+  private objectPropertyName(key: Token): string {
+    return key.type === TokenType.String ? key.lexeme.slice(1, -1) : key.lexeme;
   }
 
   /**

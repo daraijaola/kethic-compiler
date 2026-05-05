@@ -3,7 +3,7 @@ import { Token } from "../lexer/tokens";
 /**
  * PrimitiveTypeName is the set of concrete primitive values Kethic currently supports.
  */
-export type PrimitiveTypeName = "Number" | "String" | "Boolean" | "Void";
+export type PrimitiveTypeName = "Number" | "String" | "Boolean" | "Void" | "Null";
 
 /**
  * PrimitiveType represents a concrete Kethic primitive.
@@ -40,9 +40,17 @@ export interface ArrayType {
 }
 
 /**
+ * ObjectType represents an anonymous object shape inferred from a literal.
+ */
+export interface ObjectType {
+  readonly kind: "Object";
+  readonly properties: Readonly<Record<string, KethicType>>;
+}
+
+/**
  * KethicType is the formal internal type model used by the checker.
  */
-export type KethicType = PrimitiveType | UnknownType | FunctionType | ArrayType;
+export type KethicType = PrimitiveType | UnknownType | FunctionType | ArrayType | ObjectType;
 
 /**
  * Shared type objects for the currently supported Kethic types.
@@ -51,6 +59,7 @@ export const NUMBER_TYPE: PrimitiveType = { kind: "Primitive", name: "Number" };
 export const STRING_TYPE: PrimitiveType = { kind: "Primitive", name: "String" };
 export const BOOLEAN_TYPE: PrimitiveType = { kind: "Primitive", name: "Boolean" };
 export const VOID_TYPE: PrimitiveType = { kind: "Primitive", name: "Void" };
+export const NULL_TYPE: PrimitiveType = { kind: "Primitive", name: "Null" };
 export const UNKNOWN_TYPE: UnknownType = { kind: "Unknown" };
 
 /**
@@ -139,6 +148,16 @@ export function createArrayType(elementType: KethicType): ArrayType {
 }
 
 /**
+ * createObjectType creates an anonymous object shape.
+ */
+export function createObjectType(properties: Readonly<Record<string, KethicType>>): ObjectType {
+  return {
+    kind: "Object",
+    properties,
+  };
+}
+
+/**
  * typeToString formats structured Kethic types for diagnostics.
  */
 export function typeToString(type: KethicType): string {
@@ -151,6 +170,8 @@ export function typeToString(type: KethicType): string {
       return `Kelthar(${type.parameters.map(typeToString).join(", ")}) -> ${typeToString(type.returnType)}`;
     case "Array":
       return `${typeToString(type.elementType)}[]`;
+    case "Object":
+      return `{ ${Object.entries(type.properties).map(([name, value]) => `${name}: ${typeToString(value)}`).join("; ")} }`;
   }
 }
 

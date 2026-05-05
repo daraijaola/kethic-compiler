@@ -165,6 +165,11 @@ export class Obfuscator {
         }
 
         const identifier: string = line.slice(identifierStart, index);
+        if (this.isObjectPropertyKey(line, identifierStart, index)) {
+          output += identifier;
+          continue;
+        }
+
         output += this.identifierMap.get(identifier) ?? identifier;
         continue;
       }
@@ -413,6 +418,43 @@ export class Obfuscator {
    */
   private isIdentifierPart(character: string): boolean {
     return /[A-Za-z0-9_$]/.test(character);
+  }
+
+  /**
+   * isObjectPropertyKey preserves bare object literal keys before ':'.
+   */
+  private isObjectPropertyKey(line: string, start: number, end: number): boolean {
+    const next: string = this.nextNonWhitespace(line, end);
+    const previous: string = this.previousNonWhitespace(line, start);
+    return next === ":" && previous !== "?";
+  }
+
+  /**
+   * nextNonWhitespace finds the next meaningful character in a JavaScript line.
+   */
+  private nextNonWhitespace(line: string, start: number): string {
+    for (let index: number = start; index < line.length; index += 1) {
+      const character: string = line.charAt(index);
+      if (!/\s/.test(character)) {
+        return character;
+      }
+    }
+
+    return "";
+  }
+
+  /**
+   * previousNonWhitespace finds the previous meaningful character in a JavaScript line.
+   */
+  private previousNonWhitespace(line: string, start: number): string {
+    for (let index: number = start - 1; index >= 0; index -= 1) {
+      const character: string = line.charAt(index);
+      if (!/\s/.test(character)) {
+        return character;
+      }
+    }
+
+    return "";
   }
 
   /**

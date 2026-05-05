@@ -14,6 +14,7 @@ import {
   SwitchStatementNode,
   TemplateStringNode,
   TypeDefinitionNode,
+  ObjectLiteralNode,
 } from "../parser/ast";
 import { CodeGenerationResult, SourceMapEntry } from "./types";
 
@@ -226,6 +227,12 @@ export class CodeGenerator {
         return expression.token.lexeme;
       case "StringLiteral":
         return expression.token.lexeme;
+      case "NullLiteral":
+        return "null";
+      case "ArrayLiteral":
+        return `[${expression.elements.map((element: ExpressionNode) => this.emitExpression(element)).join(", ")}]`;
+      case "ObjectLiteral":
+        return this.emitObjectLiteral(expression);
       case "FunctionExpression":
         return this.emitFunctionExpression(expression);
       case "ArrowFunctionExpression":
@@ -261,6 +268,23 @@ export class CodeGenerator {
   private emitBinaryExpression(expression: BinaryExpressionNode): string {
     const operator: string = this.emitBinaryOperator(expression.operator.type);
     return `${this.emitExpression(expression.left)} ${operator} ${this.emitExpression(expression.right)}`;
+  }
+
+  /**
+   * emitObjectLiteral emits anonymous objects while preserving property names.
+   */
+  private emitObjectLiteral(expression: ObjectLiteralNode): string {
+    const properties: string = expression.properties
+      .map((property) => `${this.emitObjectKey(property.key)}: ${this.emitExpression(property.value)}`)
+      .join(", ");
+    return `{ ${properties} }`;
+  }
+
+  /**
+   * emitObjectKey keeps identifier keys bare and string keys quoted.
+   */
+  private emitObjectKey(key: { readonly type: TokenType; readonly lexeme: string }): string {
+    return key.type === TokenType.String ? key.lexeme : key.lexeme;
   }
 
   /**

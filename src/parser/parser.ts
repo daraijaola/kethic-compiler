@@ -2,6 +2,7 @@ import { Token, TokenType } from "../lexer/tokens";
 import { Lexer } from "../lexer/lexer";
 import {
   AssignmentExpressionNode,
+  ArrayLiteralNode,
   BinaryExpressionNode,
   BooleanLiteralNode,
   BreakStatementNode,
@@ -24,6 +25,9 @@ import {
   LoopStatementNode,
   MemberExpressionNode,
   NumberLiteralNode,
+  NullLiteralNode,
+  ObjectLiteralNode,
+  ObjectPropertyNode,
   OvrinDeclarationNode,
   ParameterNode,
   ProgramNode,
@@ -744,6 +748,18 @@ export class Parser {
       return this.createStringLiteral(this.previous());
     }
 
+    if (this.match(TokenType.Umra)) {
+      return this.createNullLiteral(this.previous());
+    }
+
+    if (this.match(TokenType.LeftBracket)) {
+      return this.parseArrayLiteral(this.previous());
+    }
+
+    if (this.match(TokenType.LeftBrace)) {
+      return this.parseObjectLiteral(this.previous());
+    }
+
     if (this.match(TokenType.TemplateString)) {
       return this.createTemplateString(this.previous());
     }
@@ -899,6 +915,60 @@ export class Parser {
   }
 
   /**
+   * parseArrayLiteral parses [value, value] including empty and nested arrays.
+   */
+  private parseArrayLiteral(openingBracket: Token): ArrayLiteralNode {
+    const elements: ExpressionNode[] = [];
+
+    if (!this.check(TokenType.RightBracket)) {
+      do {
+        elements.push(this.parseExpression());
+      } while (this.match(TokenType.Comma));
+    }
+
+    this.consume(TokenType.RightBracket, "Expected ']' after array literal.");
+
+    return {
+      kind: "ArrayLiteral",
+      location: this.locationFrom(openingBracket),
+      openingBracket,
+      elements,
+    };
+  }
+
+  /**
+   * parseObjectLiteral parses { key: value, key: value } anonymous structures.
+   */
+  private parseObjectLiteral(openingBrace: Token): ObjectLiteralNode {
+    const properties: ObjectPropertyNode[] = [];
+
+    if (!this.check(TokenType.RightBrace)) {
+      do {
+        const key: Token = this.match(TokenType.Identifier)
+          ? this.previous()
+          : this.consume(TokenType.String, "Expected object property name.");
+        this.consume(TokenType.Colon, "Expected ':' after object property name.");
+        const value: ExpressionNode = this.parseExpression();
+        properties.push({
+          kind: "ObjectProperty",
+          location: this.locationFrom(key),
+          key,
+          value,
+        });
+      } while (this.match(TokenType.Comma));
+    }
+
+    this.consume(TokenType.RightBrace, "Expected '}' after object literal.");
+
+    return {
+      kind: "ObjectLiteral",
+      location: this.locationFrom(openingBrace),
+      openingBrace,
+      properties,
+    };
+  }
+
+  /**
    * createStringLiteral strips quotes from a string token while preserving escapes.
    */
   private createStringLiteral(token: Token): StringLiteralNode {
@@ -907,6 +977,18 @@ export class Parser {
       location: this.locationFrom(token),
       token,
       value: token.lexeme.slice(1, -1),
+    };
+  }
+
+  /**
+   * createNullLiteral converts Umra into a null literal AST node.
+   */
+  private createNullLiteral(token: Token): NullLiteralNode {
+    return {
+      kind: "NullLiteral",
+      location: this.locationFrom(token),
+      keyword: token,
+      value: null,
     };
   }
 

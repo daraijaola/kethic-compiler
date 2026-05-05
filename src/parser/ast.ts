@@ -234,6 +234,42 @@ export interface StringLiteralNode extends BaseNode {
 }
 
 /**
+ * NullLiteralNode stores Umra, the Kethic null value.
+ */
+export interface NullLiteralNode extends BaseNode {
+  readonly kind: "NullLiteral";
+  readonly keyword: Token;
+  readonly value: null;
+}
+
+/**
+ * ArrayLiteralNode stores comma-separated expressions inside brackets.
+ */
+export interface ArrayLiteralNode extends BaseNode {
+  readonly kind: "ArrayLiteral";
+  readonly openingBracket: Token;
+  readonly elements: ExpressionNode[];
+}
+
+/**
+ * ObjectLiteralNode stores anonymous key/value structures.
+ */
+export interface ObjectLiteralNode extends BaseNode {
+  readonly kind: "ObjectLiteral";
+  readonly openingBrace: Token;
+  readonly properties: ObjectPropertyNode[];
+}
+
+/**
+ * ObjectPropertyNode stores one object literal property.
+ */
+export interface ObjectPropertyNode extends BaseNode {
+  readonly kind: "ObjectProperty";
+  readonly key: Token;
+  readonly value: ExpressionNode;
+}
+
+/**
  * FunctionExpressionNode stores anonymous function expressions introduced by
  * Tharva or expression-position Kelthar.
  */
@@ -407,6 +443,9 @@ export type ExpressionNode =
   | IdentifierExpressionNode
   | NumberLiteralNode
   | StringLiteralNode
+  | NullLiteralNode
+  | ArrayLiteralNode
+  | ObjectLiteralNode
   | FunctionExpressionNode
   | ArrowFunctionExpressionNode
   | TemplateStringNode
