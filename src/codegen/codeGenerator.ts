@@ -202,6 +202,8 @@ export class CodeGenerator {
         return `${expression.operator.lexeme}${this.emitExpression(expression.argument)}`;
       case "BinaryExpression":
         return this.emitBinaryExpression(expression);
+      case "ConditionalExpression":
+        return `${this.emitExpression(expression.condition)} ? ${this.emitExpression(expression.whenTrue)} : ${this.emitExpression(expression.whenFalse)}`;
       case "AssignmentExpression":
         return `${this.emitExpression(expression.target)} = ${this.emitExpression(expression.value)}`;
       case "CallExpression":

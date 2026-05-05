@@ -79,6 +79,9 @@ export class Lexer {
       case "%":
         this.addToken(TokenType.Percent, character, startLine, startColumn);
         return;
+      case "?":
+        this.addToken(TokenType.QuestionMark, character, startLine, startColumn);
+        return;
 
       // Minus may stand alone or introduce an arrow operator.
       case "-":

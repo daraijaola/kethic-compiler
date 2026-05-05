@@ -7,6 +7,7 @@ import {
   BlockStatementNode,
   CallExpressionNode,
   ConditionalStatementNode,
+  ConditionalExpressionNode,
   ConstantDeclarationNode,
   ContinueStatementNode,
   ErrorHandlingStatementNode,
@@ -445,7 +446,7 @@ export class Parser {
    * parseAssignment handles right-associative identifier assignment.
    */
   private parseAssignment(): ExpressionNode {
-    const expression: ExpressionNode = this.parseLogicalOr();
+    const expression: ExpressionNode = this.parseConditionalExpression();
 
     if (this.match(TokenType.Equals)) {
       const equals: Token = this.previous();
@@ -465,6 +466,32 @@ export class Parser {
     }
 
     return expression;
+  }
+
+  /**
+   * parseConditionalExpression handles condition ? whenTrue : whenFalse.
+   */
+  private parseConditionalExpression(): ExpressionNode {
+    const condition: ExpressionNode = this.parseLogicalOr();
+
+    if (!this.match(TokenType.QuestionMark)) {
+      return condition;
+    }
+
+    const questionMark: Token = this.previous();
+    const whenTrue: ExpressionNode = this.parseExpression();
+    const colon: Token = this.consume(TokenType.Colon, "Expected ':' in conditional expression.");
+    const whenFalse: ExpressionNode = this.parseConditionalExpression();
+
+    return {
+      kind: "ConditionalExpression",
+      location: condition.location,
+      condition,
+      questionMark,
+      whenTrue,
+      colon,
+      whenFalse,
+    } satisfies ConditionalExpressionNode;
   }
 
   /**

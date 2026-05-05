@@ -238,6 +238,18 @@ export interface BinaryExpressionNode extends BaseNode {
 }
 
 /**
+ * ConditionalExpressionNode stores ternary condition ? whenTrue : whenFalse.
+ */
+export interface ConditionalExpressionNode extends BaseNode {
+  readonly kind: "ConditionalExpression";
+  readonly condition: ExpressionNode;
+  readonly questionMark: Token;
+  readonly whenTrue: ExpressionNode;
+  readonly colon: Token;
+  readonly whenFalse: ExpressionNode;
+}
+
+/**
  * AssignmentExpressionNode stores reassignment to an existing identifier.
  */
 export interface AssignmentExpressionNode extends BaseNode {
@@ -321,6 +333,7 @@ export type ExpressionNode =
   | BooleanLiteralNode
   | UnaryExpressionNode
   | BinaryExpressionNode
+  | ConditionalExpressionNode
   | AssignmentExpressionNode
   | CallExpressionNode
   | MemberExpressionNode

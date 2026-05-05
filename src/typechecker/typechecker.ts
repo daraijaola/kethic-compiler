@@ -6,6 +6,7 @@ import {
   BlockStatementNode,
   CallExpressionNode,
   ConditionalStatementNode,
+  ConditionalExpressionNode,
   ConstantDeclarationNode,
   ContinueStatementNode,
   ErrorHandlingStatementNode,
@@ -417,6 +418,8 @@ export class TypeChecker {
         return this.inferUnaryExpression(expression, contextKeyword);
       case "BinaryExpression":
         return this.inferBinaryExpression(expression, contextKeyword);
+      case "ConditionalExpression":
+        return this.inferConditionalExpression(expression, contextKeyword);
       case "AssignmentExpression":
         return this.inferAssignmentExpression(expression, contextKeyword);
       case "CallExpression":
@@ -486,6 +489,32 @@ export class TypeChecker {
     }
 
     return NUMBER_TYPE;
+  }
+
+  /**
+   * inferConditionalExpression checks ternary condition and branch compatibility.
+   */
+  private inferConditionalExpression(expression: ConditionalExpressionNode, contextKeyword: Token): KethicType {
+    const conditionType: KethicType = this.inferExpression(expression.condition, contextKeyword);
+    const trueType: KethicType = this.inferExpression(expression.whenTrue, contextKeyword);
+    const falseType: KethicType = this.inferExpression(expression.whenFalse, contextKeyword);
+
+    if (!this.typesCompatible(BOOLEAN_TYPE, conditionType)) {
+      this.report(
+        contextKeyword,
+        `conditional expression expected Boolean condition but received ${typeToString(conditionType)}`,
+      );
+    }
+
+    if (!this.typesCompatible(trueType, falseType)) {
+      this.report(
+        contextKeyword,
+        `conditional branches must return compatible types but received ${typeToString(trueType)} and ${typeToString(falseType)}`,
+      );
+      return UNKNOWN_TYPE;
+    }
+
+    return isUnknownType(trueType) ? falseType : trueType;
   }
 
   /**
