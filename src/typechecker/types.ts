@@ -1,9 +1,47 @@
 import { Token } from "../lexer/tokens";
 
 /**
- * PrimitiveTypeName is the set of value categories understood in Phase 3.
+ * PrimitiveTypeName is the set of concrete primitive values Kethic currently supports.
  */
-export type PrimitiveTypeName = "Number" | "String" | "Boolean" | "Void" | "Unknown";
+export type PrimitiveTypeName = "Number" | "String" | "Boolean" | "Void";
+
+/**
+ * PrimitiveType represents a concrete Kethic primitive.
+ */
+export interface PrimitiveType {
+  readonly kind: "Primitive";
+  readonly name: PrimitiveTypeName;
+}
+
+/**
+ * UnknownType represents an unresolved type that should not cascade errors.
+ */
+export interface UnknownType {
+  readonly kind: "Unknown";
+}
+
+/**
+ * FunctionType represents the callable shape of a Kelthar.
+ */
+export interface FunctionType {
+  readonly kind: "Function";
+  readonly parameters: KethicType[];
+  returnType: KethicType;
+}
+
+/**
+ * KethicType is the formal internal type model used by the checker.
+ */
+export type KethicType = PrimitiveType | UnknownType | FunctionType;
+
+/**
+ * Shared type objects for the currently supported Kethic types.
+ */
+export const NUMBER_TYPE: PrimitiveType = { kind: "Primitive", name: "Number" };
+export const STRING_TYPE: PrimitiveType = { kind: "Primitive", name: "String" };
+export const BOOLEAN_TYPE: PrimitiveType = { kind: "Primitive", name: "Boolean" };
+export const VOID_TYPE: PrimitiveType = { kind: "Primitive", name: "Void" };
+export const UNKNOWN_TYPE: UnknownType = { kind: "Unknown" };
 
 /**
  * SymbolKind separates mutable values, constants, and declared functions.
@@ -16,7 +54,7 @@ export type SymbolKind = "Variable" | "Constant" | "Function";
 export interface ValueSymbol {
   readonly kind: "Variable" | "Constant";
   readonly name: string;
-  readonly type: PrimitiveTypeName;
+  readonly type: KethicType;
   readonly declarationKeyword: Token;
   readonly declarationName: Token;
 }
@@ -30,9 +68,11 @@ export interface FunctionSymbol {
   readonly name: string;
   readonly parameterCount: number;
   readonly parameterNames: string[];
-  returnType: PrimitiveTypeName;
+  readonly parameterTypes: KethicType[];
+  returnType: KethicType;
   readonly declarationKeyword: Token;
   readonly declarationName: Token;
+  readonly type: FunctionType;
 }
 
 /**
@@ -56,4 +96,36 @@ export interface TypeCheckDiagnostic {
   readonly column: number;
   readonly keyword: string;
   readonly message: string;
+}
+
+/**
+ * createFunctionType creates a mutable function type tied to a Kelthar symbol.
+ */
+export function createFunctionType(parameters: KethicType[], returnType: KethicType): FunctionType {
+  return {
+    kind: "Function",
+    parameters,
+    returnType,
+  };
+}
+
+/**
+ * typeToString formats structured Kethic types for diagnostics.
+ */
+export function typeToString(type: KethicType): string {
+  switch (type.kind) {
+    case "Primitive":
+      return type.name;
+    case "Unknown":
+      return "Unknown";
+    case "Function":
+      return `Kelthar(${type.parameters.map(typeToString).join(", ")}) -> ${typeToString(type.returnType)}`;
+  }
+}
+
+/**
+ * isUnknownType checks whether a type is unresolved.
+ */
+export function isUnknownType(type: KethicType): boolean {
+  return type.kind === "Unknown";
 }

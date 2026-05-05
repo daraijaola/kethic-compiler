@@ -52,8 +52,17 @@ export interface FunctionDeclarationNode extends BaseNode {
   readonly kind: "FunctionDeclaration";
   readonly keyword: Token;
   readonly name: Token;
-  readonly parameters: Token[];
+  readonly parameters: ParameterNode[];
   readonly body: BlockStatementNode;
+}
+
+/**
+ * ParameterNode stores formal Kelthar parameter metadata.
+ * Phase A keeps syntax unchanged, so parameters currently only have a name.
+ */
+export interface ParameterNode extends BaseNode {
+  readonly kind: "Parameter";
+  readonly name: Token;
 }
 
 /**
@@ -210,7 +219,7 @@ export interface BinaryExpressionNode extends BaseNode {
  */
 export interface AssignmentExpressionNode extends BaseNode {
   readonly kind: "AssignmentExpression";
-  readonly target: IdentifierExpressionNode;
+  readonly target: AssignmentTargetNode;
   readonly equals: Token;
   readonly value: ExpressionNode;
 }
@@ -222,6 +231,24 @@ export interface CallExpressionNode extends BaseNode {
   readonly kind: "CallExpression";
   readonly callee: ExpressionNode;
   readonly arguments: ExpressionNode[];
+}
+
+/**
+ * MemberExpressionNode stores dot notation access such as vessel.name.
+ */
+export interface MemberExpressionNode extends BaseNode {
+  readonly kind: "MemberExpression";
+  readonly object: ExpressionNode;
+  readonly property: Token;
+}
+
+/**
+ * IndexExpressionNode stores bracket notation access such as vessel[index].
+ */
+export interface IndexExpressionNode extends BaseNode {
+  readonly kind: "IndexExpression";
+  readonly object: ExpressionNode;
+  readonly index: ExpressionNode;
 }
 
 /**
@@ -271,8 +298,16 @@ export type ExpressionNode =
   | BinaryExpressionNode
   | AssignmentExpressionNode
   | CallExpressionNode
+  | MemberExpressionNode
+  | IndexExpressionNode
   | UmkelCallExpressionNode
   | GroupingExpressionNode;
+
+/**
+ * AssignmentTargetNode is every expression form that can appear on the left
+ * side of assignment without changing syntax.
+ */
+export type AssignmentTargetNode = IdentifierExpressionNode | MemberExpressionNode | IndexExpressionNode;
 
 /**
  * BinaryOperatorTokenType limits binary expressions to valid operator tokens.

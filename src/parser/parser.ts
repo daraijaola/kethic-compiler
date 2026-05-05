@@ -14,9 +14,12 @@ import {
   FunctionDeclarationNode,
   GroupingExpressionNode,
   IdentifierExpressionNode,
+  IndexExpressionNode,
   LoopStatementNode,
+  MemberExpressionNode,
   NumberLiteralNode,
   OvrinDeclarationNode,
+  ParameterNode,
   ProgramNode,
   ReturnStatementNode,
   SourceLocation,
@@ -170,7 +173,7 @@ export class Parser {
    */
   private parseFunctionDeclaration(keyword: Token): FunctionDeclarationNode {
     const name: Token = this.consume(TokenType.Identifier, "Expected function name after Kelthar.");
-    const parameters: Token[] = this.parseParameterList();
+    const parameters: ParameterNode[] = this.parseParameterList();
     const body: BlockStatementNode = this.parseRequiredBlock("Expected function body after Kelthar parameters.");
 
     return {
@@ -395,14 +398,14 @@ export class Parser {
       const equals: Token = this.previous();
       const value: ExpressionNode = this.parseAssignment();
 
-      if (expression.kind !== "IdentifierExpression") {
+      if (!this.isAssignmentTarget(expression)) {
         throw new ParserError(equals, "Invalid assignment target.");
       }
 
       return {
         kind: "AssignmentExpression",
         location: expression.location,
-        target: expression as IdentifierExpressionNode,
+        target: expression,
         equals,
         value,
       } satisfies AssignmentExpressionNode;
@@ -493,19 +496,47 @@ export class Parser {
   private parseCall(): ExpressionNode {
     let expression: ExpressionNode = this.parsePrimary();
 
-    while (this.match(TokenType.LeftParen)) {
-      const openingParen: Token = this.previous();
-      const args: ExpressionNode[] = this.parseArgumentsAfterOpeningParen();
-      expression = {
-        kind: "CallExpression",
-        location: expression.location,
-        callee: expression,
-        arguments: args,
-      } satisfies CallExpressionNode;
+    while (true) {
+      if (this.match(TokenType.LeftParen)) {
+        const openingParen: Token = this.previous();
+        const args: ExpressionNode[] = this.parseArgumentsAfterOpeningParen();
+        expression = {
+          kind: "CallExpression",
+          location: expression.location,
+          callee: expression,
+          arguments: args,
+        } satisfies CallExpressionNode;
 
-      if (openingParen.type !== TokenType.LeftParen) {
-        throw new ParserError(openingParen, "Internal parser error while parsing call.");
+        if (openingParen.type !== TokenType.LeftParen) {
+          throw new ParserError(openingParen, "Internal parser error while parsing call.");
+        }
+        continue;
       }
+
+      if (this.match(TokenType.Dot)) {
+        const property: Token = this.consume(TokenType.Identifier, "Expected property name after '.'.");
+        expression = {
+          kind: "MemberExpression",
+          location: expression.location,
+          object: expression,
+          property,
+        } satisfies MemberExpressionNode;
+        continue;
+      }
+
+      if (this.match(TokenType.LeftBracket)) {
+        const index: ExpressionNode = this.parseExpression();
+        this.consume(TokenType.RightBracket, "Expected ']' after index expression.");
+        expression = {
+          kind: "IndexExpression",
+          location: expression.location,
+          object: expression,
+          index,
+        } satisfies IndexExpressionNode;
+        continue;
+      }
+
+      break;
     }
 
     return expression;
@@ -603,13 +634,18 @@ export class Parser {
   /**
    * parseParameterList parses function parameters inside parentheses.
    */
-  private parseParameterList(): Token[] {
+  private parseParameterList(): ParameterNode[] {
     this.consume(TokenType.LeftParen, "Expected '(' before parameter list.");
-    const parameters: Token[] = [];
+    const parameters: ParameterNode[] = [];
 
     if (!this.check(TokenType.RightParen)) {
       do {
-        parameters.push(this.consume(TokenType.Identifier, "Expected parameter name."));
+        const name: Token = this.consume(TokenType.Identifier, "Expected parameter name.");
+        parameters.push({
+          kind: "Parameter",
+          location: this.locationFrom(name),
+          name,
+        });
       } while (this.match(TokenType.Comma));
     }
 
@@ -651,6 +687,17 @@ export class Parser {
       token,
       value: token.lexeme.slice(1, -1),
     };
+  }
+
+  /**
+   * isAssignmentTarget reports whether an expression can receive assignment.
+   */
+  private isAssignmentTarget(expression: ExpressionNode): expression is IdentifierExpressionNode | MemberExpressionNode | IndexExpressionNode {
+    return (
+      expression.kind === "IdentifierExpression" ||
+      expression.kind === "MemberExpression" ||
+      expression.kind === "IndexExpression"
+    );
   }
 
   /**

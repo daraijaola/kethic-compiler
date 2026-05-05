@@ -118,7 +118,7 @@ export class CodeGenerator {
    * emitFunctionDeclaration emits Kelthar as a JavaScript function declaration.
    */
   private emitFunctionDeclaration(statement: FunctionDeclarationNode): void {
-    const parameters: string = statement.parameters.map((parameter) => parameter.lexeme).join(", ");
+    const parameters: string = statement.parameters.map((parameter) => parameter.name.lexeme).join(", ");
     this.emitMappedLine(`function ${statement.name.lexeme}(${parameters}) {`, statement.keyword.line);
     this.emitBlockBody(statement.body);
     this.emitRawLine(`${this.indent()}}`);
@@ -175,9 +175,13 @@ export class CodeGenerator {
       case "BinaryExpression":
         return this.emitBinaryExpression(expression);
       case "AssignmentExpression":
-        return `${expression.target.name.lexeme} = ${this.emitExpression(expression.value)}`;
+        return `${this.emitExpression(expression.target)} = ${this.emitExpression(expression.value)}`;
       case "CallExpression":
         return `${this.emitExpression(expression.callee)}(${expression.arguments.map((argument) => this.emitExpression(argument)).join(", ")})`;
+      case "MemberExpression":
+        return `${this.emitExpression(expression.object)}.${expression.property.lexeme}`;
+      case "IndexExpression":
+        return `${this.emitExpression(expression.object)}[${this.emitExpression(expression.index)}]`;
       case "UmkelCallExpression":
         return `${expression.callee.lexeme}(${expression.arguments.map((argument) => this.emitExpression(argument)).join(", ")})`;
       case "GroupingExpression":

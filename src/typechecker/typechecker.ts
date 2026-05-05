@@ -12,8 +12,11 @@ import {
   FunctionCallStatementNode,
   FunctionDeclarationNode,
   IdentifierExpressionNode,
+  IndexExpressionNode,
   LoopStatementNode,
+  MemberExpressionNode,
   OvrinDeclarationNode,
+  ParameterNode,
   ProgramNode,
   ReturnStatementNode,
   StatementNode,
@@ -22,7 +25,21 @@ import {
   VariableDeclarationNode,
 } from "../parser/ast";
 import { SymbolTable } from "./symbolTable";
-import { FunctionSymbol, KethicSymbol, PrimitiveTypeName, TypeCheckDiagnostic, ValueSymbol } from "./types";
+import {
+  BOOLEAN_TYPE,
+  createFunctionType,
+  FunctionSymbol,
+  isUnknownType,
+  KethicSymbol,
+  KethicType,
+  NUMBER_TYPE,
+  STRING_TYPE,
+  TypeCheckDiagnostic,
+  typeToString,
+  UNKNOWN_TYPE,
+  ValueSymbol,
+  VOID_TYPE,
+} from "./types";
 
 /**
  * KethicTypeError formats one type-checking diagnostic in the project style.
@@ -131,8 +148,8 @@ export class TypeChecker {
       return;
     }
 
-    const inferredType: PrimitiveTypeName =
-      statement.initializer === null ? "Unknown" : this.inferExpression(statement.initializer, statement.keyword);
+    const inferredType: KethicType =
+      statement.initializer === null ? UNKNOWN_TYPE : this.inferExpression(statement.initializer, statement.keyword);
 
     const symbol: ValueSymbol = {
       kind: "Variable",
@@ -153,7 +170,7 @@ export class TypeChecker {
       return;
     }
 
-    const inferredType: PrimitiveTypeName = this.inferExpression(statement.initializer, statement.keyword);
+    const inferredType: KethicType = this.inferExpression(statement.initializer, statement.keyword);
     const symbol: ValueSymbol = {
       kind: "Constant",
       name: statement.name.lexeme,
@@ -173,14 +190,18 @@ export class TypeChecker {
       return;
     }
 
+    const parameterTypes: KethicType[] = statement.parameters.map(() => UNKNOWN_TYPE);
+    const functionType = createFunctionType(parameterTypes, UNKNOWN_TYPE);
     const symbol: FunctionSymbol = {
       kind: "Function",
       name: statement.name.lexeme,
       parameterCount: statement.parameters.length,
-      parameterNames: statement.parameters.map((parameter: Token) => parameter.lexeme),
-      returnType: "Unknown",
+      parameterNames: statement.parameters.map((parameter: ParameterNode) => parameter.name.lexeme),
+      parameterTypes,
+      returnType: UNKNOWN_TYPE,
       declarationKeyword: statement.keyword,
       declarationName: statement.name,
+      type: functionType,
     };
     this.symbols.define(symbol);
   }
@@ -201,14 +222,14 @@ export class TypeChecker {
     for (const parameter of statement.parameters) {
       const parameterSymbol: ValueSymbol = {
         kind: "Variable",
-        name: parameter.lexeme,
-        type: "Unknown",
+        name: parameter.name.lexeme,
+        type: UNKNOWN_TYPE,
         declarationKeyword: statement.keyword,
-        declarationName: parameter,
+        declarationName: parameter.name,
       };
 
       if (!this.symbols.define(parameterSymbol)) {
-        this.report(statement.keyword, `duplicate parameter "${parameter.lexeme}"`);
+        this.report(statement.keyword, `duplicate parameter "${parameter.name.lexeme}"`);
       }
     }
 
@@ -238,7 +259,7 @@ export class TypeChecker {
     const symbol: ValueSymbol = {
       kind: "Variable",
       name: statement.name.lexeme,
-      type: "Unknown",
+      type: UNKNOWN_TYPE,
       declarationKeyword: statement.keyword,
       declarationName: statement.name,
     };
@@ -284,23 +305,24 @@ export class TypeChecker {
    * checkReturnStatement validates Duren against the current Kelthar return type.
    */
   private checkReturnStatement(statement: ReturnStatementNode): void {
-    const actualType: PrimitiveTypeName =
-      statement.value === null ? "Void" : this.inferExpression(statement.value, statement.keyword);
+    const actualType: KethicType =
+      statement.value === null ? VOID_TYPE : this.inferExpression(statement.value, statement.keyword);
 
     if (this.currentFunction === null) {
       this.report(statement.keyword, "Duren cannot appear outside a Kelthar");
       return;
     }
 
-    if (this.currentFunction.returnType === "Unknown") {
+    if (isUnknownType(this.currentFunction.returnType)) {
       this.currentFunction.returnType = actualType;
+      this.currentFunction.type.returnType = actualType;
       return;
     }
 
     if (!this.typesCompatible(this.currentFunction.returnType, actualType)) {
       this.report(
         statement.keyword,
-        `Kelthar "${this.currentFunction.name}" returns ${this.currentFunction.returnType} but received ${actualType}`,
+        `Kelthar "${this.currentFunction.name}" returns ${typeToString(this.currentFunction.returnType)} but received ${typeToString(actualType)}`,
       );
     }
   }
@@ -339,14 +361,14 @@ export class TypeChecker {
   /**
    * inferExpression returns the best known type for an expression node.
    */
-  private inferExpression(expression: ExpressionNode, contextKeyword: Token): PrimitiveTypeName {
+  private inferExpression(expression: ExpressionNode, contextKeyword: Token): KethicType {
     switch (expression.kind) {
       case "NumberLiteral":
-        return "Number";
+        return NUMBER_TYPE;
       case "StringLiteral":
-        return "String";
+        return STRING_TYPE;
       case "BooleanLiteral":
-        return "Boolean";
+        return BOOLEAN_TYPE;
       case "IdentifierExpression":
         return this.inferIdentifier(expression, contextKeyword);
       case "GroupingExpression":
@@ -361,35 +383,39 @@ export class TypeChecker {
         return this.inferCallExpression(expression, contextKeyword);
       case "UmkelCallExpression":
         return this.inferUmkelCallExpression(expression);
+      case "MemberExpression":
+        return this.inferMemberExpression(expression, contextKeyword);
+      case "IndexExpression":
+        return this.inferIndexExpression(expression, contextKeyword);
     }
   }
 
   /**
    * inferIdentifier resolves a variable or reports use before declaration.
    */
-  private inferIdentifier(expression: IdentifierExpressionNode, contextKeyword: Token): PrimitiveTypeName {
+  private inferIdentifier(expression: IdentifierExpressionNode, contextKeyword: Token): KethicType {
     const symbol: KethicSymbol | null = this.symbols.resolve(expression.name.lexeme);
 
     if (symbol === null) {
       this.report(contextKeyword, `variable "${expression.name.lexeme}" was used before it was declared`);
-      return "Unknown";
+      return UNKNOWN_TYPE;
     }
 
-    return symbol.kind === "Function" ? "Unknown" : symbol.type;
+    return symbol.kind === "Function" ? symbol.type : symbol.type;
   }
 
   /**
    * inferUnaryExpression checks prefix operators.
    */
-  private inferUnaryExpression(expression: UnaryExpressionNode, contextKeyword: Token): PrimitiveTypeName {
-    const argumentType: PrimitiveTypeName = this.inferExpression(expression.argument, contextKeyword);
+  private inferUnaryExpression(expression: UnaryExpressionNode, contextKeyword: Token): KethicType {
+    const argumentType: KethicType = this.inferExpression(expression.argument, contextKeyword);
 
     if (expression.operator.type === TokenType.Bang) {
-      return "Boolean";
+      return BOOLEAN_TYPE;
     }
 
-    if (expression.operator.type === TokenType.Minus && !this.typesCompatible("Number", argumentType)) {
-      this.report(contextKeyword, `operator "${expression.operator.lexeme}" expected Number but received ${argumentType}`);
+    if (expression.operator.type === TokenType.Minus && !this.typesCompatible(NUMBER_TYPE, argumentType)) {
+      this.report(contextKeyword, `operator "${expression.operator.lexeme}" expected Number but received ${typeToString(argumentType)}`);
     }
 
     return argumentType;
@@ -398,45 +424,51 @@ export class TypeChecker {
   /**
    * inferBinaryExpression checks operator compatibility and result type.
    */
-  private inferBinaryExpression(expression: BinaryExpressionNode, contextKeyword: Token): PrimitiveTypeName {
-    const leftType: PrimitiveTypeName = this.inferExpression(expression.left, contextKeyword);
-    const rightType: PrimitiveTypeName = this.inferExpression(expression.right, contextKeyword);
+  private inferBinaryExpression(expression: BinaryExpressionNode, contextKeyword: Token): KethicType {
+    const leftType: KethicType = this.inferExpression(expression.left, contextKeyword);
+    const rightType: KethicType = this.inferExpression(expression.right, contextKeyword);
 
     if ([TokenType.DoubleEquals, TokenType.BangEquals, TokenType.Less, TokenType.LessEquals, TokenType.Greater, TokenType.GreaterEquals].includes(expression.operator.type)) {
-      return "Boolean";
+      return BOOLEAN_TYPE;
     }
 
     if ([TokenType.AndAnd, TokenType.OrOr].includes(expression.operator.type)) {
-      return "Boolean";
+      return BOOLEAN_TYPE;
     }
 
-    if (expression.operator.type === TokenType.Plus && (leftType === "String" || rightType === "String")) {
-      return "String";
+    if (expression.operator.type === TokenType.Plus && (this.isPrimitive(leftType, "String") || this.isPrimitive(rightType, "String"))) {
+      return STRING_TYPE;
     }
 
-    if (!this.typesCompatible("Number", leftType) || !this.typesCompatible("Number", rightType)) {
-      this.report(contextKeyword, `operator "${expression.operator.lexeme}" expected Number operands but received ${leftType} and ${rightType}`);
-      return "Unknown";
+    if (!this.typesCompatible(NUMBER_TYPE, leftType) || !this.typesCompatible(NUMBER_TYPE, rightType)) {
+      this.report(contextKeyword, `operator "${expression.operator.lexeme}" expected Number operands but received ${typeToString(leftType)} and ${typeToString(rightType)}`);
+      return UNKNOWN_TYPE;
     }
 
-    return "Number";
+    return NUMBER_TYPE;
   }
 
   /**
    * inferAssignmentExpression checks reassignment against the declared type.
    */
-  private inferAssignmentExpression(expression: AssignmentExpressionNode, contextKeyword: Token): PrimitiveTypeName {
+  private inferAssignmentExpression(expression: AssignmentExpressionNode, contextKeyword: Token): KethicType {
+    const receivedType: KethicType = this.inferExpression(expression.value, contextKeyword);
+
+    if (expression.target.kind !== "IdentifierExpression") {
+      this.inferExpression(expression.target, contextKeyword);
+      return receivedType;
+    }
+
     const symbol: KethicSymbol | null = this.symbols.resolve(expression.target.name.lexeme);
-    const receivedType: PrimitiveTypeName = this.inferExpression(expression.value, contextKeyword);
 
     if (symbol === null) {
       this.report(contextKeyword, `variable "${expression.target.name.lexeme}" was used before it was declared`);
-      return "Unknown";
+      return UNKNOWN_TYPE;
     }
 
     if (symbol.kind === "Function") {
       this.report(contextKeyword, `cannot assign to Kelthar "${symbol.name}"`);
-      return "Unknown";
+      return UNKNOWN_TYPE;
     }
 
     if (symbol.kind === "Constant") {
@@ -447,7 +479,7 @@ export class TypeChecker {
     if (!this.typesCompatible(symbol.type, receivedType)) {
       this.report(
         contextKeyword,
-        `variable "${symbol.name}" was declared as ${symbol.type} but received ${receivedType}`,
+        `variable "${symbol.name}" was declared as ${typeToString(symbol.type)} but received ${typeToString(receivedType)}`,
       );
     }
 
@@ -457,16 +489,19 @@ export class TypeChecker {
   /**
    * inferCallExpression validates expression-level Kelthar calls.
    */
-  private inferCallExpression(expression: CallExpressionNode, contextKeyword: Token): PrimitiveTypeName {
+  private inferCallExpression(expression: CallExpressionNode, contextKeyword: Token): KethicType {
     if (expression.callee.kind !== "IdentifierExpression") {
-      this.report(contextKeyword, "only named Kelthar calls are supported");
-      return "Unknown";
+      this.inferExpression(expression.callee, contextKeyword);
+      for (const argument of expression.arguments) {
+        this.inferExpression(argument, contextKeyword);
+      }
+      return UNKNOWN_TYPE;
     }
 
     const symbol: KethicSymbol | null = this.symbols.resolve(expression.callee.name.lexeme);
     if (symbol === null || symbol.kind !== "Function") {
       this.report(contextKeyword, `Kelthar "${expression.callee.name.lexeme}" does not exist`);
-      return "Unknown";
+      return UNKNOWN_TYPE;
     }
 
     this.checkArgumentCount(contextKeyword, expression.callee.name.lexeme, symbol, expression.arguments.length);
@@ -481,11 +516,11 @@ export class TypeChecker {
   /**
    * inferUmkelCallExpression validates expression-level Umkel calls.
    */
-  private inferUmkelCallExpression(expression: ExpressionNode & { kind: "UmkelCallExpression" }): PrimitiveTypeName {
+  private inferUmkelCallExpression(expression: ExpressionNode & { kind: "UmkelCallExpression" }): KethicType {
     const symbol: KethicSymbol | null = this.symbols.resolve(expression.callee.lexeme);
     if (symbol === null || symbol.kind !== "Function") {
       this.report(expression.keyword, `Kelthar "${expression.callee.lexeme}" does not exist`);
-      return "Unknown";
+      return UNKNOWN_TYPE;
     }
 
     this.checkArgumentCount(expression.keyword, expression.callee.lexeme, symbol, expression.arguments.length);
@@ -495,6 +530,50 @@ export class TypeChecker {
     }
 
     return symbol.returnType;
+  }
+
+  /**
+   * inferMemberExpression validates dot notation against known current types.
+   */
+  private inferMemberExpression(expression: MemberExpressionNode, contextKeyword: Token): KethicType {
+    const objectType: KethicType = this.inferExpression(expression.object, contextKeyword);
+
+    if (isUnknownType(objectType)) {
+      return UNKNOWN_TYPE;
+    }
+
+    if (this.isPrimitive(objectType, "String") && expression.property.lexeme === "length") {
+      return NUMBER_TYPE;
+    }
+
+    this.report(
+      contextKeyword,
+      `type ${typeToString(objectType)} has no member "${expression.property.lexeme}"`,
+    );
+    return UNKNOWN_TYPE;
+  }
+
+  /**
+   * inferIndexExpression validates bracket notation for known current types.
+   */
+  private inferIndexExpression(expression: IndexExpressionNode, contextKeyword: Token): KethicType {
+    const objectType: KethicType = this.inferExpression(expression.object, contextKeyword);
+    const indexType: KethicType = this.inferExpression(expression.index, contextKeyword);
+
+    if (!this.typesCompatible(NUMBER_TYPE, indexType)) {
+      this.report(contextKeyword, `index expression expected Number but received ${typeToString(indexType)}`);
+    }
+
+    if (isUnknownType(objectType)) {
+      return UNKNOWN_TYPE;
+    }
+
+    if (this.isPrimitive(objectType, "String")) {
+      return STRING_TYPE;
+    }
+
+    this.report(contextKeyword, `type ${typeToString(objectType)} cannot be indexed`);
+    return UNKNOWN_TYPE;
   }
 
   /**
@@ -512,8 +591,27 @@ export class TypeChecker {
   /**
    * typesCompatible treats Unknown as compatible to avoid cascaded errors.
    */
-  private typesCompatible(expected: PrimitiveTypeName, actual: PrimitiveTypeName): boolean {
-    return expected === "Unknown" || actual === "Unknown" || expected === actual;
+  private typesCompatible(expected: KethicType, actual: KethicType): boolean {
+    if (isUnknownType(expected) || isUnknownType(actual)) {
+      return true;
+    }
+
+    if (expected.kind !== actual.kind) {
+      return false;
+    }
+
+    if (expected.kind === "Primitive" && actual.kind === "Primitive") {
+      return expected.name === actual.name;
+    }
+
+    return expected === actual;
+  }
+
+  /**
+   * isPrimitive checks for a specific primitive type name.
+   */
+  private isPrimitive(type: KethicType, name: "Number" | "String" | "Boolean" | "Void"): boolean {
+    return type.kind === "Primitive" && type.name === name;
   }
 
   /**
