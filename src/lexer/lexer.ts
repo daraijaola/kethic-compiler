@@ -175,6 +175,9 @@ export class Lexer {
       case "\"":
         this.scanString(startLine, startColumn);
         return;
+      case "`":
+        this.scanTemplateString(startLine, startColumn);
+        return;
 
       default:
         if (this.isDigit(character)) {
@@ -218,6 +221,35 @@ export class Lexer {
     }
 
     throw new LexerError("Unterminated string", startLine, startColumn);
+  }
+
+  /**
+   * scanTemplateString consumes a backtick string and preserves interpolation text.
+   */
+  private scanTemplateString(startLine: number, startColumn: number): void {
+    let lexeme: string = "`";
+
+    while (!this.isAtEnd()) {
+      const character: string = this.advance();
+      lexeme += character;
+
+      if (character === "\\") {
+        if (this.isAtEnd()) {
+          throw new LexerError("Unterminated template string escape", this.line, this.column);
+        }
+
+        const escaped: string = this.advance();
+        lexeme += escaped;
+        continue;
+      }
+
+      if (character === "`") {
+        this.addToken(TokenType.TemplateString, lexeme, startLine, startColumn);
+        return;
+      }
+    }
+
+    throw new LexerError("Unterminated template string", startLine, startColumn);
   }
 
   /**

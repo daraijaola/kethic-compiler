@@ -129,6 +129,13 @@ export class Obfuscator {
         continue;
       }
 
+      if (character === "`") {
+        const templateScan: TemplateScanResult = this.scanTemplate(line, index);
+        output += templateScan.value;
+        index = templateScan.nextIndex;
+        continue;
+      }
+
       if (this.isIdentifierStart(character)) {
         const identifierStart: number = index;
         index += 1;
@@ -236,6 +243,77 @@ export class Obfuscator {
   }
 
   /**
+   * scanTemplate encodes static template text while transforming embedded JS.
+   */
+  private scanTemplate(line: string, startIndex: number): TemplateScanResult {
+    let output: string = "`";
+    let staticText: string = "";
+    let index: number = startIndex + 1;
+
+    while (index < line.length) {
+      const character: string = line.charAt(index);
+
+      if (character === "\\") {
+        if (index + 1 >= line.length) {
+          output += this.encodeStringValue(staticText);
+          return { value: output, nextIndex: index + 1 };
+        }
+
+        staticText += this.decodeSimpleEscape(line.charAt(index + 1));
+        index += 2;
+        continue;
+      }
+
+      if (character === "`") {
+        output += this.encodeStringValue(staticText);
+        output += "`";
+        return { value: output, nextIndex: index + 1 };
+      }
+
+      if (character === "$" && line.charAt(index + 1) === "{") {
+        output += this.encodeStringValue(staticText);
+        staticText = "";
+        const expressionEnd: number = this.findTemplateExpressionEnd(line, index + 2);
+        const expressionSource: string = line.slice(index + 2, expressionEnd);
+        output += "${" + this.transformLine(expressionSource) + "}";
+        index = expressionEnd + 1;
+        continue;
+      }
+
+      staticText += character;
+      index += 1;
+    }
+
+    output += this.encodeStringValue(staticText);
+    return { value: output, nextIndex: index };
+  }
+
+  /**
+   * findTemplateExpressionEnd finds the closing brace for a JS template expression.
+   */
+  private findTemplateExpressionEnd(line: string, startIndex: number): number {
+    let depth: number = 0;
+
+    for (let index: number = startIndex; index < line.length; index += 1) {
+      const character: string = line.charAt(index);
+
+      if (character === "{") {
+        depth += 1;
+        continue;
+      }
+
+      if (character === "}") {
+        if (depth === 0) {
+          return index;
+        }
+        depth -= 1;
+      }
+    }
+
+    return line.length;
+  }
+
+  /**
    * encodeStringValue turns a string into JavaScript hex escape sequences.
    */
   private encodeStringValue(value: string): string {
@@ -337,6 +415,14 @@ export class Obfuscator {
  * StringScanResult is the result of scanning a single JavaScript string literal.
  */
 interface StringScanResult {
+  readonly value: string;
+  readonly nextIndex: number;
+}
+
+/**
+ * TemplateScanResult is the result of scanning a JavaScript template literal.
+ */
+interface TemplateScanResult {
   readonly value: string;
   readonly nextIndex: number;
 }

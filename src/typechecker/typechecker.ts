@@ -24,6 +24,7 @@ import {
   ReturnStatementNode,
   StatementNode,
   TypeDefinitionNode,
+  TemplateStringNode,
   UnaryExpressionNode,
   VariableDeclarationNode,
 } from "../parser/ast";
@@ -408,6 +409,8 @@ export class TypeChecker {
         return NUMBER_TYPE;
       case "StringLiteral":
         return STRING_TYPE;
+      case "TemplateString":
+        return this.inferTemplateString(expression, contextKeyword);
       case "BooleanLiteral":
         return BOOLEAN_TYPE;
       case "IdentifierExpression":
@@ -490,6 +493,28 @@ export class TypeChecker {
 
     return NUMBER_TYPE;
   }
+
+  /**
+   * inferTemplateString checks interpolation values and returns String.
+   */
+  private inferTemplateString(expression: TemplateStringNode, contextKeyword: Token): KethicType {
+    for (const part of expression.parts) {
+      if (part.kind !== "TemplateExpressionPart") {
+        continue;
+      }
+
+      const embeddedType: KethicType = this.inferExpression(part.expression, contextKeyword);
+      if (embeddedType.kind === "Function" || this.isPrimitive(embeddedType, "Void")) {
+        this.report(
+          contextKeyword,
+          `template interpolation must be convertible to String but received ${typeToString(embeddedType)}`,
+        );
+      }
+    }
+
+    return STRING_TYPE;
+  }
+
 
   /**
    * inferConditionalExpression checks ternary condition and branch compatibility.

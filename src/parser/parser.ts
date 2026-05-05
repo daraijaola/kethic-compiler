@@ -1,4 +1,5 @@
 import { Token, TokenType } from "../lexer/tokens";
+import { Lexer } from "../lexer/lexer";
 import {
   AssignmentExpressionNode,
   BinaryExpressionNode,
@@ -28,6 +29,9 @@ import {
   SourceLocation,
   StatementNode,
   StringLiteralNode,
+  TemplateExpressionPartNode,
+  TemplateStaticPartNode,
+  TemplateStringNode,
   TypeDefinitionNode,
   TypeFieldNode,
   UmkelCallExpressionNode,
@@ -76,6 +80,15 @@ export class Parser {
       location: this.locationFrom(firstToken),
       body,
     };
+  }
+
+  /**
+   * parseExpressionOnly parses a standalone expression token stream.
+   */
+  public parseExpressionOnly(): ExpressionNode {
+    const expression: ExpressionNode = this.parseExpression();
+    this.consume(TokenType.EOF, "Expected end of expression.");
+    return expression;
   }
 
   /**
@@ -656,6 +669,10 @@ export class Parser {
       return this.createStringLiteral(this.previous());
     }
 
+    if (this.match(TokenType.TemplateString)) {
+      return this.createTemplateString(this.previous());
+    }
+
     if (this.match(TokenType.Identifier)) {
       const name: Token = this.previous();
 
@@ -767,6 +784,93 @@ export class Parser {
       token,
       value: token.lexeme.slice(1, -1),
     };
+  }
+
+  /**
+   * createTemplateString splits a raw template token into static and expression parts.
+   */
+  private createTemplateString(token: Token): TemplateStringNode {
+    const body: string = token.lexeme.slice(1, -1);
+    const parts: (TemplateStaticPartNode | TemplateExpressionPartNode)[] = [];
+    let staticText: string = "";
+    let index: number = 0;
+
+    while (index < body.length) {
+      const character: string = body.charAt(index);
+
+      if (character === "\\") {
+        if (index + 1 < body.length) {
+          staticText += body.charAt(index + 1);
+          index += 2;
+          continue;
+        }
+      }
+
+      if (character === "{") {
+        if (staticText.length > 0) {
+          parts.push({
+            kind: "TemplateStaticPart",
+            location: this.locationFrom(token),
+            value: staticText,
+          });
+          staticText = "";
+        }
+
+        const expressionEnd: number = this.findTemplateExpressionEnd(body, index + 1, token);
+        const expressionSource: string = body.slice(index + 1, expressionEnd).trim();
+        const expression: ExpressionNode = new Parser(new Lexer(expressionSource).scanTokens()).parseExpressionOnly();
+        parts.push({
+          kind: "TemplateExpressionPart",
+          location: this.locationFrom(token),
+          expression,
+        });
+        index = expressionEnd + 1;
+        continue;
+      }
+
+      staticText += character;
+      index += 1;
+    }
+
+    if (staticText.length > 0) {
+      parts.push({
+        kind: "TemplateStaticPart",
+        location: this.locationFrom(token),
+        value: staticText,
+      });
+    }
+
+    return {
+      kind: "TemplateString",
+      location: this.locationFrom(token),
+      token,
+      parts,
+    };
+  }
+
+  /**
+   * findTemplateExpressionEnd finds the matching interpolation close brace.
+   */
+  private findTemplateExpressionEnd(body: string, startIndex: number, token: Token): number {
+    let depth: number = 0;
+
+    for (let index: number = startIndex; index < body.length; index += 1) {
+      const character: string = body.charAt(index);
+
+      if (character === "{") {
+        depth += 1;
+        continue;
+      }
+
+      if (character === "}") {
+        if (depth === 0) {
+          return index;
+        }
+        depth -= 1;
+      }
+    }
+
+    throw new ParserError(token, "Unterminated template string interpolation.");
   }
 
   /**

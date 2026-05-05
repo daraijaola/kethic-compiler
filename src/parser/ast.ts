@@ -210,6 +210,37 @@ export interface StringLiteralNode extends BaseNode {
 }
 
 /**
+ * TemplateStringNode stores backtick strings with alternating static and
+ * expression interpolation segments.
+ */
+export interface TemplateStringNode extends BaseNode {
+  readonly kind: "TemplateString";
+  readonly token: Token;
+  readonly parts: TemplateStringPartNode[];
+}
+
+/**
+ * TemplateStringPartNode is one segment of a Kethic template string.
+ */
+export type TemplateStringPartNode = TemplateStaticPartNode | TemplateExpressionPartNode;
+
+/**
+ * TemplateStaticPartNode stores literal text inside a template string.
+ */
+export interface TemplateStaticPartNode extends BaseNode {
+  readonly kind: "TemplateStaticPart";
+  readonly value: string;
+}
+
+/**
+ * TemplateExpressionPartNode stores an interpolated expression from { ... }.
+ */
+export interface TemplateExpressionPartNode extends BaseNode {
+  readonly kind: "TemplateExpressionPart";
+  readonly expression: ExpressionNode;
+}
+
+/**
  * BooleanLiteralNode stores the built-in true and false literals.
  */
 export interface BooleanLiteralNode extends BaseNode {
@@ -330,6 +361,7 @@ export type ExpressionNode =
   | IdentifierExpressionNode
   | NumberLiteralNode
   | StringLiteralNode
+  | TemplateStringNode
   | BooleanLiteralNode
   | UnaryExpressionNode
   | BinaryExpressionNode

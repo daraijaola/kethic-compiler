@@ -8,6 +8,7 @@ import {
   OvrinDeclarationNode,
   ProgramNode,
   StatementNode,
+  TemplateStringNode,
   TypeDefinitionNode,
 } from "../parser/ast";
 import { CodeGenerationResult, SourceMapEntry } from "./types";
@@ -196,6 +197,8 @@ export class CodeGenerator {
         return expression.token.lexeme;
       case "StringLiteral":
         return expression.token.lexeme;
+      case "TemplateString":
+        return this.emitTemplateString(expression);
       case "BooleanLiteral":
         return expression.value ? "true" : "false";
       case "UnaryExpression":
@@ -226,6 +229,34 @@ export class CodeGenerator {
     const operator: string = this.emitBinaryOperator(expression.operator.type);
     return `${this.emitExpression(expression.left)} ${operator} ${this.emitExpression(expression.right)}`;
   }
+
+  /**
+   * emitTemplateString emits Kethic {expression} interpolation as JS ${expression}.
+   */
+  private emitTemplateString(expression: TemplateStringNode): string {
+    let output: string = "`";
+
+    for (const part of expression.parts) {
+      if (part.kind === "TemplateStaticPart") {
+        output += this.escapeTemplateStaticText(part.value);
+      } else {
+        output += "${" + this.emitExpression(part.expression) + "}";
+      }
+    }
+
+    return `${output}\``;
+  }
+
+  /**
+   * escapeTemplateStaticText preserves literal text inside emitted JS templates.
+   */
+  private escapeTemplateStaticText(value: string): string {
+    return value
+      .replace(/\\/g, "\\\\")
+      .replace(/`/g, "\\`")
+      .replace(/\$\{/g, "\\${");
+  }
+
 
   /**
    * emitBinaryOperator normalizes token types into JavaScript operator text.

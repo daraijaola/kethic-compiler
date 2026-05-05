@@ -22,6 +22,7 @@ export enum TokenType {
   Identifier = "Identifier",
   Number = "Number",
   String = "String",
+  TemplateString = "TemplateString",
 
   // Arithmetic operators.
   Plus = "Plus",
@@ -47,6 +48,7 @@ export enum TokenType {
   // Function and type syntax operators.
   Arrow = "Arrow",
   QuestionMark = "QuestionMark",
+  Backtick = "Backtick",
 
   // Punctuation used to group, separate, and terminate syntax.
   LeftParen = "LeftParen",
