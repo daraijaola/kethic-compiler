@@ -130,7 +130,14 @@ export interface ConditionalStatementNode extends BaseNode {
   readonly keyword: Token;
   readonly condition: ExpressionNode;
   readonly thenBranch: BlockStatementNode;
+  readonly elseBranch: ConditionalElseBranchNode | null;
 }
+
+/**
+ * ConditionalElseBranchNode stores Shev branches as either an else block or an
+ * else-if conditional.
+ */
+export type ConditionalElseBranchNode = BlockStatementNode | ConditionalStatementNode;
 
 /**
  * Rukhar repeats a block while its condition remains true.

@@ -285,6 +285,7 @@ export class Parser {
   private parseConditionalStatement(keyword: Token): ConditionalStatementNode {
     const condition: ExpressionNode = this.parseExpression();
     const thenBranch: BlockStatementNode = this.parseRequiredBlock("Expected Ikhshev branch body.");
+    const elseBranch: ConditionalStatementNode | BlockStatementNode | null = this.parseOptionalShevBranch();
 
     return {
       kind: "ConditionalStatement",
@@ -292,7 +293,23 @@ export class Parser {
       keyword,
       condition,
       thenBranch,
+      elseBranch,
     };
+  }
+
+  /**
+   * parseOptionalShevBranch parses Shev { ... } and Shev Ikhshev ... chains.
+   */
+  private parseOptionalShevBranch(): ConditionalStatementNode | BlockStatementNode | null {
+    if (!this.match(TokenType.Shev)) {
+      return null;
+    }
+
+    if (this.match(TokenType.Ikhshev)) {
+      return this.parseConditionalStatement(this.previous());
+    }
+
+    return this.parseRequiredBlock("Expected Shev branch body.");
   }
 
   /**

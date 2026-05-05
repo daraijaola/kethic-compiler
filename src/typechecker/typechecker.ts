@@ -333,6 +333,17 @@ export class TypeChecker {
   private checkConditionalStatement(statement: ConditionalStatementNode): void {
     this.inferExpression(statement.condition, statement.keyword);
     this.checkBlock(statement.thenBranch, true);
+
+    if (statement.elseBranch === null) {
+      return;
+    }
+
+    if (statement.elseBranch.kind === "ConditionalStatement") {
+      this.checkConditionalStatement(statement.elseBranch);
+      return;
+    }
+
+    this.checkBlock(statement.elseBranch, true);
   }
 
   /**

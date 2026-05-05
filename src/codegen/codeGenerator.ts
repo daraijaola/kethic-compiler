@@ -2,6 +2,7 @@ import { TokenType } from "../lexer/tokens";
 import {
   BinaryExpressionNode,
   BlockStatementNode,
+  ConditionalStatementNode,
   ExpressionNode,
   FunctionDeclarationNode,
   OvrinDeclarationNode,
@@ -81,9 +82,7 @@ export class CodeGenerator {
         );
         return;
       case "ConditionalStatement":
-        this.emitMappedLine(`if (${this.emitExpression(statement.condition)}) {`, statement.keyword.line);
-        this.emitBlockBody(statement.thenBranch);
-        this.emitRawLine(`${this.indent()}}`);
+        this.emitConditionalStatement(statement, false);
         return;
       case "LoopStatement":
         this.emitMappedLine(`while (${this.emitExpression(statement.condition)}) {`, statement.keyword.line);
@@ -121,6 +120,29 @@ export class CodeGenerator {
     const parameters: string = statement.parameters.map((parameter) => parameter.name.lexeme).join(", ");
     this.emitMappedLine(`function ${statement.name.lexeme}(${parameters}) {`, statement.keyword.line);
     this.emitBlockBody(statement.body);
+    this.emitRawLine(`${this.indent()}}`);
+  }
+
+  /**
+   * emitConditionalStatement emits Ikhshev/Shev chains as if/else-if/else.
+   */
+  private emitConditionalStatement(statement: ConditionalStatementNode, asElseIf: boolean): void {
+    const prefix: string = asElseIf ? "} else if" : "if";
+    this.emitMappedLine(`${prefix} (${this.emitExpression(statement.condition)}) {`, statement.keyword.line);
+    this.emitBlockBody(statement.thenBranch);
+
+    if (statement.elseBranch === null) {
+      this.emitRawLine(`${this.indent()}}`);
+      return;
+    }
+
+    if (statement.elseBranch.kind === "ConditionalStatement") {
+      this.emitConditionalStatement(statement.elseBranch, true);
+      return;
+    }
+
+    this.emitRawLine(`${this.indent()}} else {`);
+    this.emitBlockBody(statement.elseBranch);
     this.emitRawLine(`${this.indent()}}`);
   }
 
@@ -250,7 +272,10 @@ export class CodeGenerator {
       case "BlockStatement":
         return statement.body.some((child: StatementNode) => this.statementContainsTopLevelReturn(child));
       case "ConditionalStatement":
-        return this.statementContainsTopLevelReturn(statement.thenBranch);
+        return (
+          this.statementContainsTopLevelReturn(statement.thenBranch) ||
+          (statement.elseBranch !== null && this.statementContainsTopLevelReturn(statement.elseBranch))
+        );
       case "LoopStatement":
         return this.statementContainsTopLevelReturn(statement.body);
       case "ErrorHandlingStatement":
