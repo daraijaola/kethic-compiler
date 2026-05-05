@@ -7,6 +7,7 @@ import {
   CallExpressionNode,
   ConditionalStatementNode,
   ConstantDeclarationNode,
+  ContinueStatementNode,
   ErrorHandlingStatementNode,
   ExpressionNode,
   ExpressionStatementNode,
@@ -134,6 +135,9 @@ export class TypeChecker {
         return;
       case "BreakStatement":
         this.checkBreakStatement(statement);
+        return;
+      case "ContinueStatement":
+        this.checkContinueStatement(statement);
         return;
       case "ErrorHandlingStatement":
         this.checkErrorHandlingStatement(statement);
@@ -367,6 +371,15 @@ export class TypeChecker {
   private checkBreakStatement(statement: BreakStatementNode): void {
     if (this.loopDepth === 0) {
       this.report(statement.keyword, "Duruk cannot appear outside a Rukhar loop");
+    }
+  }
+
+  /**
+   * checkContinueStatement validates Rukum appears inside Rukhar.
+   */
+  private checkContinueStatement(statement: ContinueStatementNode): void {
+    if (this.loopDepth === 0) {
+      this.report(statement.keyword, "Rukum cannot appear outside a Rukhar loop");
     }
   }
 

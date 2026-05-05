@@ -8,6 +8,7 @@ import {
   CallExpressionNode,
   ConditionalStatementNode,
   ConstantDeclarationNode,
+  ContinueStatementNode,
   ErrorHandlingStatementNode,
   ExpressionNode,
   ExpressionStatementNode,
@@ -125,6 +126,10 @@ export class Parser {
 
     if (this.match(TokenType.Duruk)) {
       return this.parseBreakStatement(this.previous());
+    }
+
+    if (this.match(TokenType.Rukum)) {
+      return this.parseContinueStatement(this.previous());
     }
 
     if (this.match(TokenType.Eshnak)) {
@@ -341,6 +346,19 @@ export class Parser {
 
     return {
       kind: "BreakStatement",
+      location: this.locationFrom(keyword),
+      keyword,
+    };
+  }
+
+  /**
+   * parseContinueStatement parses Rukum;
+   */
+  private parseContinueStatement(keyword: Token): ContinueStatementNode {
+    this.consume(TokenType.Semicolon, "Expected ';' after Rukum.");
+
+    return {
+      kind: "ContinueStatement",
       location: this.locationFrom(keyword),
       keyword,
     };

@@ -92,6 +92,9 @@ export class CodeGenerator {
       case "BreakStatement":
         this.emitMappedLine("break;", statement.keyword.line);
         return;
+      case "ContinueStatement":
+        this.emitMappedLine("continue;", statement.keyword.line);
+        return;
       case "ErrorHandlingStatement":
         this.emitMappedLine("try {", statement.keyword.line);
         this.emitBlockBody(statement.guardedBody);
