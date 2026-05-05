@@ -150,6 +150,14 @@ export interface LoopStatementNode extends BaseNode {
 }
 
 /**
+ * BreakStatementNode exits the nearest Rukhar loop.
+ */
+export interface BreakStatementNode extends BaseNode {
+  readonly kind: "BreakStatement";
+  readonly keyword: Token;
+}
+
+/**
  * Eshnak catches faults by pairing a guarded block with a recovery block.
  */
 export interface ErrorHandlingStatementNode extends BaseNode {
@@ -290,6 +298,7 @@ export type StatementNode =
   | ReturnStatementNode
   | ConditionalStatementNode
   | LoopStatementNode
+  | BreakStatementNode
   | ErrorHandlingStatementNode
   | ExpressionStatementNode;
 

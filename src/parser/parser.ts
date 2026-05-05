@@ -3,6 +3,7 @@ import {
   AssignmentExpressionNode,
   BinaryExpressionNode,
   BooleanLiteralNode,
+  BreakStatementNode,
   BlockStatementNode,
   CallExpressionNode,
   ConditionalStatementNode,
@@ -120,6 +121,10 @@ export class Parser {
 
     if (this.match(TokenType.Rukhar)) {
       return this.parseLoopStatement(this.previous());
+    }
+
+    if (this.match(TokenType.Duruk)) {
+      return this.parseBreakStatement(this.previous());
     }
 
     if (this.match(TokenType.Eshnak)) {
@@ -325,6 +330,19 @@ export class Parser {
       keyword,
       condition,
       body,
+    };
+  }
+
+  /**
+   * parseBreakStatement parses Duruk;
+   */
+  private parseBreakStatement(keyword: Token): BreakStatementNode {
+    this.consume(TokenType.Semicolon, "Expected ';' after Duruk.");
+
+    return {
+      kind: "BreakStatement",
+      location: this.locationFrom(keyword),
+      keyword,
     };
   }
 

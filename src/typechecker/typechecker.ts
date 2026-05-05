@@ -2,6 +2,7 @@ import { Token, TokenType } from "../lexer/tokens";
 import {
   AssignmentExpressionNode,
   BinaryExpressionNode,
+  BreakStatementNode,
   BlockStatementNode,
   CallExpressionNode,
   ConditionalStatementNode,
@@ -63,6 +64,7 @@ export class TypeChecker {
   private readonly symbols: SymbolTable = new SymbolTable();
   private readonly diagnostics: TypeCheckDiagnostic[] = [];
   private currentFunction: FunctionSymbol | null = null;
+  private loopDepth: number = 0;
 
   /**
    * check returns all type-checking errors found in a full Program AST.
@@ -129,6 +131,9 @@ export class TypeChecker {
         return;
       case "LoopStatement":
         this.checkLoopStatement(statement);
+        return;
+      case "BreakStatement":
+        this.checkBreakStatement(statement);
         return;
       case "ErrorHandlingStatement":
         this.checkErrorHandlingStatement(statement);
@@ -351,7 +356,18 @@ export class TypeChecker {
    */
   private checkLoopStatement(statement: LoopStatementNode): void {
     this.inferExpression(statement.condition, statement.keyword);
+    this.loopDepth += 1;
     this.checkBlock(statement.body, true);
+    this.loopDepth -= 1;
+  }
+
+  /**
+   * checkBreakStatement validates Duruk appears inside Rukhar.
+   */
+  private checkBreakStatement(statement: BreakStatementNode): void {
+    if (this.loopDepth === 0) {
+      this.report(statement.keyword, "Duruk cannot appear outside a Rukhar loop");
+    }
   }
 
   /**

@@ -89,6 +89,9 @@ export class CodeGenerator {
         this.emitBlockBody(statement.body);
         this.emitRawLine(`${this.indent()}}`);
         return;
+      case "BreakStatement":
+        this.emitMappedLine("break;", statement.keyword.line);
+        return;
       case "ErrorHandlingStatement":
         this.emitMappedLine("try {", statement.keyword.line);
         this.emitBlockBody(statement.guardedBody);
