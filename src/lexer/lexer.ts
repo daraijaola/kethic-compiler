@@ -162,6 +162,15 @@ export class Lexer {
         this.addToken(TokenType.Comma, character, startLine, startColumn);
         return;
       case ".":
+        if (this.match(".")) {
+          if (this.match(".")) {
+            this.addToken(TokenType.Ellipsis, "...", startLine, startColumn);
+            return;
+          }
+
+          throw new LexerError("Unexpected '..'; did you mean '...'?", startLine, startColumn);
+        }
+
         this.addToken(TokenType.Dot, character, startLine, startColumn);
         return;
       case ":":

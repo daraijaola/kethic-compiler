@@ -72,6 +72,22 @@ export class Obfuscator {
       this.collectParameterIdentifiers(functionMatch[1]);
       functionMatch = functionPattern.exec(plainCode);
     }
+
+    const anonymousFunctionPattern: RegExp = /\bfunction\s*\(([^)]*)\)/g;
+    let anonymousFunctionMatch: RegExpExecArray | null = anonymousFunctionPattern.exec(plainCode);
+
+    while (anonymousFunctionMatch !== null) {
+      this.collectParameterIdentifiers(anonymousFunctionMatch[1]);
+      anonymousFunctionMatch = anonymousFunctionPattern.exec(plainCode);
+    }
+
+    const arrowFunctionPattern: RegExp = /\(([^)]*)\)\s*=>/g;
+    let arrowFunctionMatch: RegExpExecArray | null = arrowFunctionPattern.exec(plainCode);
+
+    while (arrowFunctionMatch !== null) {
+      this.collectParameterIdentifiers(arrowFunctionMatch[1]);
+      arrowFunctionMatch = arrowFunctionPattern.exec(plainCode);
+    }
   }
 
   /**
@@ -79,9 +95,14 @@ export class Obfuscator {
    */
   private collectParameterIdentifiers(parameterList: string): void {
     for (const parameter of parameterList.split(",")) {
-      const trimmed: string = parameter.trim();
-      if (trimmed.length > 0) {
-        this.ensureIdentifierMapping(trimmed);
+      const name: string = parameter
+        .split("=")[0]
+        .trim()
+        .replace(/^\.\.\./, "")
+        .trim();
+
+      if (/^[A-Za-z_$][A-Za-z0-9_$]*$/.test(name)) {
+        this.ensureIdentifierMapping(name);
       }
     }
   }

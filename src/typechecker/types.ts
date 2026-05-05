@@ -26,13 +26,23 @@ export interface UnknownType {
 export interface FunctionType {
   readonly kind: "Function";
   readonly parameters: KethicType[];
+  readonly minimumParameterCount: number;
+  readonly hasRestParameter: boolean;
   returnType: KethicType;
+}
+
+/**
+ * ArrayType represents repeated values, currently used for rest parameters.
+ */
+export interface ArrayType {
+  readonly kind: "Array";
+  readonly elementType: KethicType;
 }
 
 /**
  * KethicType is the formal internal type model used by the checker.
  */
-export type KethicType = PrimitiveType | UnknownType | FunctionType;
+export type KethicType = PrimitiveType | UnknownType | FunctionType | ArrayType;
 
 /**
  * Shared type objects for the currently supported Kethic types.
@@ -67,6 +77,8 @@ export interface FunctionSymbol {
   readonly kind: "Function";
   readonly name: string;
   readonly parameterCount: number;
+  readonly minimumParameterCount: number;
+  readonly hasRestParameter: boolean;
   readonly parameterNames: string[];
   readonly parameterTypes: KethicType[];
   returnType: KethicType;
@@ -101,11 +113,28 @@ export interface TypeCheckDiagnostic {
 /**
  * createFunctionType creates a mutable function type tied to a Kelthar symbol.
  */
-export function createFunctionType(parameters: KethicType[], returnType: KethicType): FunctionType {
+export function createFunctionType(
+  parameters: KethicType[],
+  returnType: KethicType,
+  minimumParameterCount: number = parameters.length,
+  hasRestParameter: boolean = false,
+): FunctionType {
   return {
     kind: "Function",
     parameters,
+    minimumParameterCount,
+    hasRestParameter,
     returnType,
+  };
+}
+
+/**
+ * createArrayType creates a repeated-value type for rest parameters.
+ */
+export function createArrayType(elementType: KethicType): ArrayType {
+  return {
+    kind: "Array",
+    elementType,
   };
 }
 
@@ -120,6 +149,8 @@ export function typeToString(type: KethicType): string {
       return "Unknown";
     case "Function":
       return `Kelthar(${type.parameters.map(typeToString).join(", ")}) -> ${typeToString(type.returnType)}`;
+    case "Array":
+      return `${typeToString(type.elementType)}[]`;
   }
 }
 

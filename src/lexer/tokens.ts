@@ -7,6 +7,8 @@ export enum TokenType {
   Nava = "Navā",
   Torun = "Torūn",
   Kelthar = "Kelthar",
+  Tharva = "Tharva",
+  Rinthar = "Rinthar",
   Umkel = "Umkel",
   Duren = "Duren",
   Ikhshev = "Ikhshev",
@@ -50,6 +52,7 @@ export enum TokenType {
 
   // Function and type syntax operators.
   Arrow = "Arrow",
+  Ellipsis = "Ellipsis",
   QuestionMark = "QuestionMark",
   Backtick = "Backtick",
 
@@ -89,6 +92,8 @@ export const KEYWORDS: ReadonlyMap<string, TokenType> = new Map<string, TokenTyp
   ["Navā", TokenType.Nava],
   ["Torūn", TokenType.Torun],
   ["Kelthar", TokenType.Kelthar],
+  ["Tharva", TokenType.Tharva],
+  ["Rinthar", TokenType.Rinthar],
   ["Umkel", TokenType.Umkel],
   ["Duren", TokenType.Duren],
   ["Ikhshev", TokenType.Ikhshev],

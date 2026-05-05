@@ -14,8 +14,10 @@ import {
   ErrorHandlingStatementNode,
   ExpressionNode,
   ExpressionStatementNode,
+  ArrowFunctionExpressionNode,
   FunctionCallStatementNode,
   FunctionDeclarationNode,
+  FunctionExpressionNode,
   GroupingExpressionNode,
   IdentifierExpressionNode,
   IndexExpressionNode,
@@ -714,6 +716,18 @@ export class Parser {
       } satisfies UmkelCallExpressionNode;
     }
 
+    if (this.match(TokenType.Tharva)) {
+      return this.parseFunctionExpression(this.previous());
+    }
+
+    if (this.match(TokenType.Kelthar)) {
+      return this.parseFunctionExpression(this.previous());
+    }
+
+    if (this.match(TokenType.Rinthar)) {
+      return this.parseArrowFunctionExpression(this.previous());
+    }
+
     if (this.match(TokenType.Number)) {
       const token: Token = this.previous();
       const value: number = Number(token.lexeme);
@@ -798,17 +812,66 @@ export class Parser {
 
     if (!this.check(TokenType.RightParen)) {
       do {
+        const isRest: boolean = this.match(TokenType.Ellipsis);
         const name: Token = this.consume(TokenType.Identifier, "Expected parameter name.");
+        const defaultValue: ExpressionNode | null = this.match(TokenType.Equals) ? this.parseExpression() : null;
+
+        if (isRest && defaultValue !== null) {
+          throw new ParserError(name, "Rest parameters cannot have default values.");
+        }
+
         parameters.push({
           kind: "Parameter",
           location: this.locationFrom(name),
           name,
+          defaultValue,
+          isRest,
         });
+
+        if (isRest && !this.check(TokenType.RightParen)) {
+          throw new ParserError(name, "Rest parameter must be the final parameter.");
+        }
       } while (this.match(TokenType.Comma));
     }
 
     this.consume(TokenType.RightParen, "Expected ')' after parameter list.");
     return parameters;
+  }
+
+  /**
+   * parseFunctionExpression parses Tharva(...) { ... } or expression-position Kelthar(...) { ... }.
+   */
+  private parseFunctionExpression(keyword: Token): FunctionExpressionNode {
+    const parameters: ParameterNode[] = this.parseParameterList();
+    const body: BlockStatementNode = this.parseRequiredBlock("Expected function expression body.");
+
+    return {
+      kind: "FunctionExpression",
+      location: this.locationFrom(keyword),
+      keyword,
+      parameters,
+      body,
+    };
+  }
+
+  /**
+   * parseArrowFunctionExpression parses Rinthar (...) -> expression or block.
+   */
+  private parseArrowFunctionExpression(keyword: Token): ArrowFunctionExpressionNode {
+    const parameters: ParameterNode[] = this.parseParameterList();
+    this.consume(TokenType.Arrow, "Expected '->' after Rinthar parameters.");
+
+    const body: ExpressionNode | BlockStatementNode = this.match(TokenType.LeftBrace)
+      ? this.parseBlockFromOpening(this.previous())
+      : this.parseExpression();
+
+    return {
+      kind: "ArrowFunctionExpression",
+      location: this.locationFrom(keyword),
+      keyword,
+      parameters,
+      body,
+    };
   }
 
   /**

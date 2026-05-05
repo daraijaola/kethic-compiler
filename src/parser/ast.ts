@@ -63,6 +63,8 @@ export interface FunctionDeclarationNode extends BaseNode {
 export interface ParameterNode extends BaseNode {
   readonly kind: "Parameter";
   readonly name: Token;
+  readonly defaultValue: ExpressionNode | null;
+  readonly isRest: boolean;
 }
 
 /**
@@ -232,6 +234,27 @@ export interface StringLiteralNode extends BaseNode {
 }
 
 /**
+ * FunctionExpressionNode stores anonymous function expressions introduced by
+ * Tharva or expression-position Kelthar.
+ */
+export interface FunctionExpressionNode extends BaseNode {
+  readonly kind: "FunctionExpression";
+  readonly keyword: Token;
+  readonly parameters: ParameterNode[];
+  readonly body: BlockStatementNode;
+}
+
+/**
+ * ArrowFunctionExpressionNode stores Rinthar functions with expression or block bodies.
+ */
+export interface ArrowFunctionExpressionNode extends BaseNode {
+  readonly kind: "ArrowFunctionExpression";
+  readonly keyword: Token;
+  readonly parameters: ParameterNode[];
+  readonly body: ExpressionNode | BlockStatementNode;
+}
+
+/**
  * TemplateStringNode stores backtick strings with alternating static and
  * expression interpolation segments.
  */
@@ -384,6 +407,8 @@ export type ExpressionNode =
   | IdentifierExpressionNode
   | NumberLiteralNode
   | StringLiteralNode
+  | FunctionExpressionNode
+  | ArrowFunctionExpressionNode
   | TemplateStringNode
   | BooleanLiteralNode
   | UnaryExpressionNode

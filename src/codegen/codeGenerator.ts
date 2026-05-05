@@ -4,8 +4,11 @@ import {
   BlockStatementNode,
   ConditionalStatementNode,
   ExpressionNode,
+  ArrowFunctionExpressionNode,
   FunctionDeclarationNode,
+  FunctionExpressionNode,
   OvrinDeclarationNode,
+  ParameterNode,
   ProgramNode,
   StatementNode,
   SwitchStatementNode,
@@ -128,7 +131,7 @@ export class CodeGenerator {
    * emitFunctionDeclaration emits Kelthar as a JavaScript function declaration.
    */
   private emitFunctionDeclaration(statement: FunctionDeclarationNode): void {
-    const parameters: string = statement.parameters.map((parameter) => parameter.name.lexeme).join(", ");
+    const parameters: string = this.emitParameterList(statement.parameters);
     this.emitMappedLine(`function ${statement.name.lexeme}(${parameters}) {`, statement.keyword.line);
     this.emitBlockBody(statement.body);
     this.emitRawLine(`${this.indent()}}`);
@@ -223,6 +226,10 @@ export class CodeGenerator {
         return expression.token.lexeme;
       case "StringLiteral":
         return expression.token.lexeme;
+      case "FunctionExpression":
+        return this.emitFunctionExpression(expression);
+      case "ArrowFunctionExpression":
+        return this.emitArrowFunctionExpression(expression);
       case "TemplateString":
         return this.emitTemplateString(expression);
       case "BooleanLiteral":
@@ -254,6 +261,161 @@ export class CodeGenerator {
   private emitBinaryExpression(expression: BinaryExpressionNode): string {
     const operator: string = this.emitBinaryOperator(expression.operator.type);
     return `${this.emitExpression(expression.left)} ${operator} ${this.emitExpression(expression.right)}`;
+  }
+
+  /**
+   * emitFunctionExpression emits Tharva/Kelthar expression functions inline.
+   */
+  private emitFunctionExpression(expression: FunctionExpressionNode): string {
+    const parameters: string = this.emitParameterList(expression.parameters);
+    const body: string[] = this.emitBlockBodyAsLines(expression.body, 1);
+    return `function (${parameters}) {\n${body.join("\n")}\n}`;
+  }
+
+  /**
+   * emitArrowFunctionExpression emits Rinthar expression or block bodies.
+   */
+  private emitArrowFunctionExpression(expression: ArrowFunctionExpressionNode): string {
+    const parameters: string = this.emitParameterList(expression.parameters);
+
+    if (expression.body.kind !== "BlockStatement") {
+      return `(${parameters}) => ${this.emitExpression(expression.body)}`;
+    }
+
+    const body: string[] = this.emitBlockBodyAsLines(expression.body, 1);
+    return `(${parameters}) => {\n${body.join("\n")}\n}`;
+  }
+
+  /**
+   * emitParameterList maps defaults and rest parameters to JavaScript syntax.
+   */
+  private emitParameterList(parameters: ParameterNode[]): string {
+    return parameters
+      .map((parameter: ParameterNode) => {
+        const restPrefix: string = parameter.isRest ? "..." : "";
+        const defaultSuffix: string =
+          parameter.defaultValue === null ? "" : ` = ${this.emitExpression(parameter.defaultValue)}`;
+        return `${restPrefix}${parameter.name.lexeme}${defaultSuffix}`;
+      })
+      .join(", ");
+  }
+
+  /**
+   * emitBlockBodyAsLines emits function-expression bodies without mutating the
+   * top-level output buffer or source map.
+   */
+  private emitBlockBodyAsLines(block: BlockStatementNode, indentLevel: number): string[] {
+    return block.body.flatMap((statement: StatementNode) => this.emitStatementAsLines(statement, indentLevel));
+  }
+
+  /**
+   * emitStatementAsLines converts statements for nested expression contexts.
+   */
+  private emitStatementAsLines(statement: StatementNode, indentLevel: number): string[] {
+    const indent: string = this.indentText(indentLevel);
+
+    switch (statement.kind) {
+      case "VariableDeclaration":
+        return [
+          `${indent}let ${statement.name.lexeme}${statement.initializer === null ? "" : ` = ${this.emitExpression(statement.initializer)}`};`,
+        ];
+      case "ConstantDeclaration":
+        return [`${indent}const ${statement.name.lexeme} = ${this.emitExpression(statement.initializer)};`];
+      case "ReturnStatement":
+        return [`${indent}return${statement.value === null ? "" : ` ${this.emitExpression(statement.value)}`};`];
+      case "ExpressionStatement":
+        return [`${indent}${this.emitExpression(statement.expression)};`];
+      case "BreakStatement":
+        return [`${indent}break;`];
+      case "ContinueStatement":
+        return [`${indent}continue;`];
+      case "BlockStatement":
+        return [`${indent}{`, ...this.emitBlockBodyAsLines(statement, indentLevel + 1), `${indent}}`];
+      case "ConditionalStatement":
+        return this.emitConditionalAsLines(statement, indentLevel, false);
+      case "LoopStatement":
+        return [
+          `${indent}while (${this.emitExpression(statement.condition)}) {`,
+          ...this.emitBlockBodyAsLines(statement.body, indentLevel + 1),
+          `${indent}}`,
+        ];
+      case "SwitchStatement":
+        return this.emitSwitchAsLines(statement, indentLevel);
+      case "ErrorHandlingStatement":
+        return [
+          `${indent}try {`,
+          ...this.emitBlockBodyAsLines(statement.guardedBody, indentLevel + 1),
+          `${indent}} catch (error) {`,
+          ...this.emitBlockBodyAsLines(statement.recoveryBody, indentLevel + 1),
+          `${indent}}`,
+        ];
+      case "FunctionDeclaration":
+        return [
+          `${indent}function ${statement.name.lexeme}(${this.emitParameterList(statement.parameters)}) {`,
+          ...this.emitBlockBodyAsLines(statement.body, indentLevel + 1),
+          `${indent}}`,
+        ];
+      case "TypeDefinition":
+        return [
+          `${indent}/** @typedef {{ ${statement.fields.map((field) => `${field.name.lexeme}: ${field.typeName.lexeme}`).join("; ")} }} ${statement.name.lexeme} */`,
+        ];
+      case "OvrinDeclaration":
+        return [
+          statement.source === null
+            ? `${indent}export { ${statement.name.lexeme} };`
+            : `${indent}import { ${statement.name.lexeme} } from ${statement.source.token.lexeme};`,
+        ];
+      default:
+        return [`${indent}/* unsupported nested statement: ${statement.kind} */`];
+    }
+  }
+
+  /**
+   * emitConditionalAsLines mirrors Ikhshev/Shev emission for expression-local bodies.
+   */
+  private emitConditionalAsLines(statement: ConditionalStatementNode, indentLevel: number, asElseIf: boolean): string[] {
+    const indent: string = this.indentText(indentLevel);
+    const prefix: string = asElseIf ? "} else if" : "if";
+    const lines: string[] = [
+      `${indent}${prefix} (${this.emitExpression(statement.condition)}) {`,
+      ...this.emitBlockBodyAsLines(statement.thenBranch, indentLevel + 1),
+    ];
+
+    if (statement.elseBranch === null) {
+      lines.push(`${indent}}`);
+      return lines;
+    }
+
+    if (statement.elseBranch.kind === "ConditionalStatement") {
+      return [...lines, ...this.emitConditionalAsLines(statement.elseBranch, indentLevel, true)];
+    }
+
+    lines.push(`${indent}} else {`);
+    lines.push(...this.emitBlockBodyAsLines(statement.elseBranch, indentLevel + 1));
+    lines.push(`${indent}}`);
+    return lines;
+  }
+
+  /**
+   * emitSwitchAsLines mirrors Ikhselthar emission for expression-local bodies.
+   */
+  private emitSwitchAsLines(statement: SwitchStatementNode, indentLevel: number): string[] {
+    const indent: string = this.indentText(indentLevel);
+    const lines: string[] = [`${indent}switch (${this.emitExpression(statement.expression)}) {`];
+
+    for (const switchCase of statement.cases) {
+      const caseIndent: string = this.indentText(indentLevel + 1);
+      lines.push(
+        switchCase.matchValue === null
+          ? `${caseIndent}default: {`
+          : `${caseIndent}case ${this.emitExpression(switchCase.matchValue)}: {`,
+      );
+      lines.push(...this.emitBlockBodyAsLines(switchCase.body, indentLevel + 2));
+      lines.push(`${caseIndent}}`);
+    }
+
+    lines.push(`${indent}}`);
+    return lines;
   }
 
   /**
@@ -380,5 +542,12 @@ export class CodeGenerator {
    */
   private indent(): string {
     return "  ".repeat(this.indentLevel);
+  }
+
+  /**
+   * indentText returns indentation for generated expression-local blocks.
+   */
+  private indentText(level: number): string {
+    return "  ".repeat(level);
   }
 }

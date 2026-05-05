@@ -12,8 +12,10 @@ import {
   ErrorHandlingStatementNode,
   ExpressionNode,
   ExpressionStatementNode,
+  ArrowFunctionExpressionNode,
   FunctionCallStatementNode,
   FunctionDeclarationNode,
+  FunctionExpressionNode,
   IdentifierExpressionNode,
   IndexExpressionNode,
   LoopStatementNode,
@@ -32,7 +34,9 @@ import {
 import { SymbolTable } from "./symbolTable";
 import {
   BOOLEAN_TYPE,
+  createArrayType,
   createFunctionType,
+  FunctionType,
   FunctionSymbol,
   isUnknownType,
   KethicSymbol,
@@ -207,11 +211,15 @@ export class TypeChecker {
     }
 
     const parameterTypes: KethicType[] = statement.parameters.map(() => UNKNOWN_TYPE);
-    const functionType = createFunctionType(parameterTypes, UNKNOWN_TYPE);
+    const hasRestParameter: boolean = statement.parameters.some((parameter: ParameterNode) => parameter.isRest);
+    const minimumParameterCount: number = this.minimumParameterCount(statement.parameters);
+    const functionType = createFunctionType(parameterTypes, UNKNOWN_TYPE, minimumParameterCount, hasRestParameter);
     const symbol: FunctionSymbol = {
       kind: "Function",
       name: statement.name.lexeme,
       parameterCount: statement.parameters.length,
+      minimumParameterCount,
+      hasRestParameter,
       parameterNames: statement.parameters.map((parameter: ParameterNode) => parameter.name.lexeme),
       parameterTypes,
       returnType: UNKNOWN_TYPE,
@@ -235,23 +243,76 @@ export class TypeChecker {
     this.currentFunction = symbol;
     this.symbols.enterScope();
 
-    for (const parameter of statement.parameters) {
-      const parameterSymbol: ValueSymbol = {
-        kind: "Variable",
-        name: parameter.name.lexeme,
-        type: UNKNOWN_TYPE,
-        declarationKeyword: statement.keyword,
-        declarationName: parameter.name,
-      };
-
-      if (!this.symbols.define(parameterSymbol)) {
-        this.report(statement.keyword, `duplicate parameter "${parameter.name.lexeme}"`);
-      }
-    }
+    this.defineParameters(statement.parameters, statement.keyword, symbol.parameterTypes);
 
     this.checkBlock(statement.body, false);
     this.symbols.exitScope();
     this.currentFunction = previousFunction;
+  }
+
+  /**
+   * checkFunctionLikeBody checks anonymous and arrow block functions using the
+   * same return rules as named Kelthar declarations.
+   */
+  private checkFunctionLikeBody(
+    parameters: ParameterNode[],
+    keyword: Token,
+    body: BlockStatementNode,
+    functionSymbol: FunctionSymbol,
+    parameterTypes: KethicType[],
+  ): void {
+    const previousFunction: FunctionSymbol | null = this.currentFunction;
+    this.currentFunction = functionSymbol;
+    this.symbols.enterScope();
+    this.defineParameters(parameters, keyword, parameterTypes);
+    this.checkBlock(body, false);
+    this.symbols.exitScope();
+    this.currentFunction = previousFunction;
+  }
+
+  /**
+   * defineParameters stores parameters in the current scope and validates
+   * default expressions before the function body is checked.
+   */
+  private defineParameters(parameters: ParameterNode[], keyword: Token, parameterTypes: KethicType[]): void {
+    for (let index: number = 0; index < parameters.length; index += 1) {
+      const parameter: ParameterNode = parameters[index];
+      const defaultType: KethicType =
+        parameter.defaultValue === null ? UNKNOWN_TYPE : this.inferExpression(parameter.defaultValue, keyword);
+      const parameterType: KethicType = parameter.isRest ? createArrayType(UNKNOWN_TYPE) : defaultType;
+      parameterTypes[index] = parameterType;
+
+      const parameterSymbol: ValueSymbol = {
+        kind: "Variable",
+        name: parameter.name.lexeme,
+        type: parameterType,
+        declarationKeyword: keyword,
+        declarationName: parameter.name,
+      };
+
+      if (!this.symbols.define(parameterSymbol)) {
+        this.report(keyword, `duplicate parameter "${parameter.name.lexeme}"`);
+      }
+    }
+  }
+
+  /**
+   * createSyntheticFunctionSymbol makes a temporary function frame for expressions.
+   */
+  private createSyntheticFunctionSymbol(keyword: Token, parameters: ParameterNode[], functionType: FunctionType): FunctionSymbol {
+    return {
+      kind: "Function",
+      name: "<anonymous>",
+      parameterCount: parameters.length,
+      minimumParameterCount: this.minimumParameterCount(parameters),
+      hasRestParameter: parameters.some((parameter: ParameterNode) => parameter.isRest),
+      parameterNames: parameters.map((parameter: ParameterNode) => parameter.name.lexeme),
+      parameterTypes: functionType.parameters,
+      returnType: UNKNOWN_TYPE,
+      declarationKeyword: keyword,
+      declarationName: keyword,
+      type: functionType,
+    };
   }
 
   /**
@@ -445,6 +506,10 @@ export class TypeChecker {
         return NUMBER_TYPE;
       case "StringLiteral":
         return STRING_TYPE;
+      case "FunctionExpression":
+        return this.inferFunctionExpression(expression);
+      case "ArrowFunctionExpression":
+        return this.inferArrowFunctionExpression(expression);
       case "TemplateString":
         return this.inferTemplateString(expression, contextKeyword);
       case "BooleanLiteral":
@@ -579,6 +644,54 @@ export class TypeChecker {
   }
 
   /**
+   * inferFunctionExpression checks a Tharva/Kelthar expression in its own scope.
+   */
+  private inferFunctionExpression(expression: FunctionExpressionNode): KethicType {
+    const parameterTypes: KethicType[] = expression.parameters.map(() => UNKNOWN_TYPE);
+    const functionType: FunctionType = createFunctionType(
+      parameterTypes,
+      UNKNOWN_TYPE,
+      this.minimumParameterCount(expression.parameters),
+      expression.parameters.some((parameter: ParameterNode) => parameter.isRest),
+    );
+    const functionSymbol: FunctionSymbol = this.createSyntheticFunctionSymbol(expression.keyword, expression.parameters, functionType);
+
+    this.checkFunctionLikeBody(expression.parameters, expression.keyword, expression.body, functionSymbol, parameterTypes);
+    return functionType;
+  }
+
+  /**
+   * inferArrowFunctionExpression checks a Rinthar expression body or block body.
+   */
+  private inferArrowFunctionExpression(expression: ArrowFunctionExpressionNode): KethicType {
+    const parameterTypes: KethicType[] = expression.parameters.map(() => UNKNOWN_TYPE);
+    const functionType: FunctionType = createFunctionType(
+      parameterTypes,
+      UNKNOWN_TYPE,
+      this.minimumParameterCount(expression.parameters),
+      expression.parameters.some((parameter: ParameterNode) => parameter.isRest),
+    );
+    const functionSymbol: FunctionSymbol = this.createSyntheticFunctionSymbol(expression.keyword, expression.parameters, functionType);
+
+    if (expression.body.kind === "BlockStatement") {
+      this.checkFunctionLikeBody(expression.parameters, expression.keyword, expression.body, functionSymbol, parameterTypes);
+      return functionType;
+    }
+
+    const previousFunction: FunctionSymbol | null = this.currentFunction;
+    this.currentFunction = functionSymbol;
+    this.symbols.enterScope();
+    this.defineParameters(expression.parameters, expression.keyword, parameterTypes);
+    const returnType: KethicType = this.inferExpression(expression.body, expression.keyword);
+    functionSymbol.returnType = returnType;
+    functionSymbol.type.returnType = returnType;
+    this.symbols.exitScope();
+    this.currentFunction = previousFunction;
+
+    return functionType;
+  }
+
+  /**
    * inferAssignmentExpression checks reassignment against the declared type.
    */
   private inferAssignmentExpression(expression: AssignmentExpressionNode, contextKeyword: Token): KethicType {
@@ -620,27 +733,21 @@ export class TypeChecker {
    * inferCallExpression validates expression-level Kelthar calls.
    */
   private inferCallExpression(expression: CallExpressionNode, contextKeyword: Token): KethicType {
-    if (expression.callee.kind !== "IdentifierExpression") {
-      this.inferExpression(expression.callee, contextKeyword);
-      for (const argument of expression.arguments) {
-        this.inferExpression(argument, contextKeyword);
-      }
+    const calleeType: KethicType = this.inferExpression(expression.callee, contextKeyword);
+
+    if (calleeType.kind !== "Function") {
+      const calleeName: string = expression.callee.kind === "IdentifierExpression" ? expression.callee.name.lexeme : "<expression>";
+      this.report(contextKeyword, `Kelthar "${calleeName}" does not exist`);
       return UNKNOWN_TYPE;
     }
 
-    const symbol: KethicSymbol | null = this.symbols.resolve(expression.callee.name.lexeme);
-    if (symbol === null || symbol.kind !== "Function") {
-      this.report(contextKeyword, `Kelthar "${expression.callee.name.lexeme}" does not exist`);
-      return UNKNOWN_TYPE;
-    }
-
-    this.checkArgumentCount(contextKeyword, expression.callee.name.lexeme, symbol, expression.arguments.length);
+    this.checkFunctionTypeArgumentCount(contextKeyword, "call target", calleeType, expression.arguments.length);
 
     for (const argument of expression.arguments) {
       this.inferExpression(argument, contextKeyword);
     }
 
-    return symbol.returnType;
+    return calleeType.returnType;
   }
 
   /**
@@ -648,18 +755,22 @@ export class TypeChecker {
    */
   private inferUmkelCallExpression(expression: ExpressionNode & { kind: "UmkelCallExpression" }): KethicType {
     const symbol: KethicSymbol | null = this.symbols.resolve(expression.callee.lexeme);
-    if (symbol === null || symbol.kind !== "Function") {
+    if (symbol === null || (symbol.kind !== "Function" && symbol.type.kind !== "Function")) {
       this.report(expression.keyword, `Kelthar "${expression.callee.lexeme}" does not exist`);
       return UNKNOWN_TYPE;
     }
 
-    this.checkArgumentCount(expression.keyword, expression.callee.lexeme, symbol, expression.arguments.length);
+    if (symbol.kind === "Function") {
+      this.checkArgumentCount(expression.keyword, expression.callee.lexeme, symbol, expression.arguments.length);
+    } else {
+      this.checkFunctionTypeArgumentCount(expression.keyword, expression.callee.lexeme, symbol.type as FunctionType, expression.arguments.length);
+    }
 
     for (const argument of expression.arguments) {
       this.inferExpression(argument, expression.keyword);
     }
 
-    return symbol.returnType;
+    return symbol.kind === "Function" ? symbol.returnType : (symbol.type as FunctionType).returnType;
   }
 
   /**
@@ -710,12 +821,56 @@ export class TypeChecker {
    * checkArgumentCount reports mismatched Kelthar arity.
    */
   private checkArgumentCount(keyword: Token, name: string, symbol: FunctionSymbol, actualCount: number): void {
-    if (symbol.parameterCount !== actualCount) {
+    if (actualCount < symbol.minimumParameterCount || (!symbol.hasRestParameter && actualCount > symbol.parameterCount)) {
       this.report(
         keyword,
-        `Kelthar "${name}" expected ${symbol.parameterCount} argument(s) but received ${actualCount}`,
+        `Kelthar "${name}" expected ${this.formatArity(symbol.minimumParameterCount, symbol.parameterCount, symbol.hasRestParameter)} argument(s) but received ${actualCount}`,
       );
     }
+  }
+
+  /**
+   * checkFunctionTypeArgumentCount validates function values without a declaration symbol.
+   */
+  private checkFunctionTypeArgumentCount(keyword: Token, name: string, type: FunctionType, actualCount: number): void {
+    if (actualCount < type.minimumParameterCount || (!type.hasRestParameter && actualCount > type.parameters.length)) {
+      this.report(
+        keyword,
+        `Kelthar "${name}" expected ${this.formatArity(type.minimumParameterCount, type.parameters.length, type.hasRestParameter)} argument(s) but received ${actualCount}`,
+      );
+    }
+  }
+
+  /**
+   * minimumParameterCount counts parameters that callers must provide.
+   */
+  private minimumParameterCount(parameters: ParameterNode[]): number {
+    let count: number = 0;
+
+    for (const parameter of parameters) {
+      if (parameter.isRest || parameter.defaultValue !== null) {
+        continue;
+      }
+
+      count += 1;
+    }
+
+    return count;
+  }
+
+  /**
+   * formatArity explains exact, optional, and rest argument counts.
+   */
+  private formatArity(minimum: number, maximum: number, hasRest: boolean): string {
+    if (hasRest) {
+      return `at least ${minimum}`;
+    }
+
+    if (minimum === maximum) {
+      return `${maximum}`;
+    }
+
+    return `${minimum}-${maximum}`;
   }
 
   /**
@@ -732,6 +887,19 @@ export class TypeChecker {
 
     if (expected.kind === "Primitive" && actual.kind === "Primitive") {
       return expected.name === actual.name;
+    }
+
+    if (expected.kind === "Array" && actual.kind === "Array") {
+      return this.typesCompatible(expected.elementType, actual.elementType);
+    }
+
+    if (expected.kind === "Function" && actual.kind === "Function") {
+      return (
+        expected.parameters.length === actual.parameters.length &&
+        expected.minimumParameterCount === actual.minimumParameterCount &&
+        expected.hasRestParameter === actual.hasRestParameter &&
+        this.typesCompatible(expected.returnType, actual.returnType)
+      );
     }
 
     return expected === actual;
