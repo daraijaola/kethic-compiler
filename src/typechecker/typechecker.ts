@@ -17,6 +17,7 @@ import {
   FunctionCallStatementNode,
   FunctionDeclarationNode,
   FunctionExpressionNode,
+  GenericTypeDefinitionNode,
   IdentifierExpressionNode,
   IndexExpressionNode,
   LoopStatementNode,
@@ -44,6 +45,7 @@ import {
   createUnionType,
   FunctionType,
   FunctionSymbol,
+  GenericTypeSymbol,
   isUnknownType,
   KethicSymbol,
   KethicType,
@@ -58,6 +60,8 @@ import {
   ValueSymbol,
   VOID_TYPE,
 } from "./types";
+
+type TypeBindings = ReadonlyMap<string, KethicType>;
 
 /**
  * KethicTypeError formats one type-checking diagnostic in the project style.
@@ -113,6 +117,10 @@ export class TypeChecker {
       if (statement.kind === "UnionTypeDefinition") {
         this.declareUnionType(statement);
       }
+
+      if (statement.kind === "GenericTypeDefinition") {
+        this.declareGenericType(statement);
+      }
     }
   }
 
@@ -146,6 +154,9 @@ export class TypeChecker {
         return;
       case "UnionTypeDefinition":
         this.checkUnionTypeDefinition(statement);
+        return;
+      case "GenericTypeDefinition":
+        this.checkGenericTypeDefinition(statement);
         return;
       case "OvrinDeclaration":
         this.checkOvrinDeclaration(statement);
@@ -397,6 +408,23 @@ export class TypeChecker {
   }
 
   /**
+   * checkGenericTypeDefinition records Tharkar aliases in the symbol table.
+   */
+  private checkGenericTypeDefinition(statement: GenericTypeDefinitionNode): void {
+    const existing: KethicSymbol | null = this.symbols.resolveCurrent(statement.name.lexeme);
+    if (existing !== null && existing.kind === "GenericType" && existing.declarationName === statement.name) {
+      return;
+    }
+
+    if (existing !== null) {
+      this.report(statement.keyword, `duplicate declaration of "${statement.name.lexeme}"`);
+      return;
+    }
+
+    this.declareGenericType(statement);
+  }
+
+  /**
    * declareUnionType stores a Shevkar alias without checking executable code.
    */
   private declareUnionType(statement: UnionTypeDefinitionNode): void {
@@ -410,6 +438,26 @@ export class TypeChecker {
       kind: "Type",
       name: statement.name.lexeme,
       type,
+      declarationKeyword: statement.keyword,
+      declarationName: statement.name,
+    };
+    this.symbols.define(symbol);
+  }
+
+  /**
+   * declareGenericType stores a Tharkar pattern-shape for later substitution.
+   */
+  private declareGenericType(statement: GenericTypeDefinitionNode): void {
+    if (this.symbols.resolveCurrent(statement.name.lexeme) !== null) {
+      this.report(statement.keyword, `duplicate declaration of "${statement.name.lexeme}"`);
+      return;
+    }
+
+    const symbol: GenericTypeSymbol = {
+      kind: "GenericType",
+      name: statement.name.lexeme,
+      typeParameters: statement.typeParameters.map((parameter) => parameter.lexeme),
+      typeExpression: statement.typeExpression,
       declarationKeyword: statement.keyword,
       declarationName: statement.name,
     };
@@ -645,7 +693,7 @@ export class TypeChecker {
       return UNKNOWN_TYPE;
     }
 
-    if (symbol.kind === "Type") {
+    if (symbol.kind === "Type" || symbol.kind === "GenericType") {
       this.report(contextKeyword, `type "${expression.name.lexeme}" cannot be used as a value`);
       return UNKNOWN_TYPE;
     }
@@ -868,6 +916,11 @@ export class TypeChecker {
       return UNKNOWN_TYPE;
     }
 
+    if (symbol.kind === "Type" || symbol.kind === "GenericType") {
+      this.report(contextKeyword, `type "${symbol.name}" cannot be assigned as a value`);
+      return UNKNOWN_TYPE;
+    }
+
     if (symbol.kind === "Constant") {
       this.report(contextKeyword, `Torūn "${symbol.name}" cannot be assigned after first assignment`);
       return symbol.type;
@@ -906,7 +959,13 @@ export class TypeChecker {
    */
   private inferUmkelCallExpression(expression: ExpressionNode & { kind: "UmkelCallExpression" }): KethicType {
     const symbol: KethicSymbol | null = this.symbols.resolve(expression.callee.lexeme);
-    if (symbol === null || (symbol.kind !== "Function" && symbol.type.kind !== "Function")) {
+    if (
+      symbol === null ||
+      (symbol.kind !== "Function" &&
+        symbol.kind !== "Variable" &&
+        symbol.kind !== "Constant") ||
+      (symbol.kind !== "Function" && symbol.type.kind !== "Function")
+    ) {
       this.report(expression.keyword, `Kelthar "${expression.callee.lexeme}" does not exist`);
       return UNKNOWN_TYPE;
     }
@@ -1162,51 +1221,99 @@ export class TypeChecker {
   /**
    * resolveTypeExpression converts parser type annotations into internal types.
    */
-  private resolveTypeExpression(expression: TypeExpressionNode, contextKeyword: Token): KethicType {
+  private resolveTypeExpression(
+    expression: TypeExpressionNode,
+    contextKeyword: Token,
+    typeBindings: TypeBindings = new Map<string, KethicType>(),
+  ): KethicType {
     if (expression.kind === "UnionTypeExpression") {
       return createUnionType(
-        expression.members.map((member: TypeExpressionNode) => this.resolveTypeExpression(member, contextKeyword)),
+        expression.members.map((member: TypeExpressionNode) =>
+          this.resolveTypeExpression(member, contextKeyword, typeBindings),
+        ),
       );
     }
 
     if (expression.kind === "OptionalTypeExpression") {
-      return createUnionType([this.resolveTypeExpression(expression.innerType, contextKeyword), NULL_TYPE]);
+      return createUnionType([this.resolveTypeExpression(expression.innerType, contextKeyword, typeBindings), NULL_TYPE]);
     }
 
     if (expression.kind === "ArrayTypeExpression") {
-      return createArrayType(this.resolveTypeExpression(expression.elementType, contextKeyword));
+      return createArrayType(this.resolveTypeExpression(expression.elementType, contextKeyword, typeBindings));
     }
 
     if (expression.kind === "ObjectTypeExpression") {
       const properties: Record<string, KethicType> = {};
       for (const property of expression.properties) {
-        properties[property.name.lexeme] = this.resolveTypeExpression(property.valueType, contextKeyword);
+        properties[property.name.lexeme] = this.resolveTypeExpression(property.valueType, contextKeyword, typeBindings);
       }
       return createObjectType(properties);
     }
 
     const name: string = expression.name.type === TokenType.Umra ? "Null" : expression.name.lexeme;
+    const typeArguments: KethicType[] = expression.typeArguments.map((typeArgument: TypeExpressionNode) =>
+      this.resolveTypeExpression(typeArgument, contextKeyword, typeBindings),
+    );
+
+    if (typeBindings.has(name)) {
+      if (typeArguments.length > 0) {
+        this.report(contextKeyword, `type parameter "${name}" does not accept type arguments`);
+      }
+      return typeBindings.get(name) ?? UNKNOWN_TYPE;
+    }
 
     switch (name) {
       case "Number":
+        this.reportUnexpectedTypeArguments(name, typeArguments.length, contextKeyword);
         return NUMBER_TYPE;
       case "String":
+        this.reportUnexpectedTypeArguments(name, typeArguments.length, contextKeyword);
         return STRING_TYPE;
       case "Boolean":
+        this.reportUnexpectedTypeArguments(name, typeArguments.length, contextKeyword);
         return BOOLEAN_TYPE;
       case "Void":
+        this.reportUnexpectedTypeArguments(name, typeArguments.length, contextKeyword);
         return VOID_TYPE;
       case "Null":
+        this.reportUnexpectedTypeArguments(name, typeArguments.length, contextKeyword);
         return NULL_TYPE;
       default: {
         const symbol: KethicSymbol | null = this.symbols.resolve(name);
         if (symbol !== null && symbol.kind === "Type") {
+          this.reportUnexpectedTypeArguments(name, typeArguments.length, contextKeyword);
           return symbol.type;
+        }
+
+        if (symbol !== null && symbol.kind === "GenericType") {
+          if (typeArguments.length !== symbol.typeParameters.length) {
+            this.report(
+              contextKeyword,
+              `Tharkar "${name}" expected ${symbol.typeParameters.length} type argument(s) but received ${typeArguments.length}`,
+            );
+            return UNKNOWN_TYPE;
+          }
+
+          const nextBindings: Map<string, KethicType> = new Map<string, KethicType>(typeBindings);
+          for (let index: number = 0; index < symbol.typeParameters.length; index += 1) {
+            nextBindings.set(symbol.typeParameters[index], typeArguments[index]);
+          }
+
+          return this.resolveTypeExpression(symbol.typeExpression, contextKeyword, nextBindings);
         }
 
         this.report(contextKeyword, `type "${name}" does not exist`);
         return UNKNOWN_TYPE;
       }
+    }
+  }
+
+  /**
+   * reportUnexpectedTypeArguments rejects generic arguments on non-generic types.
+   */
+  private reportUnexpectedTypeArguments(name: string, argumentCount: number, contextKeyword: Token): void {
+    if (argumentCount > 0) {
+      this.report(contextKeyword, `type "${name}" does not accept type arguments`);
     }
   }
 

@@ -100,11 +100,23 @@ export interface UnionTypeDefinitionNode extends BaseNode {
 }
 
 /**
+ * GenericTypeDefinitionNode declares a named Tharkar pattern-shape.
+ */
+export interface GenericTypeDefinitionNode extends BaseNode {
+  readonly kind: "GenericTypeDefinition";
+  readonly keyword: Token;
+  readonly name: Token;
+  readonly typeParameters: Token[];
+  readonly typeExpression: TypeExpressionNode;
+}
+
+/**
  * TypeNameNode references a primitive or declared type by name.
  */
 export interface TypeNameNode extends BaseNode {
   readonly kind: "TypeName";
   readonly name: Token;
+  readonly typeArguments: TypeExpressionNode[];
 }
 
 /**
@@ -518,6 +530,7 @@ export type StatementNode =
   | FunctionDeclarationNode
   | TypeDefinitionNode
   | UnionTypeDefinitionNode
+  | GenericTypeDefinitionNode
   | OvrinDeclarationNode
   | BlockStatementNode
   | FunctionCallStatementNode

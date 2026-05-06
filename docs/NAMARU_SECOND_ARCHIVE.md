@@ -17,7 +17,7 @@ The central question of this era was:
 | Map / dictionary | `Selva` | sealed vessel | Future map/dictionary type |
 | Union type | `Shevkar` | forked shape | Active union type syntax |
 | Optional type | `Umrava` | vessel of the unnamed dark | Active optional type annotation |
-| Generic type | `Tharkar` | pattern-shape | Future generic type syntax |
+| Generic type | `Tharkar` | pattern-shape | Active generic type alias |
 | Tainted value | `Ovesh` | foreign crack | Future security type |
 | Trusted value | `Seltor` | sealed stone | Future security type |
 | Capability | `Torkel` | oath-name | Future authority type |
@@ -152,4 +152,4 @@ Teaching: "If the seal-maker falls, every gate becomes a wound."
 
 ## Compiler Status
 
-Most terms are reserved as of this document and must not be used as ordinary identifiers. `Rukva`, `Kelva`, `Selva`, `Shevkar`, and `Umrava` are now active syntax because their compiler phases are implemented and tested. Any remaining term should only become active syntax when its compiler phase is implemented and tested.
+Most terms are reserved as of this document and must not be used as ordinary identifiers. `Rukva`, `Kelva`, `Selva`, `Shevkar`, `Umrava`, and `Tharkar` are now active syntax because their compiler phases are implemented and tested. Any remaining term should only become active syntax when its compiler phase is implemented and tested.

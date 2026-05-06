@@ -50,6 +50,7 @@ Kethic source files use:
 | `Kelva` | Object / record type annotation | compiles away |
 | `Shevkar` | Union type alias | JS typedef comment |
 | `Umrava` | Optional type annotation | compiles away |
+| `Tharkar` | Generic type alias | JS typedef comment |
 | `Eshnak` | Error handling | `try/catch` |
 | `Ovrin` | Import/export placeholder | `import` / `export` |
 | `Selva` | Map / dictionary literal | computed-property lookup object |
@@ -60,7 +61,6 @@ The following Second Archive terms are reserved and cannot be used as normal ide
 
 | Word | Planned Concept |
 | --- | --- |
-| `Tharkar` | Generic type |
 | `Ovesh` | Tainted value |
 | `Seltor` | Trusted value |
 | `Torkel` | Capability |
@@ -284,6 +284,7 @@ The type checker currently supports:
 - object annotations with `Kelva`
 - named union aliases with `Shevkar`
 - optional annotations with `Umrava`
+- generic aliases with `Tharkar`
 - variable, constant, and parameter type annotations
 - lexical scope tracking
 - duplicate declaration diagnostics
@@ -334,6 +335,18 @@ Navā user: Kelva { name: String, age: Number } = { name: "Aru", age: 30 };
 
 `Kelva { field: Type }` declares an object shape whose fields must match the declared property names and types.
 
+### 12.4 Generic Types
+
+```keth
+Tharkar Box<T> = Kelva { value: T };
+Tharkar Pair<T, U> = Kelva { first: T, second: U };
+
+Navā numberBox: Box<Number> = { value: 10 };
+Navā pair: Pair<String, Number> = { first: "age", second: 30 };
+```
+
+`Tharkar` declares a reusable pattern-shape. Each type parameter must be supplied when the generic alias is used, and the checker substitutes concrete types into the alias body.
+
 ## 13. Obfuscation
 
 The obfuscator currently performs:
@@ -351,7 +364,6 @@ Object property keys are intentionally preserved while property values are obfus
 
 The following are planned but not active syntax:
 
-- `Tharkar` generic types
 - `Ovesh` tainted values
 - `Seltor` trusted values
 - `Torkel` capabilities

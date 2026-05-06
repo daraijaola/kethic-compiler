@@ -20,6 +20,7 @@ import {
   FunctionCallStatementNode,
   FunctionDeclarationNode,
   FunctionExpressionNode,
+  GenericTypeDefinitionNode,
   GroupingExpressionNode,
   IdentifierExpressionNode,
   IndexExpressionNode,
@@ -131,6 +132,10 @@ export class Parser {
 
     if (this.match(TokenType.Shevkar)) {
       return this.parseUnionTypeDefinition(this.previous());
+    }
+
+    if (this.match(TokenType.Tharkar)) {
+      return this.parseGenericTypeDefinition(this.previous());
     }
 
     if (this.match(TokenType.Ovrin)) {
@@ -287,6 +292,26 @@ export class Parser {
       location: this.locationFrom(keyword),
       keyword,
       name,
+      typeExpression,
+    };
+  }
+
+  /**
+   * parseGenericTypeDefinition parses Tharkar Name<T> = Type;
+   */
+  private parseGenericTypeDefinition(keyword: Token): GenericTypeDefinitionNode {
+    const name: Token = this.consume(TokenType.Identifier, "Expected type name after Tharkar.");
+    const typeParameters: Token[] = this.parseTypeParameterList();
+    this.consume(TokenType.Equals, "Expected '=' after Tharkar parameters.");
+    const typeExpression: TypeExpressionNode = this.parseTypeExpression();
+    this.consume(TokenType.Semicolon, "Expected ';' after Tharkar definition.");
+
+    return {
+      kind: "GenericTypeDefinition",
+      location: this.locationFrom(keyword),
+      keyword,
+      name,
+      typeParameters,
       typeExpression,
     };
   }
@@ -963,10 +988,47 @@ export class Parser {
         kind: "TypeName",
         location: this.locationFrom(name),
         name,
+        typeArguments: name.type === TokenType.Identifier ? this.parseOptionalTypeArgumentList() : [],
       } satisfies TypeNameNode;
     }
 
     throw new ParserError(this.peek(), "Expected type name.");
+  }
+
+  /**
+   * parseTypeParameterList parses generic declaration parameters like <T, U>.
+   */
+  private parseTypeParameterList(): Token[] {
+    this.consume(TokenType.Less, "Expected '<' before Tharkar type parameters.");
+    const parameters: Token[] = [];
+
+    do {
+      const parameter: Token = this.consume(TokenType.Identifier, "Expected Tharkar type parameter name.");
+      if (parameters.some((existing: Token) => existing.lexeme === parameter.lexeme)) {
+        throw new ParserError(parameter, `Duplicate Tharkar type parameter "${parameter.lexeme}".`);
+      }
+      parameters.push(parameter);
+    } while (this.match(TokenType.Comma));
+
+    this.consume(TokenType.Greater, "Expected '>' after Tharkar type parameters.");
+    return parameters;
+  }
+
+  /**
+   * parseOptionalTypeArgumentList parses generic use arguments like <Number>.
+   */
+  private parseOptionalTypeArgumentList(): TypeExpressionNode[] {
+    if (!this.match(TokenType.Less)) {
+      return [];
+    }
+
+    const typeArguments: TypeExpressionNode[] = [];
+    do {
+      typeArguments.push(this.parseTypeExpression());
+    } while (this.match(TokenType.Comma));
+
+    this.consume(TokenType.Greater, "Expected '>' after type arguments.");
+    return typeArguments;
   }
 
   /**

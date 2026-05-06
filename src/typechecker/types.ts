@@ -1,4 +1,5 @@
 import { Token } from "../lexer/tokens";
+import type { TypeExpressionNode } from "../parser/ast";
 
 /**
  * PrimitiveTypeName is the set of concrete primitive values Kethic currently supports.
@@ -82,7 +83,7 @@ export const UNKNOWN_TYPE: UnknownType = { kind: "Unknown" };
 /**
  * SymbolKind separates mutable values, constants, and declared functions.
  */
-export type SymbolKind = "Variable" | "Constant" | "Function" | "Type";
+export type SymbolKind = "Variable" | "Constant" | "Function" | "Type" | "GenericType";
 
 /**
  * ValueSymbol stores the inferred type for a Navā or Torūn name.
@@ -125,9 +126,21 @@ export interface TypeSymbol {
 }
 
 /**
+ * GenericTypeSymbol stores Tharkar aliases that need type arguments before use.
+ */
+export interface GenericTypeSymbol {
+  readonly kind: "GenericType";
+  readonly name: string;
+  readonly typeParameters: readonly string[];
+  readonly typeExpression: TypeExpressionNode;
+  readonly declarationKeyword: Token;
+  readonly declarationName: Token;
+}
+
+/**
  * KethicSymbol is any named item the type checker can resolve.
  */
-export type KethicSymbol = ValueSymbol | FunctionSymbol | TypeSymbol;
+export type KethicSymbol = ValueSymbol | FunctionSymbol | TypeSymbol | GenericTypeSymbol;
 
 /**
  * Scope stores declarations visible in one lexical region.

@@ -7,6 +7,7 @@ import {
   ArrowFunctionExpressionNode,
   FunctionDeclarationNode,
   FunctionExpressionNode,
+  GenericTypeDefinitionNode,
   MapLiteralNode,
   OvrinDeclarationNode,
   ParameterNode,
@@ -118,6 +119,9 @@ export class CodeGenerator {
       case "UnionTypeDefinition":
         this.emitMappedLine(`/** @typedef {*} ${statement.name.lexeme} */`, statement.keyword.line);
         return;
+      case "GenericTypeDefinition":
+        this.emitGenericTypeDefinition(statement);
+        return;
       case "OvrinDeclaration":
         this.emitOvrinDeclaration(statement);
         return;
@@ -195,6 +199,13 @@ export class CodeGenerator {
       .map((field) => `${field.name.lexeme}: ${field.typeName.lexeme}`)
       .join("; ");
     this.emitMappedLine(`/** @typedef {{ ${fields} }} ${statement.name.lexeme} */`, statement.keyword.line);
+  }
+
+  /**
+   * emitGenericTypeDefinition emits Tharkar as a JS typedef placeholder.
+   */
+  private emitGenericTypeDefinition(statement: GenericTypeDefinitionNode): void {
+    this.emitMappedLine(`/** @typedef {*} ${statement.name.lexeme} */`, statement.keyword.line);
   }
 
   /**
@@ -404,6 +415,8 @@ export class CodeGenerator {
           `${indent}/** @typedef {{ ${statement.fields.map((field) => `${field.name.lexeme}: ${field.typeName.lexeme}`).join("; ")} }} ${statement.name.lexeme} */`,
         ];
       case "UnionTypeDefinition":
+        return [`${indent}/** @typedef {*} ${statement.name.lexeme} */`];
+      case "GenericTypeDefinition":
         return [`${indent}/** @typedef {*} ${statement.name.lexeme} */`];
       case "OvrinDeclaration":
         return [

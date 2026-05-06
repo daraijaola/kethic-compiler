@@ -222,6 +222,46 @@ Umkel first(["wrong"]);
     expect(result.diagnostics[2]).toContain('Kelthar "first" argument 1 expected Number[] but received String[]');
   });
 
+  it("accepts Tharkar generic type aliases with concrete type arguments", () => {
+    const result = compile(`
+Tharkar Box<T> = Kelva { value: T };
+Tharkar Pair<T, U> = Kelva { first: T, second: U };
+Navā numberBox: Box<Number> = { value: 10 };
+Navā stringBox: Box<String> = { value: "sealed" };
+Navā pair: Pair<String, Number> = { first: "age", second: 30 };
+Kelthar unwrap(box: Box<Number>) {
+  Duren box.value;
+}
+Umkel unwrap(numberBox);
+`);
+
+    expect(result.diagnostics).toEqual([]);
+    expect(result.code).toContain("/** @typedef {*} Box */");
+    expect(result.code).toContain("/** @typedef {*} Pair */");
+    expect(result.code).toContain("let numberBox = { value: 10 };");
+    expect(result.code).toContain('let stringBox = { value: "sealed" };');
+    expect(result.code).toContain('let pair = { first: "age", second: 30 };');
+  });
+
+  it("reports Tharkar type argument and substituted shape errors", () => {
+    const result = compile(`
+Tharkar Box<T> = Kelva { value: T };
+Navā badBox: Box<Number> = { value: "wrong" };
+Navā missingArgument: Box = { value: 10 };
+Navā tooManyArguments: Box<Number, String> = { value: 10 };
+Kelthar unwrap(box: Box<Number>) {
+  Duren box.value;
+}
+Umkel unwrap({ value: "wrong" });
+`);
+
+    expect(result.diagnostics).toHaveLength(4);
+    expect(result.diagnostics[0]).toContain('variable "badBox" was declared as { value: Number } but received { value: String }');
+    expect(result.diagnostics[1]).toContain('Tharkar "Box" expected 1 type argument(s) but received 0');
+    expect(result.diagnostics[2]).toContain('Tharkar "Box" expected 1 type argument(s) but received 2');
+    expect(result.diagnostics[3]).toContain('Kelthar "unwrap" argument 1 expected { value: Number } but received { value: String }');
+  });
+
   it("infers mixed ternary branches as a union result", () => {
     const result = compile(`
 Navā mixed = true ? "yes" : 1;
