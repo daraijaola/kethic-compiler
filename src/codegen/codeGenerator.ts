@@ -141,7 +141,8 @@ export class CodeGenerator {
    */
   private emitFunctionDeclaration(statement: FunctionDeclarationNode): void {
     const parameters: string = this.emitParameterList(statement.parameters);
-    this.emitMappedLine(`function ${statement.name.lexeme}(${parameters}) {`, statement.keyword.line);
+    const asyncPrefix: string = statement.isAsync ? "async " : "";
+    this.emitMappedLine(`${asyncPrefix}function ${statement.name.lexeme}(${parameters}) {`, statement.keyword.line);
     this.emitBlockBody(statement.body);
     this.emitRawLine(`${this.indent()}}`);
   }
@@ -260,6 +261,8 @@ export class CodeGenerator {
         return expression.value ? "true" : "false";
       case "UnaryExpression":
         return `${expression.operator.lexeme}${this.emitExpression(expression.argument)}`;
+      case "AwaitExpression":
+        return `await ${this.emitExpression(expression.argument)}`;
       case "BinaryExpression":
         return this.emitBinaryExpression(expression);
       case "ConditionalExpression":
@@ -324,7 +327,8 @@ export class CodeGenerator {
   private emitFunctionExpression(expression: FunctionExpressionNode): string {
     const parameters: string = this.emitParameterList(expression.parameters);
     const body: string[] = this.emitBlockBodyAsLines(expression.body, 1);
-    return `function (${parameters}) {\n${body.join("\n")}\n}`;
+    const asyncPrefix: string = expression.isAsync ? "async " : "";
+    return `${asyncPrefix}function (${parameters}) {\n${body.join("\n")}\n}`;
   }
 
   /**
@@ -332,13 +336,14 @@ export class CodeGenerator {
    */
   private emitArrowFunctionExpression(expression: ArrowFunctionExpressionNode): string {
     const parameters: string = this.emitParameterList(expression.parameters);
+    const asyncPrefix: string = expression.isAsync ? "async " : "";
 
     if (expression.body.kind !== "BlockStatement") {
-      return `(${parameters}) => ${this.emitExpression(expression.body)}`;
+      return `${asyncPrefix}(${parameters}) => ${this.emitExpression(expression.body)}`;
     }
 
     const body: string[] = this.emitBlockBodyAsLines(expression.body, 1);
-    return `(${parameters}) => {\n${body.join("\n")}\n}`;
+    return `${asyncPrefix}(${parameters}) => {\n${body.join("\n")}\n}`;
   }
 
   /**
@@ -406,7 +411,7 @@ export class CodeGenerator {
         ];
       case "FunctionDeclaration":
         return [
-          `${indent}function ${statement.name.lexeme}(${this.emitParameterList(statement.parameters)}) {`,
+          `${indent}${statement.isAsync ? "async " : ""}function ${statement.name.lexeme}(${this.emitParameterList(statement.parameters)}) {`,
           ...this.emitBlockBodyAsLines(statement.body, indentLevel + 1),
           `${indent}}`,
         ];

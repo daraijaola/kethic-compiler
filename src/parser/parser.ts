@@ -4,6 +4,7 @@ import {
   AssignmentExpressionNode,
   ArrayLiteralNode,
   BinaryExpressionNode,
+  AwaitExpressionNode,
   BooleanLiteralNode,
   BreakStatementNode,
   BlockStatementNode,
@@ -123,7 +124,11 @@ export class Parser {
     }
 
     if (this.match(TokenType.Kelthar)) {
-      return this.parseFunctionDeclaration(this.previous());
+      return this.parseFunctionDeclaration(this.previous(), false);
+    }
+
+    if (this.match(TokenType.Ovdurthar)) {
+      return this.parseAsyncDeclaration(this.previous());
     }
 
     if (this.match(TokenType.Selkar)) {
@@ -230,7 +235,7 @@ export class Parser {
   /**
    * parseFunctionDeclaration parses Kelthar name(param, param) { ... }
    */
-  private parseFunctionDeclaration(keyword: Token): FunctionDeclarationNode {
+  private parseFunctionDeclaration(keyword: Token, isAsync: boolean): FunctionDeclarationNode {
     const name: Token = this.consume(TokenType.Identifier, "Expected function name after Kelthar.");
     const parameters: ParameterNode[] = this.parseParameterList();
     const body: BlockStatementNode = this.parseRequiredBlock("Expected function body after Kelthar parameters.");
@@ -242,7 +247,16 @@ export class Parser {
       name,
       parameters,
       body,
+      isAsync,
     };
+  }
+
+  /**
+   * parseAsyncDeclaration parses Ovdurthar Kelthar name(...) { ... }.
+   */
+  private parseAsyncDeclaration(keyword: Token): FunctionDeclarationNode {
+    const functionKeyword: Token = this.consume(TokenType.Kelthar, "Expected Kelthar after Ovdurthar.");
+    return this.parseFunctionDeclaration(functionKeyword, true);
   }
 
   /**
@@ -696,6 +710,16 @@ export class Parser {
    * parseUnary handles prefix ! and -.
    */
   private parseUnary(): ExpressionNode {
+    if (this.match(TokenType.Torduren)) {
+      const keyword: Token = this.previous();
+      return {
+        kind: "AwaitExpression",
+        location: this.locationFrom(keyword),
+        keyword,
+        argument: this.parseUnary(),
+      } satisfies AwaitExpressionNode;
+    }
+
     if (this.match(TokenType.Bang, TokenType.Minus)) {
       const operator: Token = this.previous();
       const argument: ExpressionNode = this.parseUnary();
@@ -782,15 +806,19 @@ export class Parser {
     }
 
     if (this.match(TokenType.Tharva)) {
-      return this.parseFunctionExpression(this.previous());
+      return this.parseFunctionExpression(this.previous(), false);
     }
 
     if (this.match(TokenType.Kelthar)) {
-      return this.parseFunctionExpression(this.previous());
+      return this.parseFunctionExpression(this.previous(), false);
     }
 
     if (this.match(TokenType.Rinthar)) {
-      return this.parseArrowFunctionExpression(this.previous());
+      return this.parseArrowFunctionExpression(this.previous(), false);
+    }
+
+    if (this.match(TokenType.Ovdurthar)) {
+      return this.parseAsyncFunctionExpression(this.previous());
     }
 
     if (this.match(TokenType.Number)) {
@@ -1065,7 +1093,7 @@ export class Parser {
   /**
    * parseFunctionExpression parses Tharva(...) { ... } or expression-position Kelthar(...) { ... }.
    */
-  private parseFunctionExpression(keyword: Token): FunctionExpressionNode {
+  private parseFunctionExpression(keyword: Token, isAsync: boolean): FunctionExpressionNode {
     const parameters: ParameterNode[] = this.parseParameterList();
     const body: BlockStatementNode = this.parseRequiredBlock("Expected function expression body.");
 
@@ -1075,13 +1103,14 @@ export class Parser {
       keyword,
       parameters,
       body,
+      isAsync,
     };
   }
 
   /**
    * parseArrowFunctionExpression parses Rinthar (...) -> expression or block.
    */
-  private parseArrowFunctionExpression(keyword: Token): ArrowFunctionExpressionNode {
+  private parseArrowFunctionExpression(keyword: Token, isAsync: boolean): ArrowFunctionExpressionNode {
     const parameters: ParameterNode[] = this.parseParameterList();
     this.consume(TokenType.Arrow, "Expected '->' after Rinthar parameters.");
 
@@ -1095,7 +1124,23 @@ export class Parser {
       keyword,
       parameters,
       body,
+      isAsync,
     };
+  }
+
+  /**
+   * parseAsyncFunctionExpression parses Ovdurthar Tharva/Kelthar/Rinthar forms.
+   */
+  private parseAsyncFunctionExpression(keyword: Token): FunctionExpressionNode | ArrowFunctionExpressionNode {
+    if (this.match(TokenType.Tharva, TokenType.Kelthar)) {
+      return this.parseFunctionExpression(this.previous(), true);
+    }
+
+    if (this.match(TokenType.Rinthar)) {
+      return this.parseArrowFunctionExpression(this.previous(), true);
+    }
+
+    throw new ParserError(keyword, "Expected Tharva, Kelthar, or Rinthar after Ovdurthar.");
   }
 
   /**

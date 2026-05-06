@@ -80,6 +80,37 @@ Kelthar collect(...items) {
     expect(result.code).toContain("function collect(...items) {");
   });
 
+  it("emits Ovdurthar async functions and Torduren await expressions", () => {
+    const result = compile(`
+Ovdurthar Kelthar load(value: Number) {
+  Navā result = Torduren value;
+  Duren result;
+}
+Navā delayed = Ovdurthar Tharva(value: Number) {
+  Duren Torduren value;
+};
+Navā arrow = Ovdurthar Rinthar (value: Number) -> Torduren value;
+`);
+
+    expect(result.diagnostics).toEqual([]);
+    expect(result.code).toContain("async function load(value) {");
+    expect(result.code).toContain("let result = await value;");
+    expect(result.code).toContain("let delayed = async function (value) {");
+    expect(result.code).toContain("return await value;");
+    expect(result.code).toContain("let arrow = async (value) => await value;");
+  });
+
+  it("reports Torduren outside Ovdurthar functions", () => {
+    const result = compile(`
+Kelthar load(value: Number) {
+  Duren Torduren value;
+}
+`);
+
+    expect(result.diagnostics).toHaveLength(1);
+    expect(result.diagnostics[0]).toContain("Torduren cannot appear outside an Ovdurthar function");
+  });
+
   it("infers arrays, objects, null, member access, and indexing", () => {
     const result = compile(`
 Navā scores = [95, 87, 72];

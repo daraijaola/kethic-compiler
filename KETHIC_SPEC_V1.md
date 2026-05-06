@@ -34,6 +34,8 @@ Kethic source files use:
 | `Kelthar` | Named function declaration; expression-position anonymous function is currently also accepted | `function` |
 | `Tharva` | Anonymous function expression | `function (...) { ... }` |
 | `Rinthar` | Arrow function expression | `(...) => ...` |
+| `Ovdurthar` | Async function marker | `async function` / `async (...) => ...` |
+| `Torduren` | Await expression | `await` |
 | `Umkel` | Function call invocation | `callee(...)` |
 | `Duren` | Return statement | `return` |
 | `Umra` | Null literal | `null` |
@@ -201,6 +203,19 @@ Kelthar collect(...items) {
 
 Rest parameters must be final and cannot have default values.
 
+### 8.5 Async and Await
+
+```keth
+Ovdurthar Kelthar load(value: Number) {
+  Navā result = Torduren value;
+  Duren result;
+}
+
+Navā compact = Ovdurthar Rinthar (value: Number) -> Torduren value;
+```
+
+`Ovdurthar` marks a named, anonymous, or arrow function as async. `Torduren` pauses for a returning answer and is valid only inside an `Ovdurthar` function.
+
 ## 9. Control Flow
 
 ### 9.1 Conditional
@@ -291,6 +306,7 @@ The type checker currently supports:
 - undeclared variable diagnostics
 - function arity diagnostics
 - return type consistency diagnostics
+- `Torduren` placement inside `Ovdurthar` functions
 - switch case type matching
 
 Unknown values use `Unknown` to avoid cascaded errors.
@@ -373,8 +389,6 @@ The following are planned but not active syntax:
 - `Umresh` unsafe sink enforcement
 - `Selovva` query capsules
 - `Torumsel` authority kernel runtime
-- `Ovdurthar` async
-- `Torduren` await
 
 ## 15. Stabilization Rule
 

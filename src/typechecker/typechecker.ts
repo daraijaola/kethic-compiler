@@ -2,6 +2,7 @@ import { Token, TokenType } from "../lexer/tokens";
 import {
   AssignmentExpressionNode,
   ArrayLiteralNode,
+  AwaitExpressionNode,
   BinaryExpressionNode,
   BreakStatementNode,
   BlockStatementNode,
@@ -269,13 +270,14 @@ export class TypeChecker {
     );
     const hasRestParameter: boolean = statement.parameters.some((parameter: ParameterNode) => parameter.isRest);
     const minimumParameterCount: number = this.minimumParameterCount(statement.parameters);
-    const functionType = createFunctionType(parameterTypes, UNKNOWN_TYPE, minimumParameterCount, hasRestParameter);
+    const functionType = createFunctionType(parameterTypes, UNKNOWN_TYPE, minimumParameterCount, hasRestParameter, statement.isAsync);
     const symbol: FunctionSymbol = {
       kind: "Function",
       name: statement.name.lexeme,
       parameterCount: statement.parameters.length,
       minimumParameterCount,
       hasRestParameter,
+      isAsync: statement.isAsync,
       parameterNames: statement.parameters.map((parameter: ParameterNode) => parameter.name.lexeme),
       parameterTypes,
       returnType: UNKNOWN_TYPE,
@@ -372,6 +374,7 @@ export class TypeChecker {
       parameterCount: parameters.length,
       minimumParameterCount: this.minimumParameterCount(parameters),
       hasRestParameter: parameters.some((parameter: ParameterNode) => parameter.isRest),
+      isAsync: functionType.isAsync,
       parameterNames: parameters.map((parameter: ParameterNode) => parameter.name.lexeme),
       parameterTypes: functionType.parameters,
       returnType: UNKNOWN_TYPE,
@@ -665,6 +668,8 @@ export class TypeChecker {
         return this.inferExpression(expression.expression, contextKeyword);
       case "UnaryExpression":
         return this.inferUnaryExpression(expression, contextKeyword);
+      case "AwaitExpression":
+        return this.inferAwaitExpression(expression);
       case "BinaryExpression":
         return this.inferBinaryExpression(expression, contextKeyword);
       case "ConditionalExpression":
@@ -713,6 +718,20 @@ export class TypeChecker {
 
     if (expression.operator.type === TokenType.Minus && !this.typesCompatible(NUMBER_TYPE, argumentType)) {
       this.report(contextKeyword, `operator "${expression.operator.lexeme}" expected Number but received ${typeToString(argumentType)}`);
+    }
+
+    return argumentType;
+  }
+
+  /**
+   * inferAwaitExpression validates that Torduren pauses only happen inside an
+   * Ovdurthar function frame, then returns the awaited expression type.
+   */
+  private inferAwaitExpression(expression: AwaitExpressionNode): KethicType {
+    const argumentType: KethicType = this.inferExpression(expression.argument, expression.keyword);
+
+    if (this.currentFunction === null || !this.currentFunction.isAsync) {
+      this.report(expression.keyword, "Torduren cannot appear outside an Ovdurthar function");
     }
 
     return argumentType;
@@ -855,6 +874,7 @@ export class TypeChecker {
       UNKNOWN_TYPE,
       this.minimumParameterCount(expression.parameters),
       expression.parameters.some((parameter: ParameterNode) => parameter.isRest),
+      expression.isAsync,
     );
     const functionSymbol: FunctionSymbol = this.createSyntheticFunctionSymbol(expression.keyword, expression.parameters, functionType);
 
@@ -872,6 +892,7 @@ export class TypeChecker {
       UNKNOWN_TYPE,
       this.minimumParameterCount(expression.parameters),
       expression.parameters.some((parameter: ParameterNode) => parameter.isRest),
+      expression.isAsync,
     );
     const functionSymbol: FunctionSymbol = this.createSyntheticFunctionSymbol(expression.keyword, expression.parameters, functionType);
 
@@ -1197,6 +1218,7 @@ export class TypeChecker {
         expected.parameters.length === actual.parameters.length &&
         expected.minimumParameterCount === actual.minimumParameterCount &&
         expected.hasRestParameter === actual.hasRestParameter &&
+        expected.isAsync === actual.isAsync &&
         this.typesCompatible(expected.returnType, actual.returnType)
       );
     }

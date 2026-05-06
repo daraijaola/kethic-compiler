@@ -29,6 +29,7 @@ export interface FunctionType {
   readonly parameters: KethicType[];
   readonly minimumParameterCount: number;
   readonly hasRestParameter: boolean;
+  readonly isAsync: boolean;
   returnType: KethicType;
 }
 
@@ -106,6 +107,7 @@ export interface FunctionSymbol {
   readonly parameterCount: number;
   readonly minimumParameterCount: number;
   readonly hasRestParameter: boolean;
+  readonly isAsync: boolean;
   readonly parameterNames: string[];
   readonly parameterTypes: KethicType[];
   returnType: KethicType;
@@ -168,12 +170,14 @@ export function createFunctionType(
   returnType: KethicType,
   minimumParameterCount: number = parameters.length,
   hasRestParameter: boolean = false,
+  isAsync: boolean = false,
 ): FunctionType {
   return {
     kind: "Function",
     parameters,
     minimumParameterCount,
     hasRestParameter,
+    isAsync,
     returnType,
   };
 }
@@ -229,7 +233,7 @@ export function typeToString(type: KethicType): string {
     case "Unknown":
       return "Unknown";
     case "Function":
-      return `Kelthar(${type.parameters.map(typeToString).join(", ")}) -> ${typeToString(type.returnType)}`;
+      return `${type.isAsync ? "Ovdurthar " : ""}Kelthar(${type.parameters.map(typeToString).join(", ")}) -> ${typeToString(type.returnType)}`;
     case "Array":
       return `${typeToString(type.elementType)}[]`;
     case "Object":

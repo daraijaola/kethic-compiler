@@ -9,6 +9,8 @@ export class Obfuscator {
   private readonly identifierMap: Map<string, string> = new Map<string, string>();
   private random: SeededRandom = new SeededRandom(`${Date.now()}-${Math.random()}`);
   private readonly reservedWords: ReadonlySet<string> = new Set<string>([
+    "async",
+    "await",
     "break",
     "case",
     "catch",

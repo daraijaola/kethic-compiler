@@ -56,6 +56,7 @@ export interface FunctionDeclarationNode extends BaseNode {
   readonly name: Token;
   readonly parameters: ParameterNode[];
   readonly body: BlockStatementNode;
+  readonly isAsync: boolean;
 }
 
 /**
@@ -383,6 +384,7 @@ export interface FunctionExpressionNode extends BaseNode {
   readonly keyword: Token;
   readonly parameters: ParameterNode[];
   readonly body: BlockStatementNode;
+  readonly isAsync: boolean;
 }
 
 /**
@@ -393,6 +395,7 @@ export interface ArrowFunctionExpressionNode extends BaseNode {
   readonly keyword: Token;
   readonly parameters: ParameterNode[];
   readonly body: ExpressionNode | BlockStatementNode;
+  readonly isAsync: boolean;
 }
 
 /**
@@ -441,6 +444,15 @@ export interface BooleanLiteralNode extends BaseNode {
 export interface UnaryExpressionNode extends BaseNode {
   readonly kind: "UnaryExpression";
   readonly operator: Token;
+  readonly argument: ExpressionNode;
+}
+
+/**
+ * AwaitExpressionNode stores Torduren expression pauses inside async functions.
+ */
+export interface AwaitExpressionNode extends BaseNode {
+  readonly kind: "AwaitExpression";
+  readonly keyword: Token;
   readonly argument: ExpressionNode;
 }
 
@@ -559,6 +571,7 @@ export type ExpressionNode =
   | TemplateStringNode
   | BooleanLiteralNode
   | UnaryExpressionNode
+  | AwaitExpressionNode
   | BinaryExpressionNode
   | ConditionalExpressionNode
   | AssignmentExpressionNode
