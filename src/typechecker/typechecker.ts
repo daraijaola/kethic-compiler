@@ -37,6 +37,7 @@ import {
   UnionTypeDefinitionNode,
   VariableDeclarationNode,
 } from "../parser/ast";
+import { createStandardLibraryFunctionSymbol, standardLibraryFunctions } from "../stdlib";
 import { SymbolTable } from "./symbolTable";
 import {
   BOOLEAN_TYPE,
@@ -90,6 +91,10 @@ export class TypeChecker {
   private loopDepth: number = 0;
   private switchDepth: number = 0;
 
+  public constructor() {
+    this.predeclareStandardLibrary();
+  }
+
   /**
    * check returns all type-checking errors found in a full Program AST.
    */
@@ -109,6 +114,16 @@ export class TypeChecker {
    */
   public formatDiagnostics(diagnostics: TypeCheckDiagnostic[]): string[] {
     return diagnostics.map((diagnostic: TypeCheckDiagnostic) => new KethicTypeError(diagnostic).message);
+  }
+
+  /**
+   * predeclareStandardLibrary makes compiler-known built-ins visible without
+   * forcing every Kethic file to import console and math helpers.
+   */
+  private predeclareStandardLibrary(): void {
+    for (const definition of standardLibraryFunctions) {
+      this.symbols.define(createStandardLibraryFunctionSymbol(definition));
+    }
   }
 
   /**

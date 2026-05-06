@@ -18,6 +18,7 @@ import {
   TypeDefinitionNode,
   ObjectLiteralNode,
 } from "../parser/ast";
+import { standardLibraryByName, StandardLibraryFunction } from "../stdlib";
 import { CodeGenerationResult, SourceMapEntry } from "./types";
 
 /**
@@ -79,7 +80,10 @@ export class CodeGenerator {
         return;
       case "FunctionCallStatement":
         this.emitMappedLine(
-          `${statement.callee.lexeme}(${statement.arguments.map((argument: ExpressionNode) => this.emitExpression(argument)).join(", ")});`,
+          `${this.emitNamedCall(
+            statement.callee.lexeme,
+            statement.arguments.map((argument: ExpressionNode) => this.emitExpression(argument)),
+          )};`,
           statement.keyword.line,
         );
         return;
@@ -270,13 +274,23 @@ export class CodeGenerator {
       case "AssignmentExpression":
         return `${this.emitExpression(expression.target)} = ${this.emitExpression(expression.value)}`;
       case "CallExpression":
+        if (expression.callee.kind === "IdentifierExpression") {
+          return this.emitNamedCall(
+            expression.callee.name.lexeme,
+            expression.arguments.map((argument) => this.emitExpression(argument)),
+          );
+        }
+
         return `${this.emitExpression(expression.callee)}(${expression.arguments.map((argument) => this.emitExpression(argument)).join(", ")})`;
       case "MemberExpression":
         return `${this.emitExpression(expression.object)}.${expression.property.lexeme}`;
       case "IndexExpression":
         return `${this.emitExpression(expression.object)}[${this.emitExpression(expression.index)}]`;
       case "UmkelCallExpression":
-        return `${expression.callee.lexeme}(${expression.arguments.map((argument) => this.emitExpression(argument)).join(", ")})`;
+        return this.emitNamedCall(
+          expression.callee.lexeme,
+          expression.arguments.map((argument) => this.emitExpression(argument)),
+        );
       case "GroupingExpression":
         return `(${this.emitExpression(expression.expression)})`;
     }
@@ -288,6 +302,19 @@ export class CodeGenerator {
   private emitBinaryExpression(expression: BinaryExpressionNode): string {
     const operator: string = this.emitBinaryOperator(expression.operator.type);
     return `${this.emitExpression(expression.left)} ${operator} ${this.emitExpression(expression.right)}`;
+  }
+
+  /**
+   * emitNamedCall maps compiler-known standard library functions to their
+   * JavaScript targets while leaving user Kelthar calls unchanged.
+   */
+  private emitNamedCall(name: string, argumentsList: readonly string[]): string {
+    const builtin: StandardLibraryFunction | undefined = standardLibraryByName.get(name);
+    if (builtin !== undefined) {
+      return builtin.emitCall(argumentsList);
+    }
+
+    return `${name}(${argumentsList.join(", ")})`;
   }
 
   /**

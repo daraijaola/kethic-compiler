@@ -272,7 +272,28 @@ Eshnak {
 
 Emits JavaScript `try/catch`.
 
-## 11. Expressions
+## 11. Standard Library
+
+Kethic predeclares a small standard library. These functions require no `Ovrin` import and are type-checked like normal `Kelthar` calls.
+
+| Kethic Function | Type Rule | JavaScript Output |
+| --- | --- | --- |
+| `Print(...values)` | accepts any values, returns `Void` | `console.log(...)` |
+| `MathMax(...values: Number)` | one or more numbers, returns `Number` | `Math.max(...)` |
+| `MathMin(...values: Number)` | one or more numbers, returns `Number` | `Math.min(...)` |
+| `MathRound(value: Number)` | returns `Number` | `Math.round(...)` |
+| `MathFloor(value: Number)` | returns `Number` | `Math.floor(...)` |
+| `MathCeil(value: Number)` | returns `Number` | `Math.ceil(...)` |
+| `StringLength(value: String)` | returns `Number` | `value.length` |
+| `ArrayLength(value: Rukva Unknown)` | returns `Number` | `value.length` |
+
+```keth
+Navā high = MathMax(10, 20, 5);
+Navā size = StringLength("Aru");
+Umkel Print("high", high, size);
+```
+
+## 12. Expressions
 
 Kethic currently supports:
 
@@ -286,7 +307,7 @@ Kethic currently supports:
 - indexing: `items[0]`
 - grouping with parentheses
 
-## 12. Type Checking
+## 13. Type Checking
 
 The type checker currently supports:
 
@@ -301,6 +322,7 @@ The type checker currently supports:
 - named union aliases with `Shevkar`
 - optional annotations with `Umrava`
 - generic aliases with `Tharkar`
+- predeclared standard library function symbols
 - variable, constant, and parameter type annotations
 - lexical scope tracking
 - duplicate declaration diagnostics
@@ -313,7 +335,7 @@ The type checker currently supports:
 
 Unknown values use `Unknown` to avoid cascaded errors.
 
-### 12.1 Union Types
+### 13.1 Union Types
 
 ```keth
 Shevkar Label = String | Number;
@@ -328,7 +350,7 @@ Kelthar echo(value: Label) {
 
 `Shevkar` declares a named forked shape. A value annotated with a union may receive any member type in that union. Inline unions are also valid in annotations.
 
-### 12.2 Optional Types
+### 13.2 Optional Types
 
 ```keth
 Navā name: Umrava String = "Aru";
@@ -341,7 +363,7 @@ Kelthar greet(value: Umrava String) {
 
 `Umrava Type` means the value may be either `Type` or `Null`. It is equivalent to `Type | Umra`, but reads as an intentional optional vessel.
 
-### 12.3 Array and Object Types
+### 13.3 Array and Object Types
 
 ```keth
 Navā scores: Rukva Number = [95, 87, 72];
@@ -353,7 +375,7 @@ Navā user: Kelva { name: String, age: Number } = { name: "Aru", age: 30 };
 
 `Kelva { field: Type }` declares an object shape whose fields must match the declared property names and types.
 
-### 12.4 Generic Types
+### 13.4 Generic Types
 
 ```keth
 Tharkar Box<T> = Kelva { value: T };
@@ -365,7 +387,7 @@ Navā pair: Pair<String, Number> = { first: "age", second: 30 };
 
 `Tharkar` declares a reusable pattern-shape. Each type parameter must be supplied when the generic alias is used, and the checker substitutes concrete types into the alias body.
 
-## 13. Obfuscation
+## 14. Obfuscation
 
 The obfuscator currently performs:
 
@@ -378,7 +400,7 @@ The obfuscator currently performs:
 
 Object property keys are intentionally preserved while property values are obfuscated.
 
-## 14. Not Yet Implemented
+## 15. Not Yet Implemented
 
 The following are planned but not active syntax:
 
@@ -392,7 +414,7 @@ The following are planned but not active syntax:
 - `Selovva` query capsules
 - `Torumsel` authority kernel runtime
 
-## 15. Stabilization Rule
+## 16. Stabilization Rule
 
 Before adding any new syntax, update this spec with:
 

@@ -128,6 +128,45 @@ Ovdurthar Kelthar load(value: Number) {
     expect(result.diagnostics[0]).toContain("Torduren expected Promise but received Number");
   });
 
+  it("type-checks and emits standard library console and math calls", () => {
+    const result = compile(`
+Navā high = MathMax(10, 20, 5);
+Navā low = Umkel MathMin(10, 20, 5);
+Navā rounded = MathRound(4.7);
+Umkel Print("high", high, low, rounded);
+`);
+
+    expect(result.diagnostics).toEqual([]);
+    expect(result.code).toContain("let high = Math.max(10, 20, 5);");
+    expect(result.code).toContain("let low = Math.min(10, 20, 5);");
+    expect(result.code).toContain("let rounded = Math.round(4.7);");
+    expect(result.code).toContain('console.log("high", high, low, rounded);');
+  });
+
+  it("type-checks and emits standard library length helpers", () => {
+    const result = compile(`
+Navā name = "Aru";
+Navā scores = [95, 87, 72];
+Navā nameSize = StringLength(name);
+Navā scoreCount = ArrayLength(scores);
+`);
+
+    expect(result.diagnostics).toEqual([]);
+    expect(result.code).toContain("let nameSize = name.length;");
+    expect(result.code).toContain("let scoreCount = scores.length;");
+  });
+
+  it("reports standard library argument type errors", () => {
+    const result = compile(`
+Navā bad = MathMax("wrong");
+Navā alsoBad = StringLength(10);
+`);
+
+    expect(result.diagnostics).toHaveLength(2);
+    expect(result.diagnostics[0]).toContain('Kelthar "call target" argument 1 expected Number but received String');
+    expect(result.diagnostics[1]).toContain('Kelthar "call target" argument 1 expected String but received Number');
+  });
+
   it("infers arrays, objects, null, member access, and indexing", () => {
     const result = compile(`
 Navā scores = [95, 87, 72];
