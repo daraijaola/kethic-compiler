@@ -137,7 +137,8 @@ export class Lexer {
           this.addToken(TokenType.OrOr, "||", startLine, startColumn);
           return;
         }
-        throw new LexerError("Unexpected '|'; did you mean '||'?", startLine, startColumn);
+        this.addToken(TokenType.Pipe, "|", startLine, startColumn);
+        return;
 
       // Punctuation tokens define grouping and separators.
       case "(":

@@ -29,8 +29,10 @@ import {
   StatementNode,
   SwitchStatementNode,
   TypeDefinitionNode,
+  TypeExpressionNode,
   TemplateStringNode,
   UnaryExpressionNode,
+  UnionTypeDefinitionNode,
   VariableDeclarationNode,
 } from "../parser/ast";
 import { SymbolTable } from "./symbolTable";
@@ -39,6 +41,7 @@ import {
   createArrayType,
   createFunctionType,
   createMapType,
+  createUnionType,
   FunctionType,
   FunctionSymbol,
   isUnknownType,
@@ -49,6 +52,7 @@ import {
   createObjectType,
   STRING_TYPE,
   TypeCheckDiagnostic,
+  TypeSymbol,
   typeToString,
   UNKNOWN_TYPE,
   ValueSymbol,
@@ -84,6 +88,7 @@ export class TypeChecker {
    * check returns all type-checking errors found in a full Program AST.
    */
   public check(program: ProgramNode): TypeCheckDiagnostic[] {
+    this.predeclareTypes(program);
     this.predeclareFunctions(program);
 
     for (const statement of program.body) {
@@ -98,6 +103,17 @@ export class TypeChecker {
    */
   public formatDiagnostics(diagnostics: TypeCheckDiagnostic[]): string[] {
     return diagnostics.map((diagnostic: TypeCheckDiagnostic) => new KethicTypeError(diagnostic).message);
+  }
+
+  /**
+   * predeclareTypes lets function parameter annotations reference top-level Shevkar aliases.
+   */
+  private predeclareTypes(program: ProgramNode): void {
+    for (const statement of program.body) {
+      if (statement.kind === "UnionTypeDefinition") {
+        this.declareUnionType(statement);
+      }
+    }
   }
 
   /**
@@ -127,6 +143,9 @@ export class TypeChecker {
         return;
       case "TypeDefinition":
         this.checkTypeDefinition(statement);
+        return;
+      case "UnionTypeDefinition":
+        this.checkUnionTypeDefinition(statement);
         return;
       case "OvrinDeclaration":
         this.checkOvrinDeclaration(statement);
@@ -175,11 +194,20 @@ export class TypeChecker {
 
     const inferredType: KethicType =
       statement.initializer === null ? UNKNOWN_TYPE : this.inferExpression(statement.initializer, statement.keyword);
+    const declaredType: KethicType | null =
+      statement.typeAnnotation === null ? null : this.resolveTypeExpression(statement.typeAnnotation, statement.keyword);
+
+    if (declaredType !== null && statement.initializer !== null && !this.typesCompatible(declaredType, inferredType)) {
+      this.report(
+        statement.keyword,
+        `variable "${statement.name.lexeme}" was declared as ${typeToString(declaredType)} but received ${typeToString(inferredType)}`,
+      );
+    }
 
     const symbol: ValueSymbol = {
       kind: "Variable",
       name: statement.name.lexeme,
-      type: inferredType,
+      type: declaredType ?? inferredType,
       declarationKeyword: statement.keyword,
       declarationName: statement.name,
     };
@@ -196,10 +224,20 @@ export class TypeChecker {
     }
 
     const inferredType: KethicType = this.inferExpression(statement.initializer, statement.keyword);
+    const declaredType: KethicType | null =
+      statement.typeAnnotation === null ? null : this.resolveTypeExpression(statement.typeAnnotation, statement.keyword);
+
+    if (declaredType !== null && !this.typesCompatible(declaredType, inferredType)) {
+      this.report(
+        statement.keyword,
+        `constant "${statement.name.lexeme}" was declared as ${typeToString(declaredType)} but received ${typeToString(inferredType)}`,
+      );
+    }
+
     const symbol: ValueSymbol = {
       kind: "Constant",
       name: statement.name.lexeme,
-      type: inferredType,
+      type: declaredType ?? inferredType,
       declarationKeyword: statement.keyword,
       declarationName: statement.name,
     };
@@ -215,7 +253,9 @@ export class TypeChecker {
       return;
     }
 
-    const parameterTypes: KethicType[] = statement.parameters.map(() => UNKNOWN_TYPE);
+    const parameterTypes: KethicType[] = statement.parameters.map((parameter: ParameterNode) =>
+      parameter.typeAnnotation === null ? UNKNOWN_TYPE : this.resolveTypeExpression(parameter.typeAnnotation, statement.keyword),
+    );
     const hasRestParameter: boolean = statement.parameters.some((parameter: ParameterNode) => parameter.isRest);
     const minimumParameterCount: number = this.minimumParameterCount(statement.parameters);
     const functionType = createFunctionType(parameterTypes, UNKNOWN_TYPE, minimumParameterCount, hasRestParameter);
@@ -282,10 +322,20 @@ export class TypeChecker {
   private defineParameters(parameters: ParameterNode[], keyword: Token, parameterTypes: KethicType[]): void {
     for (let index: number = 0; index < parameters.length; index += 1) {
       const parameter: ParameterNode = parameters[index];
+      const annotatedType: KethicType | null =
+        parameter.typeAnnotation === null ? null : this.resolveTypeExpression(parameter.typeAnnotation, keyword);
       const defaultType: KethicType =
         parameter.defaultValue === null ? UNKNOWN_TYPE : this.inferExpression(parameter.defaultValue, keyword);
-      const parameterType: KethicType = parameter.isRest ? createArrayType(UNKNOWN_TYPE) : defaultType;
+      const scalarType: KethicType = annotatedType ?? defaultType;
+      const parameterType: KethicType = parameter.isRest ? createArrayType(scalarType) : scalarType;
       parameterTypes[index] = parameterType;
+
+      if (annotatedType !== null && parameter.defaultValue !== null && !this.typesCompatible(annotatedType, defaultType)) {
+        this.report(
+          keyword,
+          `parameter "${parameter.name.lexeme}" was declared as ${typeToString(annotatedType)} but received default ${typeToString(defaultType)}`,
+        );
+      }
 
       const parameterSymbol: ValueSymbol = {
         kind: "Variable",
@@ -327,6 +377,43 @@ export class TypeChecker {
     if (this.symbols.resolveCurrent(statement.name.lexeme) !== null) {
       this.report(statement.keyword, `duplicate declaration of "${statement.name.lexeme}"`);
     }
+  }
+
+  /**
+   * checkUnionTypeDefinition records Shevkar aliases in the symbol table.
+   */
+  private checkUnionTypeDefinition(statement: UnionTypeDefinitionNode): void {
+    const existing: KethicSymbol | null = this.symbols.resolveCurrent(statement.name.lexeme);
+    if (existing !== null && existing.kind === "Type" && existing.declarationName === statement.name) {
+      return;
+    }
+
+    if (this.symbols.resolveCurrent(statement.name.lexeme) !== null) {
+      this.report(statement.keyword, `duplicate declaration of "${statement.name.lexeme}"`);
+      return;
+    }
+
+    this.declareUnionType(statement);
+  }
+
+  /**
+   * declareUnionType stores a Shevkar alias without checking executable code.
+   */
+  private declareUnionType(statement: UnionTypeDefinitionNode): void {
+    if (this.symbols.resolveCurrent(statement.name.lexeme) !== null) {
+      this.report(statement.keyword, `duplicate declaration of "${statement.name.lexeme}"`);
+      return;
+    }
+
+    const type: KethicType = this.resolveTypeExpression(statement.typeExpression, statement.keyword);
+    const symbol: TypeSymbol = {
+      kind: "Type",
+      name: statement.name.lexeme,
+      type,
+      declarationKeyword: statement.keyword,
+      declarationName: statement.name,
+    };
+    this.symbols.define(symbol);
   }
 
   /**
@@ -377,10 +464,7 @@ export class TypeChecker {
     }
 
     this.checkArgumentCount(statement.keyword, statement.callee.lexeme, symbol, statement.arguments.length);
-
-    for (const argument of statement.arguments) {
-      this.inferExpression(argument, statement.keyword);
-    }
+    this.checkFunctionArguments(statement.keyword, statement.callee.lexeme, symbol.type, statement.arguments);
   }
 
   /**
@@ -561,6 +645,11 @@ export class TypeChecker {
       return UNKNOWN_TYPE;
     }
 
+    if (symbol.kind === "Type") {
+      this.report(contextKeyword, `type "${expression.name.lexeme}" cannot be used as a value`);
+      return UNKNOWN_TYPE;
+    }
+
     return symbol.kind === "Function" ? symbol.type : symbol.type;
   }
 
@@ -646,11 +735,7 @@ export class TypeChecker {
     }
 
     if (!this.typesCompatible(trueType, falseType)) {
-      this.report(
-        contextKeyword,
-        `conditional branches must return compatible types but received ${typeToString(trueType)} and ${typeToString(falseType)}`,
-      );
-      return UNKNOWN_TYPE;
+      return createUnionType([trueType, falseType]);
     }
 
     return isUnknownType(trueType) ? falseType : trueType;
@@ -811,10 +896,7 @@ export class TypeChecker {
     }
 
     this.checkFunctionTypeArgumentCount(contextKeyword, "call target", calleeType, expression.arguments.length);
-
-    for (const argument of expression.arguments) {
-      this.inferExpression(argument, contextKeyword);
-    }
+    this.checkFunctionArguments(contextKeyword, "call target", calleeType, expression.arguments);
 
     return calleeType.returnType;
   }
@@ -834,10 +916,12 @@ export class TypeChecker {
     } else {
       this.checkFunctionTypeArgumentCount(expression.keyword, expression.callee.lexeme, symbol.type as FunctionType, expression.arguments.length);
     }
-
-    for (const argument of expression.arguments) {
-      this.inferExpression(argument, expression.keyword);
-    }
+    this.checkFunctionArguments(
+      expression.keyword,
+      expression.callee.lexeme,
+      symbol.kind === "Function" ? symbol.type : (symbol.type as FunctionType),
+      expression.arguments,
+    );
 
     return symbol.kind === "Function" ? symbol.returnType : (symbol.type as FunctionType).returnType;
   }
@@ -935,6 +1019,35 @@ export class TypeChecker {
   }
 
   /**
+   * checkFunctionArguments validates provided arguments against annotated parameter types.
+   */
+  private checkFunctionArguments(keyword: Token, name: string, type: FunctionType, argumentsList: ExpressionNode[]): void {
+    for (let index: number = 0; index < argumentsList.length; index += 1) {
+      const expectedType: KethicType = this.expectedArgumentType(type, index);
+      const actualType: KethicType = this.inferExpression(argumentsList[index], keyword);
+
+      if (!this.typesCompatible(expectedType, actualType)) {
+        this.report(
+          keyword,
+          `Kelthar "${name}" argument ${index + 1} expected ${typeToString(expectedType)} but received ${typeToString(actualType)}`,
+        );
+      }
+    }
+  }
+
+  /**
+   * expectedArgumentType resolves fixed and rest parameter positions.
+   */
+  private expectedArgumentType(type: FunctionType, index: number): KethicType {
+    if (!type.hasRestParameter || index < type.parameters.length - 1) {
+      return type.parameters[index] ?? UNKNOWN_TYPE;
+    }
+
+    const restType: KethicType = type.parameters[type.parameters.length - 1] ?? UNKNOWN_TYPE;
+    return restType.kind === "Array" ? restType.elementType : restType;
+  }
+
+  /**
    * minimumParameterCount counts parameters that callers must provide.
    */
   private minimumParameterCount(parameters: ParameterNode[]): number {
@@ -975,6 +1088,14 @@ export class TypeChecker {
     }
 
     if (expected.kind !== actual.kind) {
+      if (expected.kind === "Union") {
+        return expected.members.some((member: KethicType) => this.typesCompatible(member, actual));
+      }
+
+      if (actual.kind === "Union") {
+        return actual.members.every((member: KethicType) => this.typesCompatible(expected, member));
+      }
+
       return false;
     }
 
@@ -1006,6 +1127,12 @@ export class TypeChecker {
       );
     }
 
+    if (expected.kind === "Union" && actual.kind === "Union") {
+      return actual.members.every((actualMember: KethicType) =>
+        expected.members.some((expectedMember: KethicType) => this.typesCompatible(expectedMember, actualMember)),
+      );
+    }
+
     if (expected.kind === "Function" && actual.kind === "Function") {
       return (
         expected.parameters.length === actual.parameters.length &&
@@ -1030,6 +1157,41 @@ export class TypeChecker {
    */
   private objectPropertyName(key: Token): string {
     return key.type === TokenType.String ? key.lexeme.slice(1, -1) : key.lexeme;
+  }
+
+  /**
+   * resolveTypeExpression converts parser type annotations into internal types.
+   */
+  private resolveTypeExpression(expression: TypeExpressionNode, contextKeyword: Token): KethicType {
+    if (expression.kind === "UnionTypeExpression") {
+      return createUnionType(
+        expression.members.map((member: TypeExpressionNode) => this.resolveTypeExpression(member, contextKeyword)),
+      );
+    }
+
+    const name: string = expression.name.type === TokenType.Umra ? "Null" : expression.name.lexeme;
+
+    switch (name) {
+      case "Number":
+        return NUMBER_TYPE;
+      case "String":
+        return STRING_TYPE;
+      case "Boolean":
+        return BOOLEAN_TYPE;
+      case "Void":
+        return VOID_TYPE;
+      case "Null":
+        return NULL_TYPE;
+      default: {
+        const symbol: KethicSymbol | null = this.symbols.resolve(name);
+        if (symbol !== null && symbol.kind === "Type") {
+          return symbol.type;
+        }
+
+        this.report(contextKeyword, `type "${name}" does not exist`);
+        return UNKNOWN_TYPE;
+      }
+    }
   }
 
   /**

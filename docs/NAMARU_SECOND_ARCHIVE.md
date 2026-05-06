@@ -15,7 +15,7 @@ The central question of this era was:
 | Array | `Rukva` | wheel-vessel | Future array type name or collection form |
 | Object / record | `Kelva` | named vessel | Future object/record type name |
 | Map / dictionary | `Selva` | sealed vessel | Future map/dictionary type |
-| Union type | `Shevkar` | forked shape | Future union type syntax |
+| Union type | `Shevkar` | forked shape | Active union type syntax |
 | Optional type | `Umrava` | vessel of the unnamed dark | Future optional type syntax |
 | Generic type | `Tharkar` | pattern-shape | Future generic type syntax |
 | Tainted value | `Ovesh` | foreign crack | Future security type |
@@ -152,4 +152,4 @@ Teaching: "If the seal-maker falls, every gate becomes a wound."
 
 ## Compiler Status
 
-These terms are reserved as of this document. They must not be used as ordinary identifiers. A term should only become active syntax when its compiler phase is implemented and tested.
+Most terms are reserved as of this document and must not be used as ordinary identifiers. `Selva` and `Shevkar` are now active syntax because their compiler phases are implemented and tested. Any remaining term should only become active syntax when its compiler phase is implemented and tested.

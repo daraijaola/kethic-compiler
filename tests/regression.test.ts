@@ -110,6 +110,57 @@ Navā emptyLabels = Selva {};
     expect(result.code).toContain("let emptyLabels = ({});");
   });
 
+  it("accepts Shevkar union aliases and annotated declarations", () => {
+    const result = compile(`
+Shevkar Label = String | Number;
+Navā status: Label = "active";
+Navā count: Label = 3;
+Navā maybe: String | Umra = Umra;
+Kelthar echo(value: Label) {
+  Duren value;
+}
+`);
+
+    expect(result.diagnostics).toEqual([]);
+    expect(result.code).toContain("/** @typedef {*} Label */");
+    expect(result.code).toContain('let status = "active";');
+    expect(result.code).toContain("let count = 3;");
+    expect(result.code).toContain("let maybe = null;");
+    expect(result.code).toContain("function echo(value) {");
+  });
+
+  it("reports values that do not match Shevkar annotations", () => {
+    const result = compile(`
+Shevkar Label = String | Number;
+Navā bad: Label = true;
+`);
+
+    expect(result.diagnostics).toHaveLength(1);
+    expect(result.diagnostics[0]).toContain('variable "bad" was declared as String | Number but received Boolean');
+  });
+
+  it("reports function arguments that do not match Shevkar parameter annotations", () => {
+    const result = compile(`
+Shevkar Label = String | Number;
+Kelthar echo(value: Label) {
+  Duren value;
+}
+Umkel echo(true);
+`);
+
+    expect(result.diagnostics).toHaveLength(1);
+    expect(result.diagnostics[0]).toContain('Kelthar "echo" argument 1 expected String | Number but received Boolean');
+  });
+
+  it("infers mixed ternary branches as a union result", () => {
+    const result = compile(`
+Navā mixed = true ? "yes" : 1;
+`);
+
+    expect(result.diagnostics).toEqual([]);
+    expect(result.code).toContain('let mixed = true ? "yes" : 1;');
+  });
+
   it("preserves object keys but obfuscates object values", () => {
     const generated = new CodeGenerator().generate(
       new Parser(new Lexer('Navā user = { name: "Aru", age: 30 };').scanTokens()).parse(),

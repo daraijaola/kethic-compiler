@@ -46,6 +46,7 @@ Kethic source files use:
 | `Duruk` | Break | `break` |
 | `Rukum` | Continue | `continue` |
 | `Selkar` | Type definition placeholder | JS typedef comment |
+| `Shevkar` | Union type alias | JS typedef comment |
 | `Eshnak` | Error handling | `try/catch` |
 | `Ovrin` | Import/export placeholder | `import` / `export` |
 | `Selva` | Map / dictionary literal | computed-property lookup object |
@@ -58,7 +59,6 @@ The following Second Archive terms are reserved and cannot be used as normal ide
 | --- | --- |
 | `Rukva` | Array type / collection form |
 | `Kelva` | Object or record type |
-| `Shevkar` | Union type |
 | `Umrava` | Optional type |
 | `Tharkar` | Generic type |
 | `Ovesh` | Tainted value |
@@ -280,6 +280,8 @@ The type checker currently supports:
 - array types
 - map types
 - anonymous object shapes
+- named union aliases with `Shevkar`
+- variable, constant, and parameter type annotations
 - lexical scope tracking
 - duplicate declaration diagnostics
 - undeclared variable diagnostics
@@ -288,6 +290,21 @@ The type checker currently supports:
 - switch case type matching
 
 Unknown values use `Unknown` to avoid cascaded errors.
+
+### 12.1 Union Types
+
+```keth
+Shevkar Label = String | Number;
+Navā status: Label = "active";
+Navā count: Label = 3;
+Navā maybe: String | Umra = Umra;
+
+Kelthar echo(value: Label) {
+  Duren value;
+}
+```
+
+`Shevkar` declares a named forked shape. A value annotated with a union may receive any member type in that union. Inline unions are also valid in annotations.
 
 ## 13. Obfuscation
 
@@ -306,7 +323,6 @@ Object property keys are intentionally preserved while property values are obfus
 
 The following are planned but not active syntax:
 
-- `Shevkar` union types
 - `Umrava` optional types
 - `Tharkar` generic types
 - `Ovesh` tainted values

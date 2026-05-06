@@ -32,6 +32,7 @@ export interface VariableDeclarationNode extends BaseNode {
   readonly kind: "VariableDeclaration";
   readonly keyword: Token;
   readonly name: Token;
+  readonly typeAnnotation: TypeExpressionNode | null;
   readonly initializer: ExpressionNode | null;
 }
 
@@ -42,6 +43,7 @@ export interface ConstantDeclarationNode extends BaseNode {
   readonly kind: "ConstantDeclaration";
   readonly keyword: Token;
   readonly name: Token;
+  readonly typeAnnotation: TypeExpressionNode | null;
   readonly initializer: ExpressionNode;
 }
 
@@ -58,11 +60,12 @@ export interface FunctionDeclarationNode extends BaseNode {
 
 /**
  * ParameterNode stores formal Kelthar parameter metadata.
- * Phase A keeps syntax unchanged, so parameters currently only have a name.
+ * Parameters may carry an optional type annotation, default value, or rest mark.
  */
 export interface ParameterNode extends BaseNode {
   readonly kind: "Parameter";
   readonly name: Token;
+  readonly typeAnnotation: TypeExpressionNode | null;
   readonly defaultValue: ExpressionNode | null;
   readonly isRest: boolean;
 }
@@ -85,6 +88,37 @@ export interface TypeFieldNode extends BaseNode {
   readonly name: Token;
   readonly typeName: Token;
 }
+
+/**
+ * UnionTypeDefinitionNode declares a named Shevkar forked shape.
+ */
+export interface UnionTypeDefinitionNode extends BaseNode {
+  readonly kind: "UnionTypeDefinition";
+  readonly keyword: Token;
+  readonly name: Token;
+  readonly typeExpression: TypeExpressionNode;
+}
+
+/**
+ * TypeNameNode references a primitive or declared type by name.
+ */
+export interface TypeNameNode extends BaseNode {
+  readonly kind: "TypeName";
+  readonly name: Token;
+}
+
+/**
+ * UnionTypeExpressionNode stores Type | Type annotations.
+ */
+export interface UnionTypeExpressionNode extends BaseNode {
+  readonly kind: "UnionTypeExpression";
+  readonly members: TypeExpressionNode[];
+}
+
+/**
+ * TypeExpressionNode is every type-level expression currently supported.
+ */
+export type TypeExpressionNode = TypeNameNode | UnionTypeExpressionNode;
 
 /**
  * Ovrin represents controlled crossing at a module boundary. If source is
@@ -442,6 +476,7 @@ export type StatementNode =
   | ConstantDeclarationNode
   | FunctionDeclarationNode
   | TypeDefinitionNode
+  | UnionTypeDefinitionNode
   | OvrinDeclarationNode
   | BlockStatementNode
   | FunctionCallStatementNode

@@ -57,9 +57,17 @@ export interface MapType {
 }
 
 /**
+ * UnionType represents a value that may lawfully take several shapes.
+ */
+export interface UnionType {
+  readonly kind: "Union";
+  readonly members: readonly KethicType[];
+}
+
+/**
  * KethicType is the formal internal type model used by the checker.
  */
-export type KethicType = PrimitiveType | UnknownType | FunctionType | ArrayType | ObjectType | MapType;
+export type KethicType = PrimitiveType | UnknownType | FunctionType | ArrayType | ObjectType | MapType | UnionType;
 
 /**
  * Shared type objects for the currently supported Kethic types.
@@ -74,7 +82,7 @@ export const UNKNOWN_TYPE: UnknownType = { kind: "Unknown" };
 /**
  * SymbolKind separates mutable values, constants, and declared functions.
  */
-export type SymbolKind = "Variable" | "Constant" | "Function";
+export type SymbolKind = "Variable" | "Constant" | "Function" | "Type";
 
 /**
  * ValueSymbol stores the inferred type for a Navā or Torūn name.
@@ -89,7 +97,7 @@ export interface ValueSymbol {
 
 /**
  * FunctionSymbol stores the arity and inferred return type for a Kelthar.
- * Parameters begin as Unknown because Kethic has no parameter annotations yet.
+ * Parameters begin as annotated types or Unknown when no annotation exists.
  */
 export interface FunctionSymbol {
   readonly kind: "Function";
@@ -106,9 +114,20 @@ export interface FunctionSymbol {
 }
 
 /**
+ * TypeSymbol stores named type aliases such as Shevkar unions.
+ */
+export interface TypeSymbol {
+  readonly kind: "Type";
+  readonly name: string;
+  readonly type: KethicType;
+  readonly declarationKeyword: Token;
+  readonly declarationName: Token;
+}
+
+/**
  * KethicSymbol is any named item the type checker can resolve.
  */
-export type KethicSymbol = ValueSymbol | FunctionSymbol;
+export type KethicSymbol = ValueSymbol | FunctionSymbol | TypeSymbol;
 
 /**
  * Scope stores declarations visible in one lexical region.
@@ -178,6 +197,16 @@ export function createMapType(keyType: KethicType, valueType: KethicType): MapTy
 }
 
 /**
+ * createUnionType creates a forked shape from one or more member types.
+ */
+export function createUnionType(members: readonly KethicType[]): UnionType {
+  return {
+    kind: "Union",
+    members,
+  };
+}
+
+/**
  * typeToString formats structured Kethic types for diagnostics.
  */
 export function typeToString(type: KethicType): string {
@@ -194,6 +223,8 @@ export function typeToString(type: KethicType): string {
       return `{ ${Object.entries(type.properties).map(([name, value]) => `${name}: ${typeToString(value)}`).join("; ")} }`;
     case "Map":
       return `Selva<${typeToString(type.keyType)}, ${typeToString(type.valueType)}>`;
+    case "Union":
+      return type.members.map(typeToString).join(" | ");
   }
 }
 

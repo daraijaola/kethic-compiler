@@ -68,6 +68,7 @@ export enum TokenType {
   // Logical operators.
   AndAnd = "AndAnd",
   OrOr = "OrOr",
+  Pipe = "Pipe",
 
   // Function and type syntax operators.
   Arrow = "Arrow",

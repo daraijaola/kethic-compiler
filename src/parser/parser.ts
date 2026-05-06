@@ -43,8 +43,12 @@ import {
   TemplateStaticPartNode,
   TemplateStringNode,
   TypeDefinitionNode,
+  TypeExpressionNode,
   TypeFieldNode,
+  TypeNameNode,
   UmkelCallExpressionNode,
+  UnionTypeDefinitionNode,
+  UnionTypeExpressionNode,
   UnaryExpressionNode,
   VariableDeclarationNode,
 } from "./ast";
@@ -121,6 +125,10 @@ export class Parser {
       return this.parseTypeDefinition(this.previous());
     }
 
+    if (this.match(TokenType.Shevkar)) {
+      return this.parseUnionTypeDefinition(this.previous());
+    }
+
     if (this.match(TokenType.Ovrin)) {
       return this.parseOvrinDeclaration(this.previous());
     }
@@ -176,6 +184,7 @@ export class Parser {
    */
   private parseVariableDeclaration(keyword: Token): VariableDeclarationNode {
     const name: Token = this.consume(TokenType.Identifier, "Expected variable name after Navā.");
+    const typeAnnotation: TypeExpressionNode | null = this.parseOptionalTypeAnnotation();
     const initializer: ExpressionNode | null = this.match(TokenType.Equals) ? this.parseExpression() : null;
     this.consume(TokenType.Semicolon, "Expected ';' after variable declaration.");
 
@@ -184,6 +193,7 @@ export class Parser {
       location: this.locationFrom(keyword),
       keyword,
       name,
+      typeAnnotation,
       initializer,
     };
   }
@@ -193,6 +203,7 @@ export class Parser {
    */
   private parseConstantDeclaration(keyword: Token): ConstantDeclarationNode {
     const name: Token = this.consume(TokenType.Identifier, "Expected constant name after Torūn.");
+    const typeAnnotation: TypeExpressionNode | null = this.parseOptionalTypeAnnotation();
     this.consume(TokenType.Equals, "Expected '=' after constant name.");
     const initializer: ExpressionNode = this.parseExpression();
     this.consume(TokenType.Semicolon, "Expected ';' after constant declaration.");
@@ -202,6 +213,7 @@ export class Parser {
       location: this.locationFrom(keyword),
       keyword,
       name,
+      typeAnnotation,
       initializer,
     };
   }
@@ -254,6 +266,24 @@ export class Parser {
       keyword,
       name,
       fields,
+    };
+  }
+
+  /**
+   * parseUnionTypeDefinition parses Shevkar Name = Type | Type;
+   */
+  private parseUnionTypeDefinition(keyword: Token): UnionTypeDefinitionNode {
+    const name: Token = this.consume(TokenType.Identifier, "Expected type name after Shevkar.");
+    this.consume(TokenType.Equals, "Expected '=' after Shevkar name.");
+    const typeExpression: TypeExpressionNode = this.parseTypeExpression();
+    this.consume(TokenType.Semicolon, "Expected ';' after Shevkar definition.");
+
+    return {
+      kind: "UnionTypeDefinition",
+      location: this.locationFrom(keyword),
+      keyword,
+      name,
+      typeExpression,
     };
   }
 
@@ -836,6 +866,7 @@ export class Parser {
       do {
         const isRest: boolean = this.match(TokenType.Ellipsis);
         const name: Token = this.consume(TokenType.Identifier, "Expected parameter name.");
+        const typeAnnotation: TypeExpressionNode | null = this.parseOptionalTypeAnnotation();
         const defaultValue: ExpressionNode | null = this.match(TokenType.Equals) ? this.parseExpression() : null;
 
         if (isRest && defaultValue !== null) {
@@ -846,6 +877,7 @@ export class Parser {
           kind: "Parameter",
           location: this.locationFrom(name),
           name,
+          typeAnnotation,
           defaultValue,
           isRest,
         });
@@ -858,6 +890,55 @@ export class Parser {
 
     this.consume(TokenType.RightParen, "Expected ')' after parameter list.");
     return parameters;
+  }
+
+  /**
+   * parseOptionalTypeAnnotation parses : Type when present.
+   */
+  private parseOptionalTypeAnnotation(): TypeExpressionNode | null {
+    if (!this.match(TokenType.Colon)) {
+      return null;
+    }
+
+    return this.parseTypeExpression();
+  }
+
+  /**
+   * parseTypeExpression parses type names joined with union pipes.
+   */
+  private parseTypeExpression(): TypeExpressionNode {
+    const firstMember: TypeExpressionNode = this.parseTypePrimary();
+    const members: TypeExpressionNode[] = [firstMember];
+
+    while (this.match(TokenType.Pipe)) {
+      members.push(this.parseTypePrimary());
+    }
+
+    if (members.length === 1) {
+      return firstMember;
+    }
+
+    return {
+      kind: "UnionTypeExpression",
+      location: firstMember.location,
+      members,
+    } satisfies UnionTypeExpressionNode;
+  }
+
+  /**
+   * parseTypePrimary parses a primitive or named type reference.
+   */
+  private parseTypePrimary(): TypeExpressionNode {
+    if (this.match(TokenType.Identifier, TokenType.Umra)) {
+      const name: Token = this.previous();
+      return {
+        kind: "TypeName",
+        location: this.locationFrom(name),
+        name,
+      } satisfies TypeNameNode;
+    }
+
+    throw new ParserError(this.peek(), "Expected type name.");
   }
 
   /**

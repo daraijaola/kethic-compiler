@@ -115,6 +115,9 @@ export class CodeGenerator {
       case "TypeDefinition":
         this.emitTypeDefinition(statement);
         return;
+      case "UnionTypeDefinition":
+        this.emitMappedLine(`/** @typedef {*} ${statement.name.lexeme} */`, statement.keyword.line);
+        return;
       case "OvrinDeclaration":
         this.emitOvrinDeclaration(statement);
         return;
@@ -400,6 +403,8 @@ export class CodeGenerator {
         return [
           `${indent}/** @typedef {{ ${statement.fields.map((field) => `${field.name.lexeme}: ${field.typeName.lexeme}`).join("; ")} }} ${statement.name.lexeme} */`,
         ];
+      case "UnionTypeDefinition":
+        return [`${indent}/** @typedef {*} ${statement.name.lexeme} */`];
       case "OvrinDeclaration":
         return [
           statement.source === null
