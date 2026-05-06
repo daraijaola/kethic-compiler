@@ -46,6 +46,8 @@ Kethic source files use:
 | `Duruk` | Break | `break` |
 | `Rukum` | Continue | `continue` |
 | `Selkar` | Type definition placeholder | JS typedef comment |
+| `Rukva` | Array type annotation | compiles away |
+| `Kelva` | Object / record type annotation | compiles away |
 | `Shevkar` | Union type alias | JS typedef comment |
 | `Umrava` | Optional type annotation | compiles away |
 | `Eshnak` | Error handling | `try/catch` |
@@ -58,8 +60,6 @@ The following Second Archive terms are reserved and cannot be used as normal ide
 
 | Word | Planned Concept |
 | --- | --- |
-| `Rukva` | Array type / collection form |
-| `Kelva` | Object or record type |
 | `Tharkar` | Generic type |
 | `Ovesh` | Tainted value |
 | `Seltor` | Trusted value |
@@ -280,6 +280,8 @@ The type checker currently supports:
 - array types
 - map types
 - anonymous object shapes
+- array annotations with `Rukva`
+- object annotations with `Kelva`
 - named union aliases with `Shevkar`
 - optional annotations with `Umrava`
 - variable, constant, and parameter type annotations
@@ -319,6 +321,18 @@ Kelthar greet(value: Umrava String) {
 ```
 
 `Umrava Type` means the value may be either `Type` or `Null`. It is equivalent to `Type | Umra`, but reads as an intentional optional vessel.
+
+### 12.3 Array and Object Types
+
+```keth
+Navā scores: Rukva Number = [95, 87, 72];
+Navā nested: Rukva Rukva Number = [[1], [2]];
+Navā user: Kelva { name: String, age: Number } = { name: "Aru", age: 30 };
+```
+
+`Rukva Type` declares an array whose elements must match `Type`.
+
+`Kelva { field: Type }` declares an object shape whose fields must match the declared property names and types.
 
 ## 13. Obfuscation
 

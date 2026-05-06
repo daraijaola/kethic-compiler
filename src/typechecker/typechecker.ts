@@ -1173,6 +1173,18 @@ export class TypeChecker {
       return createUnionType([this.resolveTypeExpression(expression.innerType, contextKeyword), NULL_TYPE]);
     }
 
+    if (expression.kind === "ArrayTypeExpression") {
+      return createArrayType(this.resolveTypeExpression(expression.elementType, contextKeyword));
+    }
+
+    if (expression.kind === "ObjectTypeExpression") {
+      const properties: Record<string, KethicType> = {};
+      for (const property of expression.properties) {
+        properties[property.name.lexeme] = this.resolveTypeExpression(property.valueType, contextKeyword);
+      }
+      return createObjectType(properties);
+    }
+
     const name: string = expression.name.type === TokenType.Umra ? "Null" : expression.name.lexeme;
 
     switch (name) {

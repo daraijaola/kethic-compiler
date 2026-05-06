@@ -125,9 +125,41 @@ export interface OptionalTypeExpressionNode extends BaseNode {
 }
 
 /**
+ * ArrayTypeExpressionNode stores Rukva Type annotations.
+ */
+export interface ArrayTypeExpressionNode extends BaseNode {
+  readonly kind: "ArrayTypeExpression";
+  readonly keyword: Token;
+  readonly elementType: TypeExpressionNode;
+}
+
+/**
+ * ObjectTypeExpressionNode stores Kelva { field: Type } annotations.
+ */
+export interface ObjectTypeExpressionNode extends BaseNode {
+  readonly kind: "ObjectTypeExpression";
+  readonly keyword: Token;
+  readonly properties: ObjectTypePropertyNode[];
+}
+
+/**
+ * ObjectTypePropertyNode stores one named property inside a Kelva type.
+ */
+export interface ObjectTypePropertyNode extends BaseNode {
+  readonly kind: "ObjectTypeProperty";
+  readonly name: Token;
+  readonly valueType: TypeExpressionNode;
+}
+
+/**
  * TypeExpressionNode is every type-level expression currently supported.
  */
-export type TypeExpressionNode = TypeNameNode | UnionTypeExpressionNode | OptionalTypeExpressionNode;
+export type TypeExpressionNode =
+  | TypeNameNode
+  | UnionTypeExpressionNode
+  | OptionalTypeExpressionNode
+  | ArrayTypeExpressionNode
+  | ObjectTypeExpressionNode;
 
 /**
  * Ovrin represents controlled crossing at a module boundary. If source is

@@ -16,6 +16,7 @@ import {
   ExpressionNode,
   ExpressionStatementNode,
   ArrowFunctionExpressionNode,
+  ArrayTypeExpressionNode,
   FunctionCallStatementNode,
   FunctionDeclarationNode,
   FunctionExpressionNode,
@@ -30,6 +31,8 @@ import {
   NullLiteralNode,
   ObjectLiteralNode,
   ObjectPropertyNode,
+  ObjectTypeExpressionNode,
+  ObjectTypePropertyNode,
   OptionalTypeExpressionNode,
   OvrinDeclarationNode,
   ParameterNode,
@@ -930,6 +933,20 @@ export class Parser {
    * parseTypePrimary parses a primitive or named type reference.
    */
   private parseTypePrimary(): TypeExpressionNode {
+    if (this.match(TokenType.Rukva)) {
+      const keyword: Token = this.previous();
+      return {
+        kind: "ArrayTypeExpression",
+        location: this.locationFrom(keyword),
+        keyword,
+        elementType: this.parseTypePrimary(),
+      } satisfies ArrayTypeExpressionNode;
+    }
+
+    if (this.match(TokenType.Kelva)) {
+      return this.parseObjectTypeExpression(this.previous());
+    }
+
     if (this.match(TokenType.Umrava)) {
       const keyword: Token = this.previous();
       return {
@@ -950,6 +967,37 @@ export class Parser {
     }
 
     throw new ParserError(this.peek(), "Expected type name.");
+  }
+
+  /**
+   * parseObjectTypeExpression parses Kelva { field: Type, field: Type }.
+   */
+  private parseObjectTypeExpression(keyword: Token): ObjectTypeExpressionNode {
+    this.consume(TokenType.LeftBrace, "Expected '{' after Kelva.");
+    const properties: ObjectTypePropertyNode[] = [];
+
+    if (!this.check(TokenType.RightBrace)) {
+      do {
+        const name: Token = this.consume(TokenType.Identifier, "Expected Kelva property name.");
+        this.consume(TokenType.Colon, "Expected ':' after Kelva property name.");
+        const valueType: TypeExpressionNode = this.parseTypeExpression();
+        properties.push({
+          kind: "ObjectTypeProperty",
+          location: this.locationFrom(name),
+          name,
+          valueType,
+        });
+      } while (this.match(TokenType.Comma));
+    }
+
+    this.consume(TokenType.RightBrace, "Expected '}' after Kelva type.");
+
+    return {
+      kind: "ObjectTypeExpression",
+      location: this.locationFrom(keyword),
+      keyword,
+      properties,
+    };
   }
 
   /**

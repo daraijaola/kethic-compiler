@@ -186,6 +186,42 @@ Umkel greet(false);
     expect(result.diagnostics[1]).toContain('Kelthar "greet" argument 1 expected String | Null but received Boolean');
   });
 
+  it("accepts Rukva and Kelva type annotations for arrays and objects", () => {
+    const result = compile(`
+Shevkar MaybeScores = Umrava Rukva Number;
+Navā scores: Rukva Number = [95, 87, 72];
+Navā nested: Rukva Rukva Number = [[1], [2]];
+Navā user: Kelva { name: String, age: Number } = { name: "Aru", age: 30 };
+Navā maybeScores: MaybeScores = Umra;
+Kelthar first(items: Rukva Number) {
+  Duren items[0];
+}
+Umkel first(scores);
+`);
+
+    expect(result.diagnostics).toEqual([]);
+    expect(result.code).toContain("let scores = [95, 87, 72];");
+    expect(result.code).toContain("let nested = [[1], [2]];");
+    expect(result.code).toContain('let user = { name: "Aru", age: 30 };');
+    expect(result.code).toContain("let maybeScores = null;");
+  });
+
+  it("reports values that do not match Rukva and Kelva annotations", () => {
+    const result = compile(`
+Navā badScores: Rukva Number = ["wrong"];
+Navā badUser: Kelva { name: String, age: Number } = { name: "Aru", age: "old" };
+Kelthar first(items: Rukva Number) {
+  Duren items[0];
+}
+Umkel first(["wrong"]);
+`);
+
+    expect(result.diagnostics).toHaveLength(3);
+    expect(result.diagnostics[0]).toContain('variable "badScores" was declared as Number[] but received String[]');
+    expect(result.diagnostics[1]).toContain('variable "badUser" was declared as { name: String; age: Number } but received { name: String; age: String }');
+    expect(result.diagnostics[2]).toContain('Kelthar "first" argument 1 expected Number[] but received String[]');
+  });
+
   it("infers mixed ternary branches as a union result", () => {
     const result = compile(`
 Navā mixed = true ? "yes" : 1;
