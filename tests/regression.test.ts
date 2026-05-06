@@ -205,6 +205,34 @@ Navā alsoBad = StringLength(10);
     expect(result.diagnostics[1]).toContain('Kelthar "call target" argument 1 expected String but received Number');
   });
 
+  it("type-checks and emits simple HTTP and JSON standard library helpers", () => {
+    const result = compile(`
+Ovdurthar Kelthar loadUser(url: String) {
+  Navā raw = Torduren HttpGet(url);
+  Navā data = JsonParse(raw);
+  Navā again = JsonStringify(data);
+  Duren again;
+}
+`);
+
+    expect(result.diagnostics).toEqual([]);
+    expect(result.code).toContain("async function loadUser(url) {");
+    expect(result.code).toContain("let raw = await fetch(url).then((response) => response.text());");
+    expect(result.code).toContain("let data = JSON.parse(raw);");
+    expect(result.code).toContain("let again = JSON.stringify(data);");
+  });
+
+  it("reports simple HTTP and JSON standard library type errors", () => {
+    const result = compile(`
+Navā badGet = HttpGet(10);
+Navā badParse = JsonParse(20);
+`);
+
+    expect(result.diagnostics).toHaveLength(2);
+    expect(result.diagnostics[0]).toContain('Kelthar "call target" argument 1 expected String but received Number');
+    expect(result.diagnostics[1]).toContain('Kelthar "call target" argument 1 expected String but received Number');
+  });
+
   it("infers arrays, objects, null, member access, and indexing", () => {
     const result = compile(`
 Navā scores = [95, 87, 72];

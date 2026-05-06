@@ -3,6 +3,7 @@ import {
   BOOLEAN_TYPE,
   createArrayType,
   createFunctionType,
+  createPromiseType,
   FunctionSymbol,
   KethicType,
   NUMBER_TYPE,
@@ -187,6 +188,31 @@ export const standardLibraryFunctions: readonly StandardLibraryFunction[] = [
     minimumParameterCount: 2,
     hasRestParameter: false,
     emitCall: (argumentsList: readonly string[]): string => `(${argumentsList[0] ?? "[]"}).includes(${argumentsList[1] ?? "undefined"})`,
+  },
+  {
+    name: "HttpGet",
+    parameterTypes: [STRING_TYPE],
+    returnType: createPromiseType(STRING_TYPE),
+    minimumParameterCount: 1,
+    hasRestParameter: false,
+    emitCall: (argumentsList: readonly string[]): string =>
+      `fetch(${argumentsList[0] ?? "\"\""}).then((response) => response.text())`,
+  },
+  {
+    name: "JsonParse",
+    parameterTypes: [STRING_TYPE],
+    returnType: UNKNOWN_TYPE,
+    minimumParameterCount: 1,
+    hasRestParameter: false,
+    emitCall: (argumentsList: readonly string[]): string => `JSON.parse(${argumentsList[0] ?? "\"null\""})`,
+  },
+  {
+    name: "JsonStringify",
+    parameterTypes: [UNKNOWN_TYPE],
+    returnType: STRING_TYPE,
+    minimumParameterCount: 1,
+    hasRestParameter: false,
+    emitCall: (argumentsList: readonly string[]): string => `JSON.stringify(${argumentsList[0] ?? "null"})`,
   },
 ];
 

@@ -297,6 +297,9 @@ Kethic predeclares a small standard library. These functions require no `Ovrin` 
 | `ArrayPush(value: Rukva Unknown, item: Unknown)` | returns `Number` | `value.push(item)` |
 | `ArrayJoin(value: Rukva Unknown, separator: String)` | returns `String` | `value.join(separator)` |
 | `ArrayIncludes(value: Rukva Unknown, item: Unknown)` | returns `Boolean` | `value.includes(item)` |
+| `HttpGet(url: String)` | returns `Promise<String>` | `fetch(url).then(response => response.text())` |
+| `JsonParse(text: String)` | returns `Unknown` | `JSON.parse(text)` |
+| `JsonStringify(value: Unknown)` | returns `String` | `JSON.stringify(value)` |
 
 ```keth
 Navā high = MathMax(10, 20, 5);
@@ -304,6 +307,11 @@ Navā size = StringLength("Aru");
 Navā upper = StringUpper("aru");
 Navā first = ArrayAt([1, 2, 3], 0);
 Umkel Print("high", high, size);
+
+Ovdurthar Kelthar load(url: String) {
+  Navā raw = Torduren HttpGet(url);
+  Duren JsonParse(raw);
+}
 ```
 
 ## 12. Expressions
