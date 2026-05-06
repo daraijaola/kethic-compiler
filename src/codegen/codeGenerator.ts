@@ -7,6 +7,7 @@ import {
   ArrowFunctionExpressionNode,
   FunctionDeclarationNode,
   FunctionExpressionNode,
+  MapLiteralNode,
   OvrinDeclarationNode,
   ParameterNode,
   ProgramNode,
@@ -233,6 +234,8 @@ export class CodeGenerator {
         return `[${expression.elements.map((element: ExpressionNode) => this.emitExpression(element)).join(", ")}]`;
       case "ObjectLiteral":
         return this.emitObjectLiteral(expression);
+      case "MapLiteral":
+        return this.emitMapLiteral(expression);
       case "FunctionExpression":
         return this.emitFunctionExpression(expression);
       case "ArrowFunctionExpression":
@@ -285,6 +288,20 @@ export class CodeGenerator {
    */
   private emitObjectKey(key: { readonly type: TokenType; readonly lexeme: string }): string {
     return key.type === TokenType.String ? key.lexeme : key.lexeme;
+  }
+
+  /**
+   * emitMapLiteral emits Selva lookup archives as JavaScript Map instances.
+   */
+  private emitMapLiteral(expression: MapLiteralNode): string {
+    if (expression.entries.length === 0) {
+      return "({})";
+    }
+
+    const entries: string = expression.entries
+      .map((entry) => `[${this.emitExpression(entry.key)}]: ${this.emitExpression(entry.value)}`)
+      .join(", ");
+    return `({ ${entries} })`;
   }
 
   /**

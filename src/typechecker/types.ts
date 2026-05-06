@@ -48,9 +48,18 @@ export interface ObjectType {
 }
 
 /**
+ * MapType represents a key/value lookup archive.
+ */
+export interface MapType {
+  readonly kind: "Map";
+  readonly keyType: KethicType;
+  readonly valueType: KethicType;
+}
+
+/**
  * KethicType is the formal internal type model used by the checker.
  */
-export type KethicType = PrimitiveType | UnknownType | FunctionType | ArrayType | ObjectType;
+export type KethicType = PrimitiveType | UnknownType | FunctionType | ArrayType | ObjectType | MapType;
 
 /**
  * Shared type objects for the currently supported Kethic types.
@@ -158,6 +167,17 @@ export function createObjectType(properties: Readonly<Record<string, KethicType>
 }
 
 /**
+ * createMapType creates a lookup archive type from key and value types.
+ */
+export function createMapType(keyType: KethicType, valueType: KethicType): MapType {
+  return {
+    kind: "Map",
+    keyType,
+    valueType,
+  };
+}
+
+/**
  * typeToString formats structured Kethic types for diagnostics.
  */
 export function typeToString(type: KethicType): string {
@@ -172,6 +192,8 @@ export function typeToString(type: KethicType): string {
       return `${typeToString(type.elementType)}[]`;
     case "Object":
       return `{ ${Object.entries(type.properties).map(([name, value]) => `${name}: ${typeToString(value)}`).join("; ")} }`;
+    case "Map":
+      return `Selva<${typeToString(type.keyType)}, ${typeToString(type.valueType)}>`;
   }
 }
 

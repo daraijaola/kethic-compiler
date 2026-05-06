@@ -23,6 +23,8 @@ import {
   IdentifierExpressionNode,
   IndexExpressionNode,
   LoopStatementNode,
+  MapEntryNode,
+  MapLiteralNode,
   MemberExpressionNode,
   NumberLiteralNode,
   NullLiteralNode,
@@ -752,6 +754,10 @@ export class Parser {
       return this.createNullLiteral(this.previous());
     }
 
+    if (this.match(TokenType.Selva)) {
+      return this.parseMapLiteral(this.previous());
+    }
+
     if (this.match(TokenType.LeftBracket)) {
       return this.parseArrayLiteral(this.previous());
     }
@@ -965,6 +971,37 @@ export class Parser {
       location: this.locationFrom(openingBrace),
       openingBrace,
       properties,
+    };
+  }
+
+  /**
+   * parseMapLiteral parses Selva { key: value, key: value } lookup archives.
+   */
+  private parseMapLiteral(keyword: Token): MapLiteralNode {
+    this.consume(TokenType.LeftBrace, "Expected '{' after Selva.");
+    const entries: MapEntryNode[] = [];
+
+    if (!this.check(TokenType.RightBrace)) {
+      do {
+        const key: ExpressionNode = this.parseExpression();
+        this.consume(TokenType.Colon, "Expected ':' after Selva key.");
+        const value: ExpressionNode = this.parseExpression();
+        entries.push({
+          kind: "MapEntry",
+          location: key.location,
+          key,
+          value,
+        });
+      } while (this.match(TokenType.Comma));
+    }
+
+    this.consume(TokenType.RightBrace, "Expected '}' after Selva literal.");
+
+    return {
+      kind: "MapLiteral",
+      location: this.locationFrom(keyword),
+      keyword,
+      entries,
     };
   }
 

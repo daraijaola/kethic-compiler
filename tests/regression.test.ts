@@ -97,6 +97,19 @@ Navā empty = Umra;
     expect(result.code).toContain("let empty = null;");
   });
 
+  it("emits Selva maps as lookup dictionaries with typed indexing", () => {
+    const result = compile(`
+Navā labels = Selva { "active": "on", "paused": "off" };
+Navā current = labels["active"];
+Navā emptyLabels = Selva {};
+`);
+
+    expect(result.diagnostics).toEqual([]);
+    expect(result.code).toContain('let labels = ({ ["active"]: "on", ["paused"]: "off" });');
+    expect(result.code).toContain('let current = labels["active"];');
+    expect(result.code).toContain("let emptyLabels = ({});");
+  });
+
   it("preserves object keys but obfuscates object values", () => {
     const generated = new CodeGenerator().generate(
       new Parser(new Lexer('Navā user = { name: "Aru", age: 30 };').scanTokens()).parse(),

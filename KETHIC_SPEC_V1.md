@@ -48,6 +48,7 @@ Kethic source files use:
 | `Selkar` | Type definition placeholder | JS typedef comment |
 | `Eshnak` | Error handling | `try/catch` |
 | `Ovrin` | Import/export placeholder | `import` / `export` |
+| `Selva` | Map / dictionary literal | computed-property lookup object |
 
 ## 4. Reserved Future Words
 
@@ -57,7 +58,6 @@ The following Second Archive terms are reserved and cannot be used as normal ide
 | --- | --- |
 | `Rukva` | Array type / collection form |
 | `Kelva` | Object or record type |
-| `Selva` | Map / dictionary |
 | `Shevkar` | Union type |
 | `Umrava` | Optional type |
 | `Tharkar` | Generic type |
@@ -134,6 +134,22 @@ Navā user = { name: "Aru", age: 30 };
 ```
 
 Object literals infer anonymous object shapes. Object property keys are preserved by code generation and obfuscation.
+
+### 6.3 Map / Dictionary Literal
+
+```keth
+Navā labels = Selva { "active": "on", "paused": "off" };
+Navā emptyLabels = Selva {};
+Navā nested = Selva { "scores": [95, 87] };
+```
+
+`Selva` literals represent lookup archives. They infer a homogeneous key/value map type such as `Selva<String, Number>`. Mixed key or value types use `Unknown` for the mixed slot.
+
+Generated JavaScript currently uses computed-property lookup objects so bracket access remains valid:
+
+```js
+let labels = ({ ["active"]: "on", ["paused"]: "off" });
+```
 
 ## 7. Variables and Constants
 
@@ -262,6 +278,7 @@ The type checker currently supports:
 - primitive types: `Number`, `String`, `Boolean`, `Void`, `Null`
 - function types
 - array types
+- map types
 - anonymous object shapes
 - lexical scope tracking
 - duplicate declaration diagnostics
@@ -289,7 +306,6 @@ Object property keys are intentionally preserved while property values are obfus
 
 The following are planned but not active syntax:
 
-- `Selva` maps / dictionaries
 - `Shevkar` union types
 - `Umrava` optional types
 - `Tharkar` generic types

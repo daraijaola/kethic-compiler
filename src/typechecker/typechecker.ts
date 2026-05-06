@@ -20,6 +20,7 @@ import {
   IdentifierExpressionNode,
   IndexExpressionNode,
   LoopStatementNode,
+  MapLiteralNode,
   MemberExpressionNode,
   OvrinDeclarationNode,
   ParameterNode,
@@ -37,6 +38,7 @@ import {
   BOOLEAN_TYPE,
   createArrayType,
   createFunctionType,
+  createMapType,
   FunctionType,
   FunctionSymbol,
   isUnknownType,
@@ -515,6 +517,8 @@ export class TypeChecker {
         return this.inferArrayLiteral(expression, contextKeyword);
       case "ObjectLiteral":
         return this.inferObjectLiteral(expression, contextKeyword);
+      case "MapLiteral":
+        return this.inferMapLiteral(expression, contextKeyword);
       case "FunctionExpression":
         return this.inferFunctionExpression(expression);
       case "ArrowFunctionExpression":
@@ -687,6 +691,28 @@ export class TypeChecker {
   }
 
   /**
+   * inferMapLiteral returns homogeneous Selva key/value types or Unknown slots when mixed.
+   */
+  private inferMapLiteral(expression: MapLiteralNode, contextKeyword: Token): KethicType {
+    if (expression.entries.length === 0) {
+      return createMapType(UNKNOWN_TYPE, UNKNOWN_TYPE);
+    }
+
+    const keyTypes: KethicType[] = expression.entries.map((entry) => this.inferExpression(entry.key, contextKeyword));
+    const valueTypes: KethicType[] = expression.entries.map((entry) => this.inferExpression(entry.value, contextKeyword));
+    const firstKeyType: KethicType = keyTypes[0];
+    const firstValueType: KethicType = valueTypes[0];
+    const keyType: KethicType = keyTypes.every((type: KethicType) => this.typesCompatible(firstKeyType, type))
+      ? firstKeyType
+      : UNKNOWN_TYPE;
+    const valueType: KethicType = valueTypes.every((type: KethicType) => this.typesCompatible(firstValueType, type))
+      ? firstValueType
+      : UNKNOWN_TYPE;
+
+    return createMapType(keyType, valueType);
+  }
+
+  /**
    * inferFunctionExpression checks a Tharva/Kelthar expression in its own scope.
    */
   private inferFunctionExpression(expression: FunctionExpressionNode): KethicType {
@@ -852,20 +878,32 @@ export class TypeChecker {
     const objectType: KethicType = this.inferExpression(expression.object, contextKeyword);
     const indexType: KethicType = this.inferExpression(expression.index, contextKeyword);
 
-    if (!this.typesCompatible(NUMBER_TYPE, indexType)) {
-      this.report(contextKeyword, `index expression expected Number but received ${typeToString(indexType)}`);
-    }
-
     if (isUnknownType(objectType)) {
       return UNKNOWN_TYPE;
     }
 
     if (this.isPrimitive(objectType, "String")) {
+      if (!this.typesCompatible(NUMBER_TYPE, indexType)) {
+        this.report(contextKeyword, `index expression expected Number but received ${typeToString(indexType)}`);
+      }
       return STRING_TYPE;
     }
 
     if (objectType.kind === "Array") {
+      if (!this.typesCompatible(NUMBER_TYPE, indexType)) {
+        this.report(contextKeyword, `index expression expected Number but received ${typeToString(indexType)}`);
+      }
       return objectType.elementType;
+    }
+
+    if (objectType.kind === "Map") {
+      if (!this.typesCompatible(objectType.keyType, indexType)) {
+        this.report(
+          contextKeyword,
+          `Selva index expected ${typeToString(objectType.keyType)} key but received ${typeToString(indexType)}`,
+        );
+      }
+      return objectType.valueType;
     }
 
     this.report(contextKeyword, `type ${typeToString(objectType)} cannot be indexed`);
@@ -958,6 +996,13 @@ export class TypeChecker {
           Object.prototype.hasOwnProperty.call(actual.properties, key) &&
           this.typesCompatible(expected.properties[key], actual.properties[key]),
         )
+      );
+    }
+
+    if (expected.kind === "Map" && actual.kind === "Map") {
+      return (
+        this.typesCompatible(expected.keyType, actual.keyType) &&
+        this.typesCompatible(expected.valueType, actual.valueType)
       );
     }
 

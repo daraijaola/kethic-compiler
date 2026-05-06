@@ -270,6 +270,24 @@ export interface ObjectPropertyNode extends BaseNode {
 }
 
 /**
+ * MapLiteralNode stores Selva lookup archives with key/value entries.
+ */
+export interface MapLiteralNode extends BaseNode {
+  readonly kind: "MapLiteral";
+  readonly keyword: Token;
+  readonly entries: MapEntryNode[];
+}
+
+/**
+ * MapEntryNode stores one key/value pair inside a Selva literal.
+ */
+export interface MapEntryNode extends BaseNode {
+  readonly kind: "MapEntry";
+  readonly key: ExpressionNode;
+  readonly value: ExpressionNode;
+}
+
+/**
  * FunctionExpressionNode stores anonymous function expressions introduced by
  * Tharva or expression-position Kelthar.
  */
@@ -446,6 +464,7 @@ export type ExpressionNode =
   | NullLiteralNode
   | ArrayLiteralNode
   | ObjectLiteralNode
+  | MapLiteralNode
   | FunctionExpressionNode
   | ArrowFunctionExpressionNode
   | TemplateStringNode
