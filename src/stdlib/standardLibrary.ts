@@ -1,5 +1,15 @@
 import { Token, TokenType } from "../lexer/tokens";
-import { createArrayType, createFunctionType, FunctionSymbol, KethicType, NUMBER_TYPE, STRING_TYPE, UNKNOWN_TYPE, VOID_TYPE } from "../typechecker/types";
+import {
+  BOOLEAN_TYPE,
+  createArrayType,
+  createFunctionType,
+  FunctionSymbol,
+  KethicType,
+  NUMBER_TYPE,
+  STRING_TYPE,
+  UNKNOWN_TYPE,
+  VOID_TYPE,
+} from "../typechecker/types";
 
 /**
  * BuiltinEmitter receives already-generated JavaScript argument expressions
@@ -82,12 +92,101 @@ export const standardLibraryFunctions: readonly StandardLibraryFunction[] = [
     emitCall: (argumentsList: readonly string[]): string => `${argumentsList[0] ?? "\"\""}.length`,
   },
   {
+    name: "StringConcat",
+    parameterTypes: [createArrayType(STRING_TYPE)],
+    returnType: STRING_TYPE,
+    minimumParameterCount: 0,
+    hasRestParameter: true,
+    emitCall: (argumentsList: readonly string[]): string => argumentsList.length === 0 ? "\"\"" : argumentsList.join(" + "),
+  },
+  {
+    name: "StringUpper",
+    parameterTypes: [STRING_TYPE],
+    returnType: STRING_TYPE,
+    minimumParameterCount: 1,
+    hasRestParameter: false,
+    emitCall: (argumentsList: readonly string[]): string => `(${argumentsList[0] ?? "\"\""}).toUpperCase()`,
+  },
+  {
+    name: "StringLower",
+    parameterTypes: [STRING_TYPE],
+    returnType: STRING_TYPE,
+    minimumParameterCount: 1,
+    hasRestParameter: false,
+    emitCall: (argumentsList: readonly string[]): string => `(${argumentsList[0] ?? "\"\""}).toLowerCase()`,
+  },
+  {
+    name: "StringTrim",
+    parameterTypes: [STRING_TYPE],
+    returnType: STRING_TYPE,
+    minimumParameterCount: 1,
+    hasRestParameter: false,
+    emitCall: (argumentsList: readonly string[]): string => `(${argumentsList[0] ?? "\"\""}).trim()`,
+  },
+  {
+    name: "StringIncludes",
+    parameterTypes: [STRING_TYPE, STRING_TYPE],
+    returnType: BOOLEAN_TYPE,
+    minimumParameterCount: 2,
+    hasRestParameter: false,
+    emitCall: (argumentsList: readonly string[]): string => `(${argumentsList[0] ?? "\"\""}).includes(${argumentsList[1] ?? "\"\""})`,
+  },
+  {
+    name: "StringStartsWith",
+    parameterTypes: [STRING_TYPE, STRING_TYPE],
+    returnType: BOOLEAN_TYPE,
+    minimumParameterCount: 2,
+    hasRestParameter: false,
+    emitCall: (argumentsList: readonly string[]): string => `(${argumentsList[0] ?? "\"\""}).startsWith(${argumentsList[1] ?? "\"\""})`,
+  },
+  {
+    name: "StringSlice",
+    parameterTypes: [STRING_TYPE, NUMBER_TYPE, NUMBER_TYPE],
+    returnType: STRING_TYPE,
+    minimumParameterCount: 2,
+    hasRestParameter: false,
+    emitCall: (argumentsList: readonly string[]): string =>
+      `(${argumentsList[0] ?? "\"\""}).slice(${argumentsList.slice(1).join(", ")})`,
+  },
+  {
     name: "ArrayLength",
     parameterTypes: [createArrayType(UNKNOWN_TYPE)],
     returnType: NUMBER_TYPE,
     minimumParameterCount: 1,
     hasRestParameter: false,
     emitCall: (argumentsList: readonly string[]): string => `${argumentsList[0] ?? "[]"}.length`,
+  },
+  {
+    name: "ArrayAt",
+    parameterTypes: [createArrayType(UNKNOWN_TYPE), NUMBER_TYPE],
+    returnType: UNKNOWN_TYPE,
+    minimumParameterCount: 2,
+    hasRestParameter: false,
+    emitCall: (argumentsList: readonly string[]): string => `(${argumentsList[0] ?? "[]"}).at(${argumentsList[1] ?? "0"})`,
+  },
+  {
+    name: "ArrayPush",
+    parameterTypes: [createArrayType(UNKNOWN_TYPE), UNKNOWN_TYPE],
+    returnType: NUMBER_TYPE,
+    minimumParameterCount: 2,
+    hasRestParameter: false,
+    emitCall: (argumentsList: readonly string[]): string => `(${argumentsList[0] ?? "[]"}).push(${argumentsList[1] ?? "undefined"})`,
+  },
+  {
+    name: "ArrayJoin",
+    parameterTypes: [createArrayType(UNKNOWN_TYPE), STRING_TYPE],
+    returnType: STRING_TYPE,
+    minimumParameterCount: 2,
+    hasRestParameter: false,
+    emitCall: (argumentsList: readonly string[]): string => `(${argumentsList[0] ?? "[]"}).join(${argumentsList[1] ?? "\",\""})`,
+  },
+  {
+    name: "ArrayIncludes",
+    parameterTypes: [createArrayType(UNKNOWN_TYPE), UNKNOWN_TYPE],
+    returnType: BOOLEAN_TYPE,
+    minimumParameterCount: 2,
+    hasRestParameter: false,
+    emitCall: (argumentsList: readonly string[]): string => `(${argumentsList[0] ?? "[]"}).includes(${argumentsList[1] ?? "undefined"})`,
   },
 ];
 

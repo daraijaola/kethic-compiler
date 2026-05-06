@@ -285,11 +285,24 @@ Kethic predeclares a small standard library. These functions require no `Ovrin` 
 | `MathFloor(value: Number)` | returns `Number` | `Math.floor(...)` |
 | `MathCeil(value: Number)` | returns `Number` | `Math.ceil(...)` |
 | `StringLength(value: String)` | returns `Number` | `value.length` |
+| `StringConcat(...values: String)` | returns `String` | string `+` chain |
+| `StringUpper(value: String)` | returns `String` | `value.toUpperCase()` |
+| `StringLower(value: String)` | returns `String` | `value.toLowerCase()` |
+| `StringTrim(value: String)` | returns `String` | `value.trim()` |
+| `StringIncludes(value: String, search: String)` | returns `Boolean` | `value.includes(search)` |
+| `StringStartsWith(value: String, search: String)` | returns `Boolean` | `value.startsWith(search)` |
+| `StringSlice(value: String, start: Number, end?: Number)` | returns `String` | `value.slice(...)` |
 | `ArrayLength(value: Rukva Unknown)` | returns `Number` | `value.length` |
+| `ArrayAt(value: Rukva Unknown, index: Number)` | returns `Unknown` | `value.at(index)` |
+| `ArrayPush(value: Rukva Unknown, item: Unknown)` | returns `Number` | `value.push(item)` |
+| `ArrayJoin(value: Rukva Unknown, separator: String)` | returns `String` | `value.join(separator)` |
+| `ArrayIncludes(value: Rukva Unknown, item: Unknown)` | returns `Boolean` | `value.includes(item)` |
 
 ```keth
 Navā high = MathMax(10, 20, 5);
 Navā size = StringLength("Aru");
+Navā upper = StringUpper("aru");
+Navā first = ArrayAt([1, 2, 3], 0);
 Umkel Print("high", high, size);
 ```
 

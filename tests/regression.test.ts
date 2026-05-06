@@ -156,6 +156,44 @@ Navā scoreCount = ArrayLength(scores);
     expect(result.code).toContain("let scoreCount = scores.length;");
   });
 
+  it("type-checks and emits standard library string helpers", () => {
+    const result = compile(`
+Navā raw = "  Aru Vey  ";
+Navā clean = StringTrim(raw);
+Navā loud = StringUpper(clean);
+Navā quiet = StringLower(loud);
+Navā joined = StringConcat("Hello ", clean);
+Navā hasAru = StringIncludes(clean, "Aru");
+Navā starts = StringStartsWith(clean, "A");
+Navā piece = StringSlice(clean, 0, 3);
+`);
+
+    expect(result.diagnostics).toEqual([]);
+    expect(result.code).toContain("let clean = (raw).trim();");
+    expect(result.code).toContain("let loud = (clean).toUpperCase();");
+    expect(result.code).toContain("let quiet = (loud).toLowerCase();");
+    expect(result.code).toContain('let joined = "Hello " + clean;');
+    expect(result.code).toContain('let hasAru = (clean).includes("Aru");');
+    expect(result.code).toContain('let starts = (clean).startsWith("A");');
+    expect(result.code).toContain("let piece = (clean).slice(0, 3);");
+  });
+
+  it("type-checks and emits standard library array helpers", () => {
+    const result = compile(`
+Navā scores = [95, 87, 72];
+Navā first = ArrayAt(scores, 0);
+Navā count = ArrayPush(scores, 100);
+Navā csv = ArrayJoin(scores, ",");
+Navā hasScore = ArrayIncludes(scores, 87);
+`);
+
+    expect(result.diagnostics).toEqual([]);
+    expect(result.code).toContain("let first = (scores).at(0);");
+    expect(result.code).toContain("let count = (scores).push(100);");
+    expect(result.code).toContain('let csv = (scores).join(",");');
+    expect(result.code).toContain("let hasScore = (scores).includes(87);");
+  });
+
   it("reports standard library argument type errors", () => {
     const result = compile(`
 Navā bad = MathMax("wrong");
