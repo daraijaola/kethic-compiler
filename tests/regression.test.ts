@@ -152,6 +152,40 @@ Umkel echo(true);
     expect(result.diagnostics[0]).toContain('Kelthar "echo" argument 1 expected String | Number but received Boolean');
   });
 
+  it("accepts Umrava optional annotations as value or null", () => {
+    const result = compile(`
+Shevkar MaybeLabel = Umrava String;
+Navā name: Umrava String = "Aru";
+Navā emptyName: Umrava String = Umra;
+Navā aliasName: MaybeLabel = Umra;
+Kelthar greet(value: Umrava String) {
+  Duren value;
+}
+Umkel greet("Aru");
+Umkel greet(Umra);
+`);
+
+    expect(result.diagnostics).toEqual([]);
+    expect(result.code).toContain("/** @typedef {*} MaybeLabel */");
+    expect(result.code).toContain('let name = "Aru";');
+    expect(result.code).toContain("let emptyName = null;");
+    expect(result.code).toContain("let aliasName = null;");
+  });
+
+  it("reports values that do not match Umrava optional annotations", () => {
+    const result = compile(`
+Navā name: Umrava String = 10;
+Kelthar greet(value: Umrava String) {
+  Duren value;
+}
+Umkel greet(false);
+`);
+
+    expect(result.diagnostics).toHaveLength(2);
+    expect(result.diagnostics[0]).toContain('variable "name" was declared as String | Null but received Number');
+    expect(result.diagnostics[1]).toContain('Kelthar "greet" argument 1 expected String | Null but received Boolean');
+  });
+
   it("infers mixed ternary branches as a union result", () => {
     const result = compile(`
 Navā mixed = true ? "yes" : 1;

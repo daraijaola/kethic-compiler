@@ -1169,6 +1169,10 @@ export class TypeChecker {
       );
     }
 
+    if (expression.kind === "OptionalTypeExpression") {
+      return createUnionType([this.resolveTypeExpression(expression.innerType, contextKeyword), NULL_TYPE]);
+    }
+
     const name: string = expression.name.type === TokenType.Umra ? "Null" : expression.name.lexeme;
 
     switch (name) {

@@ -47,6 +47,7 @@ Kethic source files use:
 | `Rukum` | Continue | `continue` |
 | `Selkar` | Type definition placeholder | JS typedef comment |
 | `Shevkar` | Union type alias | JS typedef comment |
+| `Umrava` | Optional type annotation | compiles away |
 | `Eshnak` | Error handling | `try/catch` |
 | `Ovrin` | Import/export placeholder | `import` / `export` |
 | `Selva` | Map / dictionary literal | computed-property lookup object |
@@ -59,7 +60,6 @@ The following Second Archive terms are reserved and cannot be used as normal ide
 | --- | --- |
 | `Rukva` | Array type / collection form |
 | `Kelva` | Object or record type |
-| `Umrava` | Optional type |
 | `Tharkar` | Generic type |
 | `Ovesh` | Tainted value |
 | `Seltor` | Trusted value |
@@ -281,6 +281,7 @@ The type checker currently supports:
 - map types
 - anonymous object shapes
 - named union aliases with `Shevkar`
+- optional annotations with `Umrava`
 - variable, constant, and parameter type annotations
 - lexical scope tracking
 - duplicate declaration diagnostics
@@ -306,6 +307,19 @@ Kelthar echo(value: Label) {
 
 `Shevkar` declares a named forked shape. A value annotated with a union may receive any member type in that union. Inline unions are also valid in annotations.
 
+### 12.2 Optional Types
+
+```keth
+Navā name: Umrava String = "Aru";
+Navā emptyName: Umrava String = Umra;
+
+Kelthar greet(value: Umrava String) {
+  Duren value;
+}
+```
+
+`Umrava Type` means the value may be either `Type` or `Null`. It is equivalent to `Type | Umra`, but reads as an intentional optional vessel.
+
 ## 13. Obfuscation
 
 The obfuscator currently performs:
@@ -323,7 +337,6 @@ Object property keys are intentionally preserved while property values are obfus
 
 The following are planned but not active syntax:
 
-- `Umrava` optional types
 - `Tharkar` generic types
 - `Ovesh` tainted values
 - `Seltor` trusted values

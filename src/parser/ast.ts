@@ -116,9 +116,18 @@ export interface UnionTypeExpressionNode extends BaseNode {
 }
 
 /**
+ * OptionalTypeExpressionNode stores Umrava Type annotations.
+ */
+export interface OptionalTypeExpressionNode extends BaseNode {
+  readonly kind: "OptionalTypeExpression";
+  readonly keyword: Token;
+  readonly innerType: TypeExpressionNode;
+}
+
+/**
  * TypeExpressionNode is every type-level expression currently supported.
  */
-export type TypeExpressionNode = TypeNameNode | UnionTypeExpressionNode;
+export type TypeExpressionNode = TypeNameNode | UnionTypeExpressionNode | OptionalTypeExpressionNode;
 
 /**
  * Ovrin represents controlled crossing at a module boundary. If source is

@@ -30,6 +30,7 @@ import {
   NullLiteralNode,
   ObjectLiteralNode,
   ObjectPropertyNode,
+  OptionalTypeExpressionNode,
   OvrinDeclarationNode,
   ParameterNode,
   ProgramNode,
@@ -929,6 +930,16 @@ export class Parser {
    * parseTypePrimary parses a primitive or named type reference.
    */
   private parseTypePrimary(): TypeExpressionNode {
+    if (this.match(TokenType.Umrava)) {
+      const keyword: Token = this.previous();
+      return {
+        kind: "OptionalTypeExpression",
+        location: this.locationFrom(keyword),
+        keyword,
+        innerType: this.parseTypePrimary(),
+      } satisfies OptionalTypeExpressionNode;
+    }
+
     if (this.match(TokenType.Identifier, TokenType.Umra)) {
       const name: Token = this.previous();
       return {
