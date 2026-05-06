@@ -83,21 +83,27 @@ Kelthar collect(...items) {
   it("emits Ovdurthar async functions and Torduren await expressions", () => {
     const result = compile(`
 Ovdurthar Kelthar load(value: Number) {
-  Navā result = Torduren value;
-  Duren result;
+  Duren value;
 }
 Navā delayed = Ovdurthar Tharva(value: Number) {
-  Duren Torduren value;
+  Duren value;
 };
-Navā arrow = Ovdurthar Rinthar (value: Number) -> Torduren value;
+Navā arrow = Ovdurthar Rinthar (value: Number) -> value;
+Ovdurthar Kelthar useAll() {
+  Navā first = Torduren Umkel load(1);
+  Navā second = Torduren delayed(2);
+  Navā third = Torduren arrow(3);
+  Duren first + second + third;
+}
 `);
 
     expect(result.diagnostics).toEqual([]);
     expect(result.code).toContain("async function load(value) {");
-    expect(result.code).toContain("let result = await value;");
     expect(result.code).toContain("let delayed = async function (value) {");
-    expect(result.code).toContain("return await value;");
-    expect(result.code).toContain("let arrow = async (value) => await value;");
+    expect(result.code).toContain("let arrow = async (value) => value;");
+    expect(result.code).toContain("let first = await load(1);");
+    expect(result.code).toContain("let second = await delayed(2);");
+    expect(result.code).toContain("let third = await arrow(3);");
   });
 
   it("reports Torduren outside Ovdurthar functions", () => {
@@ -109,6 +115,17 @@ Kelthar load(value: Number) {
 
     expect(result.diagnostics).toHaveLength(1);
     expect(result.diagnostics[0]).toContain("Torduren cannot appear outside an Ovdurthar function");
+  });
+
+  it("reports Torduren on immediate non-promise values inside Ovdurthar functions", () => {
+    const result = compile(`
+Ovdurthar Kelthar load(value: Number) {
+  Duren Torduren value;
+}
+`);
+
+    expect(result.diagnostics).toHaveLength(1);
+    expect(result.diagnostics[0]).toContain("Torduren expected Promise but received Number");
   });
 
   it("infers arrays, objects, null, member access, and indexing", () => {

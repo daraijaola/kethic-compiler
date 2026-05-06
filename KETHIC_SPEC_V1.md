@@ -214,7 +214,7 @@ Ovdurthar Kelthar load(value: Number) {
 Navā compact = Ovdurthar Rinthar (value: Number) -> Torduren value;
 ```
 
-`Ovdurthar` marks a named, anonymous, or arrow function as async. `Torduren` pauses for a returning answer and is valid only inside an `Ovdurthar` function.
+`Ovdurthar` marks a named, anonymous, or arrow function as async. Calling an `Ovdurthar` function produces an internal `Promise<T>` far-return type, where `T` is the function body's returned value. `Torduren` pauses for a returning answer, is valid only inside an `Ovdurthar` function, and unwraps only `Promise<T>` values.
 
 ## 9. Control Flow
 
@@ -292,6 +292,7 @@ The type checker currently supports:
 
 - primitive types: `Number`, `String`, `Boolean`, `Void`, `Null`
 - function types
+- internal `Promise<T>` far-return types for `Ovdurthar` calls
 - array types
 - map types
 - anonymous object shapes
@@ -307,6 +308,7 @@ The type checker currently supports:
 - function arity diagnostics
 - return type consistency diagnostics
 - `Torduren` placement inside `Ovdurthar` functions
+- `Torduren` await-target diagnostics for non-promise values
 - switch case type matching
 
 Unknown values use `Unknown` to avoid cascaded errors.

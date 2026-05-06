@@ -67,9 +67,17 @@ export interface UnionType {
 }
 
 /**
+ * PromiseType represents the far-return value produced by Ovdurthar calls.
+ */
+export interface PromiseType {
+  readonly kind: "Promise";
+  readonly innerType: KethicType;
+}
+
+/**
  * KethicType is the formal internal type model used by the checker.
  */
-export type KethicType = PrimitiveType | UnknownType | FunctionType | ArrayType | ObjectType | MapType | UnionType;
+export type KethicType = PrimitiveType | UnknownType | FunctionType | ArrayType | ObjectType | MapType | UnionType | PromiseType;
 
 /**
  * Shared type objects for the currently supported Kethic types.
@@ -224,6 +232,16 @@ export function createUnionType(members: readonly KethicType[]): UnionType {
 }
 
 /**
+ * createPromiseType creates the internal far-return type for async calls.
+ */
+export function createPromiseType(innerType: KethicType): PromiseType {
+  return {
+    kind: "Promise",
+    innerType,
+  };
+}
+
+/**
  * typeToString formats structured Kethic types for diagnostics.
  */
 export function typeToString(type: KethicType): string {
@@ -242,6 +260,8 @@ export function typeToString(type: KethicType): string {
       return `Selva<${typeToString(type.keyType)}, ${typeToString(type.valueType)}>`;
     case "Union":
       return type.members.map(typeToString).join(" | ");
+    case "Promise":
+      return `Promise<${typeToString(type.innerType)}>`;
   }
 }
 

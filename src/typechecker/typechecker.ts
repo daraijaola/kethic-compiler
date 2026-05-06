@@ -44,6 +44,7 @@ import {
   createFunctionType,
   createMapType,
   createUnionType,
+  createPromiseType,
   FunctionType,
   FunctionSymbol,
   GenericTypeSymbol,
@@ -732,9 +733,19 @@ export class TypeChecker {
 
     if (this.currentFunction === null || !this.currentFunction.isAsync) {
       this.report(expression.keyword, "Torduren cannot appear outside an Ovdurthar function");
+      return UNKNOWN_TYPE;
     }
 
-    return argumentType;
+    if (isUnknownType(argumentType)) {
+      return UNKNOWN_TYPE;
+    }
+
+    if (argumentType.kind !== "Promise") {
+      this.report(expression.keyword, `Torduren expected Promise but received ${typeToString(argumentType)}`);
+      return UNKNOWN_TYPE;
+    }
+
+    return argumentType.innerType;
   }
 
   /**
@@ -972,7 +983,7 @@ export class TypeChecker {
     this.checkFunctionTypeArgumentCount(contextKeyword, "call target", calleeType, expression.arguments.length);
     this.checkFunctionArguments(contextKeyword, "call target", calleeType, expression.arguments);
 
-    return calleeType.returnType;
+    return this.callReturnType(calleeType);
   }
 
   /**
@@ -1003,7 +1014,7 @@ export class TypeChecker {
       expression.arguments,
     );
 
-    return symbol.kind === "Function" ? symbol.returnType : (symbol.type as FunctionType).returnType;
+    return this.callReturnType(symbol.kind === "Function" ? symbol.type : (symbol.type as FunctionType));
   }
 
   /**
@@ -1213,6 +1224,10 @@ export class TypeChecker {
       );
     }
 
+    if (expected.kind === "Promise" && actual.kind === "Promise") {
+      return this.typesCompatible(expected.innerType, actual.innerType);
+    }
+
     if (expected.kind === "Function" && actual.kind === "Function") {
       return (
         expected.parameters.length === actual.parameters.length &&
@@ -1231,6 +1246,14 @@ export class TypeChecker {
    */
   private isPrimitive(type: KethicType, name: "Number" | "String" | "Boolean" | "Void" | "Null"): boolean {
     return type.kind === "Primitive" && type.name === name;
+  }
+
+  /**
+   * callReturnType wraps Ovdurthar function results in the internal far-return
+   * Promise type while leaving normal Kelthar calls as immediate values.
+   */
+  private callReturnType(type: FunctionType): KethicType {
+    return type.isAsync ? createPromiseType(type.returnType) : type.returnType;
   }
 
   /**
@@ -1300,6 +1323,12 @@ export class TypeChecker {
       case "Null":
         this.reportUnexpectedTypeArguments(name, typeArguments.length, contextKeyword);
         return NULL_TYPE;
+      case "Promise":
+        if (typeArguments.length !== 1) {
+          this.report(contextKeyword, `type "Promise" expected 1 type argument(s) but received ${typeArguments.length}`);
+          return UNKNOWN_TYPE;
+        }
+        return createPromiseType(typeArguments[0]);
       default: {
         const symbol: KethicSymbol | null = this.symbols.resolve(name);
         if (symbol !== null && symbol.kind === "Type") {
