@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { readFileSync } from "node:fs";
 import { CodeGenerator, Lexer, Obfuscator, Parser, TokenType, TypeChecker } from "../src";
 
 function compile(source: string): { readonly code: string; readonly diagnostics: string[] } {
@@ -14,6 +15,18 @@ function compile(source: string): { readonly code: string; readonly diagnostics:
 }
 
 describe("Kethic regression coverage", () => {
+  it("compiles the Milestone 1 demo program", () => {
+    const source: string = readFileSync("examples/milestone1.keth", "utf8");
+    const result = compile(source);
+
+    expect(result.diagnostics).toEqual([]);
+    expect(result.code).toContain("async function main() {");
+    expect(result.code).toContain('await fetch("https://jsonplaceholder.typicode.com/todos/1").then((response) => response.text())');
+    expect(result.code).toContain("JSON.parse(raw)");
+    expect(result.code).toContain("console.log(headline);");
+    expect(result.code).toContain("main();");
+  });
+
   it("tokenizes reserved Second Archive words as non-identifier tokens", () => {
     const source: string = "Rukva Kelva Selva Shevkar Umrava Tharkar Ovesh Seltor Torkel Torselthar Selikh Eshrin Umresh Selovva Torumsel";
     const tokens = new Lexer(source).scanTokens();

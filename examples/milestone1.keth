@@ -1,0 +1,22 @@
+Ovdurthar Kelthar main() {
+  Navā raw = Torduren HttpGet("https://jsonplaceholder.typicode.com/todos/1");
+  Navā todo = JsonParse(raw);
+  Navā title = todo.title;
+  Navā completed = todo.completed;
+  Navā titleLength = StringLength(title);
+  Navā headline = StringConcat("Kethic fetched todo: ", title);
+  Navā report = {
+    title: title,
+    completed: completed,
+    titleLength: titleLength
+  };
+
+  Umkel Print(headline);
+  Umkel Print("Completed:", completed);
+  Umkel Print("Title length:", titleLength);
+  Umkel Print("JSON report:", JsonStringify(report));
+
+  Duren report;
+}
+
+Umkel main();
