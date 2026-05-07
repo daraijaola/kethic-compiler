@@ -3,9 +3,12 @@ import { Parser, ProgramNode } from "../parser";
 import { TokenType } from "../lexer/tokens";
 
 /**
- * NativeBlockKind tracks open Native blocks while lowering to Classic braces.
+ * NativeBlockFrame tracks open Native blocks while lowering to Classic syntax.
  */
-type NativeBlockKind = "Block" | "If" | "Switch" | "SwitchCase" | "EshnakGuard" | "EshnakRecovery";
+type NativeBlockFrame =
+  | { readonly kind: "Block" | "If" | "Switch" | "SwitchCase" | "EshnakGuard" | "EshnakRecovery" }
+  | { readonly kind: "Kelva"; readonly name: string; readonly properties: string[] }
+  | { readonly kind: "Selva"; readonly name: string; readonly entries: string[] };
 
 /**
  * NativeParserError reports invalid Kethic Native source with source lines.
@@ -58,7 +61,7 @@ export class NativeParser {
    * debugging. It is not meant to become the user-facing language.
    */
   public toClassicSource(): string {
-    const blockStack: NativeBlockKind[] = [];
+    const blockStack: NativeBlockFrame[] = [];
     const classicLines: string[] = [];
     const sourceLines: string[] = this.source.split(/\r?\n/);
 
@@ -67,7 +70,7 @@ export class NativeParser {
     }
 
     if (blockStack.length > 0) {
-      throw new NativeParserError(sourceLines.length, `unclosed Native block: ${blockStack[blockStack.length - 1]}`);
+      throw new NativeParserError(sourceLines.length, `unclosed Native block: ${blockStack[blockStack.length - 1].kind}`);
     }
 
     return classicLines.filter((line: string) => line.length > 0).join("\n");
@@ -76,10 +79,15 @@ export class NativeParser {
   /**
    * lowerLine maps one Native line into one Classic line.
    */
-  private lowerLine(rawLine: string, lineNumber: number, blockStack: NativeBlockKind[]): string[] {
+  private lowerLine(rawLine: string, lineNumber: number, blockStack: NativeBlockFrame[]): string[] {
     const line: string = rawLine.trim();
 
     if (line.length === 0 || line.startsWith("#")) {
+      return [];
+    }
+
+    if (this.insideDataBlock(blockStack) && line !== "Tor") {
+      this.collectDataLine(line, lineNumber, blockStack);
       return [];
     }
 
@@ -103,23 +111,37 @@ export class NativeParser {
       return [this.lowerStoneOath(line, lineNumber)];
     }
 
+    if (this.startsWithKeyword(line, TokenType.Rukva)) {
+      return [this.lowerArrayVessel(line, lineNumber)];
+    }
+
+    if (this.startsWithKeyword(line, TokenType.Kelva)) {
+      blockStack.push(this.startKelva(line, lineNumber));
+      return [];
+    }
+
+    if (this.startsWithKeyword(line, TokenType.Selva)) {
+      blockStack.push(this.startSelva(line, lineNumber));
+      return [];
+    }
+
     if (this.startsWithKeyword(line, TokenType.Kelthar)) {
-      blockStack.push("Block");
+      blockStack.push({ kind: "Block" });
       return [this.lowerNamedPattern(line, lineNumber)];
     }
 
     if (this.startsWithKeyword(line, TokenType.Ikhshev)) {
-      blockStack.push("If");
+      blockStack.push({ kind: "If" });
       return [this.lowerConditional(line)];
     }
 
     if (this.startsWithKeyword(line, TokenType.Rukhar)) {
-      blockStack.push("Block");
+      blockStack.push({ kind: "Block" });
       return [this.lowerLoop(line)];
     }
 
     if (this.startsWithKeyword(line, TokenType.Ikhselthar)) {
-      blockStack.push("Switch");
+      blockStack.push({ kind: "Switch" });
       return [this.lowerSwitch(line)];
     }
 
@@ -132,7 +154,7 @@ export class NativeParser {
     }
 
     if (this.startsWithKeyword(line, TokenType.Eshnak)) {
-      blockStack.push("EshnakGuard");
+      blockStack.push({ kind: "EshnakGuard" });
       return [`${TokenType.Eshnak} {`];
     }
 
@@ -158,16 +180,24 @@ export class NativeParser {
   /**
    * lowerTor closes the current Native block.
    */
-  private lowerTor(lineNumber: number, blockStack: NativeBlockKind[]): string[] {
-    const current: NativeBlockKind | undefined = blockStack.pop();
+  private lowerTor(lineNumber: number, blockStack: NativeBlockFrame[]): string[] {
+    const current: NativeBlockFrame | undefined = blockStack.pop();
 
     if (current === undefined) {
       throw new NativeParserError(lineNumber, "Tor cannot close anything here");
     }
 
-    if (current === "SwitchCase") {
-      const parent: NativeBlockKind | undefined = blockStack.pop();
-      if (parent !== "Switch") {
+    if (current.kind === "Kelva") {
+      return [`${TokenType.Nava} ${current.name} = { ${current.properties.join(", ")} };`];
+    }
+
+    if (current.kind === "Selva") {
+      return [`${TokenType.Nava} ${current.name} = ${TokenType.Selva} { ${current.entries.join(", ")} };`];
+    }
+
+    if (current.kind === "SwitchCase") {
+      const parent: NativeBlockFrame | undefined = blockStack.pop();
+      if (parent?.kind !== "Switch") {
         throw new NativeParserError(lineNumber, "Selikhshev must be inside Ikhselthar");
       }
 
@@ -206,6 +236,49 @@ export class NativeParser {
   }
 
   /**
+   * lowerArrayVessel maps Rukva name holds a, b.
+   */
+  private lowerArrayVessel(line: string, lineNumber: number): string {
+    const body: string = this.afterKeyword(line, TokenType.Rukva).trim();
+    const match: RegExpMatchArray | null = body.match(/^([A-Za-z_][A-Za-z0-9_]*)\s+holds\s*(.*)$/);
+
+    if (match === null) {
+      throw new NativeParserError(lineNumber, "expected Rukva name holds values");
+    }
+
+    const values: string = this.lowerArgumentList(match[2].trim());
+    return `${TokenType.Nava} ${match[1]} = [${values}];`;
+  }
+
+  /**
+   * startKelva opens a Native object literal block.
+   */
+  private startKelva(line: string, lineNumber: number): NativeBlockFrame {
+    const body: string = this.afterKeyword(line, TokenType.Kelva).trim();
+    const match: RegExpMatchArray | null = body.match(/^([A-Za-z_][A-Za-z0-9_]*)\s+holds$/);
+
+    if (match === null) {
+      throw new NativeParserError(lineNumber, "expected Kelva name holds");
+    }
+
+    return { kind: "Kelva", name: match[1], properties: [] };
+  }
+
+  /**
+   * startSelva opens a Native map literal block.
+   */
+  private startSelva(line: string, lineNumber: number): NativeBlockFrame {
+    const body: string = this.afterKeyword(line, TokenType.Selva).trim();
+    const match: RegExpMatchArray | null = body.match(/^([A-Za-z_][A-Za-z0-9_]*)\s+holds$/);
+
+    if (match === null) {
+      throw new NativeParserError(lineNumber, "expected Selva name holds");
+    }
+
+    return { kind: "Selva", name: match[1], entries: [] };
+  }
+
+  /**
    * lowerNamedPattern maps Kelthar name receives a, b.
    */
   private lowerNamedPattern(line: string, lineNumber: number): string {
@@ -231,8 +304,8 @@ export class NativeParser {
   /**
    * lowerShev maps Shev and Shev Ikhshev condition.
    */
-  private lowerShev(line: string, lineNumber: number, blockStack: NativeBlockKind[]): string {
-    if (blockStack[blockStack.length - 1] !== "If") {
+  private lowerShev(line: string, lineNumber: number, blockStack: NativeBlockFrame[]): string {
+    if (blockStack[blockStack.length - 1]?.kind !== "If") {
       throw new NativeParserError(lineNumber, "Shev must follow an Ikhshev block");
     }
 
@@ -268,34 +341,34 @@ export class NativeParser {
   /**
    * lowerSwitchCase maps one Selikhshev branch and closes the previous branch.
    */
-  private lowerSwitchCase(line: string, lineNumber: number, blockStack: NativeBlockKind[]): string[] {
+  private lowerSwitchCase(line: string, lineNumber: number, blockStack: NativeBlockFrame[]): string[] {
     const prefix: string[] = this.closePreviousSwitchCase(lineNumber, blockStack);
     const matchValue: string = this.afterKeyword(line, TokenType.Selikhshev).trim();
-    blockStack.push("SwitchCase");
+    blockStack.push({ kind: "SwitchCase" });
     return [...prefix, `${TokenType.Selikhshev} ${this.lowerExpression(matchValue)} {`];
   }
 
   /**
    * lowerSwitchDefault maps Ovikhnak and closes the previous branch.
    */
-  private lowerSwitchDefault(lineNumber: number, blockStack: NativeBlockKind[]): string[] {
+  private lowerSwitchDefault(lineNumber: number, blockStack: NativeBlockFrame[]): string[] {
     const prefix: string[] = this.closePreviousSwitchCase(lineNumber, blockStack);
-    blockStack.push("SwitchCase");
+    blockStack.push({ kind: "SwitchCase" });
     return [...prefix, `${TokenType.Ovikhnak} {`];
   }
 
   /**
    * closePreviousSwitchCase returns a Classic close brace when a new case starts.
    */
-  private closePreviousSwitchCase(lineNumber: number, blockStack: NativeBlockKind[]): string[] {
-    const current: NativeBlockKind | undefined = blockStack[blockStack.length - 1];
+  private closePreviousSwitchCase(lineNumber: number, blockStack: NativeBlockFrame[]): string[] {
+    const current: NativeBlockFrame | undefined = blockStack[blockStack.length - 1];
 
-    if (current === "SwitchCase") {
+    if (current?.kind === "SwitchCase") {
       blockStack.pop();
       return ["}"];
     }
 
-    if (current !== "Switch") {
+    if (current?.kind !== "Switch") {
       throw new NativeParserError(lineNumber, "Selikhshev and Ovikhnak must be inside Ikhselthar");
     }
 
@@ -305,13 +378,73 @@ export class NativeParser {
   /**
    * lowerNak maps the Eshnak recovery boundary.
    */
-  private lowerNak(lineNumber: number, blockStack: NativeBlockKind[]): string {
-    if (blockStack[blockStack.length - 1] !== "EshnakGuard") {
+  private lowerNak(lineNumber: number, blockStack: NativeBlockFrame[]): string {
+    if (blockStack[blockStack.length - 1]?.kind !== "EshnakGuard") {
       throw new NativeParserError(lineNumber, "Nak must follow an Eshnak guarded block");
     }
 
-    blockStack[blockStack.length - 1] = "EshnakRecovery";
+    blockStack[blockStack.length - 1] = { kind: "EshnakRecovery" };
     return "} {";
+  }
+
+  /**
+   * insideDataBlock checks whether the current block is collecting data fields.
+   */
+  private insideDataBlock(blockStack: NativeBlockFrame[]): boolean {
+    const current: NativeBlockFrame | undefined = blockStack[blockStack.length - 1];
+    return current?.kind === "Kelva" || current?.kind === "Selva";
+  }
+
+  /**
+   * collectDataLine stores one Native Kelva or Selva item until Tor closes it.
+   */
+  private collectDataLine(line: string, lineNumber: number, blockStack: NativeBlockFrame[]): void {
+    const current: NativeBlockFrame | undefined = blockStack[blockStack.length - 1];
+
+    if (current?.kind === "Kelva") {
+      current.properties.push(this.lowerKelvaProperty(line, lineNumber));
+      return;
+    }
+
+    if (current?.kind === "Selva") {
+      current.entries.push(this.lowerSelvaEntry(line, lineNumber));
+    }
+  }
+
+  /**
+   * lowerKelvaProperty maps name: value inside a Kelva block.
+   */
+  private lowerKelvaProperty(line: string, lineNumber: number): string {
+    const colonIndex: number = line.indexOf(":");
+    if (colonIndex === -1) {
+      throw new NativeParserError(lineNumber, "expected Kelva property as name: value");
+    }
+
+    const key: string = line.slice(0, colonIndex).trim();
+    const value: string = line.slice(colonIndex + 1).trim();
+    if (key.length === 0 || value.length === 0) {
+      throw new NativeParserError(lineNumber, "expected Kelva property as name: value");
+    }
+
+    return `${key}: ${this.lowerExpression(value)}`;
+  }
+
+  /**
+   * lowerSelvaEntry maps key => value inside a Selva block.
+   */
+  private lowerSelvaEntry(line: string, lineNumber: number): string {
+    const separatorIndex: number = line.indexOf("=>");
+    if (separatorIndex === -1) {
+      throw new NativeParserError(lineNumber, "expected Selva entry as key => value");
+    }
+
+    const key: string = line.slice(0, separatorIndex).trim();
+    const value: string = line.slice(separatorIndex + 2).trim();
+    if (key.length === 0 || value.length === 0) {
+      throw new NativeParserError(lineNumber, "expected Selva entry as key => value");
+    }
+
+    return `${this.lowerExpression(key)}: ${this.lowerExpression(value)}`;
   }
 
   /**

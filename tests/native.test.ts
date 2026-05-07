@@ -121,4 +121,36 @@ Tor
     expect(result.code).toContain("try {");
     expect(result.code).toContain("} catch (error) {");
   });
+
+  it("lowers Native data vessels into array, object, map, and null literals", () => {
+    const result = compileNative(`
+Rukva scores holds 95, 87, 72
+Rukva emptyScores holds
+Kelva user holds
+  name: "Aru"
+  age: 30
+  active: true
+Tor
+Selva labels holds
+  "active" => "on"
+  "paused" => "off"
+Tor
+Navā nothing holds Umra
+Navā first holds scores[0]
+Navā username holds user.name
+Navā activeLabel holds labels["active"]
+`);
+
+    expect(result.diagnostics).toEqual([]);
+    expect(result.classic).toContain("Navā scores = [95, 87, 72];");
+    expect(result.classic).toContain("Navā emptyScores = [];");
+    expect(result.classic).toContain('Navā user = { name: "Aru", age: 30, active: true };');
+    expect(result.classic).toContain('Navā labels = Selva { "active": "on", "paused": "off" };');
+    expect(result.classic).toContain("Navā nothing = Umra;");
+    expect(result.code).toContain("let scores = [95, 87, 72];");
+    expect(result.code).toContain("let emptyScores = [];");
+    expect(result.code).toContain('let user = { name: "Aru", age: 30, active: true };');
+    expect(result.code).toContain('let labels = ({ ["active"]: "on", ["paused"]: "off" });');
+    expect(result.code).toContain("let nothing = null;");
+  });
 });
