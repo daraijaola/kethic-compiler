@@ -3,14 +3,18 @@ import {
   ActionNode,
   ComponentNode,
   ComponentUseNode,
+  FormNode,
   HeadingNode,
+  InputNode,
   MountNode,
   PageNode,
   StateNode,
   StateUpdateNode,
   StyleBlockNode,
   StyleDeclarationNode,
+  TextareaNode,
   TextNode,
+  ValidationMessageNode,
   WebChildNode,
   WebNodeKind,
   WebProgramNode,
@@ -213,6 +217,11 @@ export class WebTypeChecker {
         this.checkComponentUse(child);
       }
 
+      if (child.kind === WebNodeKind.Form) {
+        this.checkForm(child, currentComponent);
+        continue;
+      }
+
       if ("children" in child) {
         this.checkChildren(child.children, currentComponent);
       }
@@ -247,6 +256,39 @@ export class WebTypeChecker {
     if (node.action !== null && !this.actions.has(node.action)) {
       this.report(node, "Umkar", `action "${node.action}" does not exist`);
     }
+  }
+
+  private checkForm(node: FormNode, currentComponent: ComponentNode | null): void {
+    const fields: Map<string, InputNode | TextareaNode> = new Map<string, InputNode | TextareaNode>();
+    const messages: ValidationMessageNode[] = [];
+
+    for (const child of node.children) {
+      if (child.kind === WebNodeKind.Input || child.kind === WebNodeKind.Textarea) {
+        const keyword: string = child.kind === WebNodeKind.Input ? "Enva" : "Kelrinva";
+
+        if (fields.has(child.name)) {
+          this.report(child, keyword, `field "${child.name}" is already declared in this form`);
+        }
+
+        fields.set(child.name, child);
+
+        if (child.label.trim().length === 0) {
+          this.report(child, keyword, `field "${child.name}" must have a label`);
+        }
+      }
+
+      if (child.kind === WebNodeKind.ValidationMessage) {
+        messages.push(child);
+      }
+    }
+
+    for (const message of messages) {
+      if (!fields.has(message.fieldName)) {
+        this.report(message, "Ikhen", `field "${message.fieldName}" does not exist in this form`);
+      }
+    }
+
+    this.checkChildren(node.children, currentComponent);
   }
 
   private checkComponentUse(node: ComponentUseNode): void {

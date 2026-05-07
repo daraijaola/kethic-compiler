@@ -3,13 +3,17 @@ import {
   ComponentNode,
   ComponentUseNode,
   ContainerNode,
+  FormNode,
   HeadingNode,
+  InputNode,
   MountNode,
   PageNode,
   SectionNode,
   StateNode,
   SlotNode,
   TextNode,
+  TextareaNode,
+  ValidationMessageNode,
   WebChildNode,
   WebNodeKind,
   WebProgramNode,
@@ -22,6 +26,8 @@ import {
 interface RenderContext {
   readonly values: ReadonlyMap<string, string>;
   readonly slotChildren: readonly WebChildNode[];
+  readonly validationMessages: ReadonlySet<string>;
+  readonly insideForm: boolean;
 }
 
 /**
@@ -107,6 +113,14 @@ export class HtmlGenerator {
         return this.renderHeading(node, depth, context);
       case WebNodeKind.Button:
         return this.renderButton(node, depth, context);
+      case WebNodeKind.Form:
+        return this.renderForm(node, depth, context);
+      case WebNodeKind.Input:
+        return this.renderInput(node, depth, context);
+      case WebNodeKind.Textarea:
+        return this.renderTextarea(node, depth, context);
+      case WebNodeKind.ValidationMessage:
+        return this.renderValidationMessage(node, depth);
       case WebNodeKind.ComponentUse:
         return this.renderComponentUse(node, depth, context);
       case WebNodeKind.Slot:
@@ -152,7 +166,8 @@ export class HtmlGenerator {
   private renderButton(node: ButtonNode, depth: number, context: RenderContext): string {
     const inner: string = node.children.map((child: WebChildNode) => this.renderButtonChild(child, depth + 1, context)).join("\n");
     const action: string = node.action === null ? "" : ` data-kethic-action="${this.escapeHtml(node.action)}"`;
-    return [`${this.indent(depth)}<button type="button"${action} class="kethic-button">`, inner, `${this.indent(depth)}</button>`].join("\n");
+    const type: string = node.action === null && context.insideForm ? "submit" : "button";
+    return [`${this.indent(depth)}<button type="${type}"${action} class="kethic-button">`, inner, `${this.indent(depth)}</button>`].join("\n");
   }
 
   private renderButtonChild(node: WebChildNode, depth: number, context: RenderContext): string {
@@ -182,6 +197,8 @@ export class HtmlGenerator {
     const componentContext: RenderContext = {
       values,
       slotChildren: node.children,
+      validationMessages: context.validationMessages,
+      insideForm: context.insideForm,
     };
     const inner: string = component.children
       .map((child: WebChildNode) => this.renderChild(child, depth + 1, componentContext))
@@ -198,8 +215,63 @@ export class HtmlGenerator {
     return context.slotChildren.map((child: WebChildNode) => this.renderChild(child, depth, context)).join("\n");
   }
 
+  private renderForm(node: FormNode, depth: number, context: RenderContext): string {
+    const messageFields: Set<string> = new Set<string>(
+      node.children
+        .filter((child: WebChildNode): child is ValidationMessageNode => child.kind === WebNodeKind.ValidationMessage)
+        .map((child: ValidationMessageNode) => child.fieldName),
+    );
+    const formContext: RenderContext = {
+      values: context.values,
+      slotChildren: context.slotChildren,
+      validationMessages: messageFields,
+      insideForm: true,
+    };
+    const inner: string = node.children.map((child: WebChildNode) => this.renderChild(child, depth + 1, formContext)).join("\n");
+
+    return [
+      `${this.indent(depth)}<form class="${this.className(node.name)} kethic-form">`,
+      inner,
+      `${this.indent(depth)}</form>`,
+    ].join("\n");
+  }
+
+  private renderInput(node: InputNode, depth: number, context: RenderContext): string {
+    const id: string = this.fieldId(node.name);
+    const describedBy: string = context.validationMessages.has(node.name)
+      ? ` aria-describedby="${this.escapeHtml(this.messageId(node.name))}"`
+      : "";
+    const required: string = node.required ? " required" : "";
+
+    return [
+      `${this.indent(depth)}<div class="kethic-field">`,
+      `${this.indent(depth + 1)}<label for="${this.escapeHtml(id)}">${this.escapeHtml(node.label)}</label>`,
+      `${this.indent(depth + 1)}<input id="${this.escapeHtml(id)}" name="${this.escapeHtml(node.name)}"${required}${describedBy}>`,
+      `${this.indent(depth)}</div>`,
+    ].join("\n");
+  }
+
+  private renderTextarea(node: TextareaNode, depth: number, context: RenderContext): string {
+    const id: string = this.fieldId(node.name);
+    const describedBy: string = context.validationMessages.has(node.name)
+      ? ` aria-describedby="${this.escapeHtml(this.messageId(node.name))}"`
+      : "";
+    const required: string = node.required ? " required" : "";
+
+    return [
+      `${this.indent(depth)}<div class="kethic-field">`,
+      `${this.indent(depth + 1)}<label for="${this.escapeHtml(id)}">${this.escapeHtml(node.label)}</label>`,
+      `${this.indent(depth + 1)}<textarea id="${this.escapeHtml(id)}" name="${this.escapeHtml(node.name)}" rows="${node.rows}"${required}${describedBy}></textarea>`,
+      `${this.indent(depth)}</div>`,
+    ].join("\n");
+  }
+
+  private renderValidationMessage(node: ValidationMessageNode, depth: number): string {
+    return `${this.indent(depth)}<p id="${this.escapeHtml(this.messageId(node.fieldName))}" class="kethic-validation">${this.escapeHtml(node.message)}</p>`;
+  }
+
   private emptyContext(): RenderContext {
-    return { values: new Map<string, string>(), slotChildren: [] };
+    return { values: new Map<string, string>(), slotChildren: [], validationMessages: new Set<string>(), insideForm: false };
   }
 
   private resolveValue(value: WebValue | undefined, context: RenderContext): string {
@@ -240,6 +312,14 @@ export class HtmlGenerator {
 
   private idFor(name: string): string {
     return this.className(name).replace(/^kethic-/, "");
+  }
+
+  private fieldId(name: string): string {
+    return `field-${this.idFor(name)}`;
+  }
+
+  private messageId(name: string): string {
+    return `${this.fieldId(name)}-message`;
   }
 
   private indent(depth: number): string {

@@ -44,6 +44,15 @@ Torvathar Home
         Tor
       Tor
     Tor
+    Selvathar Contact
+      Enva email label:"Email" Torikh
+      Kelrinva message label:"Message" rows:5 Torikh
+      Ikhen for:email "Enter an email before sending."
+      Ikhen for:message "Write the message you want carried."
+      Umkar
+        Kelen "Send"
+      Tor
+    Tor
   Tor
 Tor
 

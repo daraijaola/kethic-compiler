@@ -9,6 +9,10 @@ export enum WebNodeKind {
   Text = "Text",
   Heading = "Heading",
   Button = "Button",
+  Form = "Form",
+  Input = "Input",
+  Textarea = "Textarea",
+  ValidationMessage = "ValidationMessage",
   Component = "Component",
   ComponentUse = "ComponentUse",
   Slot = "Slot",
@@ -52,7 +56,18 @@ export type WebTopLevelNode = PageNode | ComponentNode | StyleBlockNode | MountN
 /**
  * WebChildNode lists nodes that can render inside page/component content.
  */
-export type WebChildNode = SectionNode | ContainerNode | TextNode | HeadingNode | ButtonNode | ComponentUseNode | SlotNode;
+export type WebChildNode =
+  | SectionNode
+  | ContainerNode
+  | TextNode
+  | HeadingNode
+  | ButtonNode
+  | FormNode
+  | InputNode
+  | TextareaNode
+  | ValidationMessageNode
+  | ComponentUseNode
+  | SlotNode;
 
 /**
  * WebValue stores either literal text or a reference to a component parameter.
@@ -141,6 +156,45 @@ export interface ButtonNode extends WebNode {
   readonly kind: WebNodeKind.Button;
   readonly action: string | null;
   readonly children: readonly WebChildNode[];
+}
+
+/**
+ * FormNode represents Selvathar, a sealed petition vessel.
+ */
+export interface FormNode extends WebNode {
+  readonly kind: WebNodeKind.Form;
+  readonly name: string;
+  readonly children: readonly WebChildNode[];
+}
+
+/**
+ * InputNode represents Enva, a single-line answer vessel.
+ */
+export interface InputNode extends WebNode {
+  readonly kind: WebNodeKind.Input;
+  readonly name: string;
+  readonly label: string;
+  readonly required: boolean;
+}
+
+/**
+ * TextareaNode represents Kelrinva, a long speech-carrying vessel.
+ */
+export interface TextareaNode extends WebNode {
+  readonly kind: WebNodeKind.Textarea;
+  readonly name: string;
+  readonly label: string;
+  readonly rows: number;
+  readonly required: boolean;
+}
+
+/**
+ * ValidationMessageNode represents Ikhen, a test-answer for a field.
+ */
+export interface ValidationMessageNode extends WebNode {
+  readonly kind: WebNodeKind.ValidationMessage;
+  readonly fieldName: string;
+  readonly message: string;
 }
 
 /**

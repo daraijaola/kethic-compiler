@@ -37,6 +37,15 @@ Torvathar Home
         Kelen "Add"
       Tor
     Tor
+    Selvathar Contact
+      Enva email label:"Email" Torikh
+      Kelrinva message label:"Message" rows:5 Torikh
+      Ikhen for:email "Enter an email before sending."
+      Ikhen for:message "Write the message you want carried."
+      Umkar
+        Kelen "Send"
+      Tor
+    Tor
   Tor
 Tor
 
@@ -73,6 +82,12 @@ describe("WebCompiler", () => {
     expect(result.html).toContain("Count: 0");
     expect(result.html).toContain('data-kethic-action="increment"');
     expect(result.html).toContain("<span>Enter</span>");
+    expect(result.html).toContain('<form class="kethic-contact kethic-form">');
+    expect(result.html).toContain('<label for="field-email">Email</label>');
+    expect(result.html).toContain('<input id="field-email" name="email" required aria-describedby="field-email-message">');
+    expect(result.html).toContain('<textarea id="field-message" name="message" rows="5" required aria-describedby="field-message-message"></textarea>');
+    expect(result.html).toContain('<p id="field-email-message" class="kethic-validation">Enter an email before sending.</p>');
+    expect(result.html).toContain('<button type="submit" class="kethic-button">');
     expect(result.html).toContain('<script defer src="./runtime.js"></script>');
     expect(result.css).toContain("@layer kethic.reset, kethic.tokens, kethic.components;");
     expect(result.css).toContain(".kethic-hero {");
@@ -80,6 +95,8 @@ describe("WebCompiler", () => {
     expect(result.css).toContain("background: var(--color-sand-50);");
     expect(result.css).toContain("color: var(--color-ink-900);");
     expect(result.css).toContain("box-shadow: var(--shadow-raised);");
+    expect(result.css).toContain(".kethic-form { display: grid; gap: var(--sa-4); max-inline-size: 42rem; }");
+    expect(result.css).toContain(".kethic-field input, .kethic-field textarea");
     expect(result.runtime).toContain('"count": 0');
     expect(result.runtime).toContain('"increment": () =>');
     expect(result.runtime).toContain('state["count"] = (state["count"] + 1);');
@@ -121,6 +138,33 @@ Umvator "#app" receives Home
 Torvathar Home
   Umkar action:missing
     Kelen "Click"
+  Tor
+Tor
+Umvator "#app" receives Home
+`),
+    ).toThrow(WebCompilerError);
+  });
+
+  it("rejects form fields without labels", () => {
+    expect(() =>
+      new WebCompiler().compile(`
+Torvathar Home
+  Selvathar Contact
+    Enva email Torikh
+  Tor
+Tor
+Umvator "#app" receives Home
+`),
+    ).toThrow(WebCompilerError);
+  });
+
+  it("rejects validation messages for missing fields", () => {
+    expect(() =>
+      new WebCompiler().compile(`
+Torvathar Home
+  Selvathar Contact
+    Enva email label:"Email" Torikh
+    Ikhen for:message "Missing message."
   Tor
 Tor
 Umvator "#app" receives Home

@@ -4,16 +4,20 @@ import {
   ComponentNode,
   ComponentUseNode,
   ContainerNode,
+  FormNode,
   StateNode,
   StateUpdateNode,
   WebExpression,
   HeadingNode,
+  InputNode,
   PageNode,
   SectionNode,
   SlotNode,
   StyleBlockNode,
   StyleDeclarationNode,
   TextNode,
+  TextareaNode,
+  ValidationMessageNode,
   WebChildNode,
   WebNodeKind,
   WebProgramNode,
@@ -29,7 +33,7 @@ import { WebCompilerError, WebDiagnostic } from "./diagnostics";
 type OpenBlock =
   | {
       readonly mode: "children";
-      readonly node: PageNode | SectionNode | ContainerNode | ButtonNode | ComponentNode | ComponentUseNode;
+      readonly node: PageNode | SectionNode | ContainerNode | ButtonNode | FormNode | ComponentNode | ComponentUseNode;
       readonly children: WebChildNode[];
     }
   | { readonly mode: "style"; readonly node: StyleBlockNode; readonly declarations: StyleDeclarationNode[] }
@@ -111,6 +115,26 @@ export class WebParser {
       return;
     }
 
+    if (line.startsWith("Selvathar ")) {
+      this.openContainerBlock(this.parseForm(line, location));
+      return;
+    }
+
+    if (line.startsWith("Enva ")) {
+      this.addChild(this.parseInput(line, location));
+      return;
+    }
+
+    if (line.startsWith("Kelrinva ")) {
+      this.addChild(this.parseTextarea(line, location));
+      return;
+    }
+
+    if (line.startsWith("Ikhen ")) {
+      this.addChild(this.parseValidationMessage(line, location));
+      return;
+    }
+
     if (line.startsWith("Umkel ")) {
       this.openContainerBlock(this.parseComponentUse(line, location));
       return;
@@ -167,7 +191,7 @@ export class WebParser {
   /**
    * openContainerBlock starts a node that may hold renderable child nodes.
    */
-  private openContainerBlock(node: PageNode | SectionNode | ContainerNode | ButtonNode | ComponentNode | ComponentUseNode): void {
+  private openContainerBlock(node: PageNode | SectionNode | ContainerNode | ButtonNode | FormNode | ComponentNode | ComponentUseNode): void {
     this.stack.push({ mode: "children", node, children: [] });
   }
 
@@ -192,7 +216,7 @@ export class WebParser {
       return;
     }
 
-    const closedNode: PageNode | SectionNode | ContainerNode | ButtonNode | ComponentNode | ComponentUseNode = {
+    const closedNode: PageNode | SectionNode | ContainerNode | ButtonNode | FormNode | ComponentNode | ComponentUseNode = {
       ...open.node,
       children: open.children,
     };
@@ -268,6 +292,10 @@ export class WebParser {
     return { kind: WebNodeKind.Container, location, name: this.requiredName(line, "Vakar", location), children: [] };
   }
 
+  private parseForm(line: string, location: WebSourceLocation): FormNode {
+    return { kind: WebNodeKind.Form, location, name: this.requiredName(line, "Selvathar", location), children: [] };
+  }
+
   private parseComponent(line: string, location: WebSourceLocation): ComponentNode {
     const match: RegExpMatchArray | null = line.match(/^Selthar\s+([A-Za-z_][A-Za-z0-9_]*)(?:\s+receives\s+(.+))?$/);
     if (match === null) {
@@ -338,6 +366,56 @@ export class WebParser {
       location,
       action: actionMatch?.[1] ?? null,
       children: [],
+    };
+  }
+
+  private parseInput(line: string, location: WebSourceLocation): InputNode {
+    const match: RegExpMatchArray | null = line.match(/^Enva\s+([A-Za-z_][A-Za-z0-9_]*)(?:\s+label:"([^"]+)")?(\s+Torikh)?$/);
+    if (match === null) {
+      this.report(location, "Enva", 'expected Enva name label:"Label" or Enva name label:"Label" Torikh');
+      return { kind: WebNodeKind.Input, location, name: "", label: "", required: false };
+    }
+
+    return {
+      kind: WebNodeKind.Input,
+      location,
+      name: match[1],
+      label: match[2] ?? "",
+      required: match[3] !== undefined,
+    };
+  }
+
+  private parseTextarea(line: string, location: WebSourceLocation): TextareaNode {
+    const match: RegExpMatchArray | null = line.match(
+      /^Kelrinva\s+([A-Za-z_][A-Za-z0-9_]*)(?:\s+label:"([^"]+)")?(?:\s+rows:(\d+))?(\s+Torikh)?$/,
+    );
+    if (match === null) {
+      this.report(location, "Kelrinva", 'expected Kelrinva name label:"Label" rows:6 or Kelrinva name label:"Label" rows:6 Torikh');
+      return { kind: WebNodeKind.Textarea, location, name: "", label: "", rows: 4, required: false };
+    }
+
+    return {
+      kind: WebNodeKind.Textarea,
+      location,
+      name: match[1],
+      label: match[2] ?? "",
+      rows: match[3] === undefined ? 4 : Number(match[3]),
+      required: match[4] !== undefined,
+    };
+  }
+
+  private parseValidationMessage(line: string, location: WebSourceLocation): ValidationMessageNode {
+    const match: RegExpMatchArray | null = line.match(/^Ikhen\s+for:([A-Za-z_][A-Za-z0-9_]*)\s+(.+)$/);
+    if (match === null) {
+      this.report(location, "Ikhen", 'expected Ikhen for:fieldName "Message"');
+      return { kind: WebNodeKind.ValidationMessage, location, fieldName: "", message: "" };
+    }
+
+    return {
+      kind: WebNodeKind.ValidationMessage,
+      location,
+      fieldName: match[1],
+      message: this.parseValue(match[2], location, "Ikhen"),
     };
   }
 
