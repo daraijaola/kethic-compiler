@@ -27,6 +27,14 @@ describe("Kethic regression coverage", () => {
     expect(result.code).toContain("main();");
   });
 
+  it("keeps the CLI source in the strict TypeScript build surface", () => {
+    const cliSource: string = readFileSync("src/cli.ts", "utf8");
+
+    expect(cliSource).toContain("kethic compile <input.keth> [--out output.js]");
+    expect(cliSource).toContain("compileSource");
+    expect(cliSource).toContain("new CodeGenerator().generate(ast).code");
+  });
+
   it("tokenizes reserved Second Archive words as non-identifier tokens", () => {
     const source: string = "Rukva Kelva Selva Shevkar Umrava Tharkar Ovesh Seltor Torkel Torselthar Selikh Eshrin Umresh Selovva Torumsel";
     const tokens = new Lexer(source).scanTokens();

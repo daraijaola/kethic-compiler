@@ -4,10 +4,13 @@
   "private": true,
   "description": "Private Kethic compiler.",
   "main": "dist/src/index.js",
+  "bin": {
+    "kethic": "dist/src/cli.js"
+  },
   "scripts": {
     "build": "tsc",
     "test": "vitest run",
-    "lexer": "ts-node src/index.ts"
+    "compile": "ts-node src/cli.ts compile"
   },
   "devDependencies": {
     "ts-node": "^10.9.2",
