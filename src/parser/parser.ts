@@ -37,6 +37,7 @@ import {
   ObjectTypePropertyNode,
   OptionalTypeExpressionNode,
   OvrinDeclarationNode,
+  OvrinSpecifierNode,
   ParameterNode,
   ProgramNode,
   ReturnStatementNode,
@@ -331,14 +332,15 @@ export class Parser {
   }
 
   /**
-   * parseOvrinDeclaration parses either:
+   * parseOvrinDeclaration parses:
    * Ovrin name;
    * Ovrin name from "module";
-   * The word from is intentionally parsed as an identifier until Phase 3 gives
-   * module flow stronger semantics.
+   * Ovrin { name, other };
+   * Ovrin { name, other } from "module";
+   * The word from remains parsed as an identifier so no new keyword is needed.
    */
   private parseOvrinDeclaration(keyword: Token): OvrinDeclarationNode {
-    const name: Token = this.consume(TokenType.Identifier, "Expected carried name after Ovrin.");
+    const specifiers: OvrinSpecifierNode[] = this.parseOvrinSpecifiers();
     let source: StringLiteralNode | null = null;
 
     if (this.check(TokenType.Identifier) && this.peek().lexeme === "from") {
@@ -353,8 +355,46 @@ export class Parser {
       kind: "OvrinDeclaration",
       location: this.locationFrom(keyword),
       keyword,
-      name,
+      specifiers,
       source,
+    };
+  }
+
+  /**
+   * parseOvrinSpecifiers parses either one carried name or a braced list.
+   */
+  private parseOvrinSpecifiers(): OvrinSpecifierNode[] {
+    if (!this.match(TokenType.LeftBrace)) {
+      const name: Token = this.consume(TokenType.Identifier, "Expected carried name after Ovrin.");
+      return [this.createOvrinSpecifier(name)];
+    }
+
+    const specifiers: OvrinSpecifierNode[] = [];
+
+    if (!this.check(TokenType.RightBrace)) {
+      do {
+        const name: Token = this.consume(TokenType.Identifier, "Expected carried name inside Ovrin list.");
+        specifiers.push(this.createOvrinSpecifier(name));
+      } while (this.match(TokenType.Comma));
+    }
+
+    this.consume(TokenType.RightBrace, "Expected '}' after Ovrin list.");
+
+    if (specifiers.length === 0) {
+      throw new ParserError(this.previous(), "Expected at least one carried name inside Ovrin list.");
+    }
+
+    return specifiers;
+  }
+
+  /**
+   * createOvrinSpecifier wraps one Ovrin name with a source location.
+   */
+  private createOvrinSpecifier(name: Token): OvrinSpecifierNode {
+    return {
+      kind: "OvrinSpecifier",
+      location: this.locationFrom(name),
+      name,
     };
   }
 

@@ -67,6 +67,14 @@ export class Obfuscator {
       declarationMatch = declarationPattern.exec(plainCode);
     }
 
+    const importPattern: RegExp = /\bimport\s*\{\s*([^}]*)\}\s*from\b/g;
+    let importMatch: RegExpExecArray | null = importPattern.exec(plainCode);
+
+    while (importMatch !== null) {
+      this.collectModuleSpecifierIdentifiers(importMatch[1]);
+      importMatch = importPattern.exec(plainCode);
+    }
+
     const functionPattern: RegExp = /\bfunction\s+[A-Za-z_$][A-Za-z0-9_$]*\s*\(([^)]*)\)/g;
     let functionMatch: RegExpExecArray | null = functionPattern.exec(plainCode);
 
@@ -139,6 +147,11 @@ export class Obfuscator {
    * transformLine scans one JS line while preserving quoted strings correctly.
    */
   private transformLine(line: string): string {
+    const moduleBoundaryLine: string | null = this.transformModuleBoundaryLine(line);
+    if (moduleBoundaryLine !== null) {
+      return moduleBoundaryLine;
+    }
+
     let output: string = "";
     let index: number = 0;
 
@@ -192,6 +205,77 @@ export class Obfuscator {
     }
 
     return output;
+  }
+
+  /**
+   * collectModuleSpecifierIdentifiers maps imported local names for internal use.
+   */
+  private collectModuleSpecifierIdentifiers(specifierList: string): void {
+    for (const rawSpecifier of specifierList.split(",")) {
+      const specifier: string = rawSpecifier.trim();
+      const aliasMatch: RegExpMatchArray | null = specifier.match(/^[A-Za-z_$][A-Za-z0-9_$]*\s+as\s+([A-Za-z_$][A-Za-z0-9_$]*)$/);
+      const name: string = aliasMatch === null ? specifier : aliasMatch[1];
+
+      if (/^[A-Za-z_$][A-Za-z0-9_$]*$/.test(name)) {
+        this.ensureIdentifierMapping(name);
+      }
+    }
+  }
+
+  /**
+   * transformModuleBoundaryLine keeps public import/export contracts stable
+   * while aliasing internal names to their obfuscated identifiers.
+   */
+  private transformModuleBoundaryLine(line: string): string | null {
+    const importMatch: RegExpMatchArray | null = line.match(/^(\s*)import\s*\{\s*([^}]*)\}\s*from\s*(.+);\s*$/);
+    if (importMatch !== null) {
+      const specifiers: string = this.transformImportSpecifiers(importMatch[2]);
+      return `${importMatch[1]}import { ${specifiers} } from ${importMatch[3]};`;
+    }
+
+    const exportMatch: RegExpMatchArray | null = line.match(/^(\s*)export\s*\{\s*([^}]*)\}\s*;\s*$/);
+    if (exportMatch !== null) {
+      const specifiers: string = this.transformExportSpecifiers(exportMatch[2]);
+      return `${exportMatch[1]}export { ${specifiers} };`;
+    }
+
+    return null;
+  }
+
+  /**
+   * transformImportSpecifiers aliases imported public names into private locals.
+   */
+  private transformImportSpecifiers(specifierList: string): string {
+    return specifierList
+      .split(",")
+      .map((rawSpecifier: string) => {
+        const specifier: string = rawSpecifier.trim();
+        const aliasMatch: RegExpMatchArray | null = specifier.match(/^([A-Za-z_$][A-Za-z0-9_$]*)\s+as\s+([A-Za-z_$][A-Za-z0-9_$]*)$/);
+        const importedName: string = aliasMatch === null ? specifier : aliasMatch[1];
+        const localName: string = aliasMatch === null ? specifier : aliasMatch[2];
+        const mappedLocalName: string = this.identifierMap.get(localName) ?? localName;
+
+        return mappedLocalName === importedName ? importedName : `${importedName} as ${mappedLocalName}`;
+      })
+      .join(", ");
+  }
+
+  /**
+   * transformExportSpecifiers aliases private locals back to public export names.
+   */
+  private transformExportSpecifiers(specifierList: string): string {
+    return specifierList
+      .split(",")
+      .map((rawSpecifier: string) => {
+        const specifier: string = rawSpecifier.trim();
+        const aliasMatch: RegExpMatchArray | null = specifier.match(/^([A-Za-z_$][A-Za-z0-9_$]*)\s+as\s+([A-Za-z_$][A-Za-z0-9_$]*)$/);
+        const localName: string = aliasMatch === null ? specifier : aliasMatch[1];
+        const exportedName: string = aliasMatch === null ? specifier : aliasMatch[2];
+        const mappedLocalName: string = this.identifierMap.get(localName) ?? localName;
+
+        return mappedLocalName === exportedName ? exportedName : `${mappedLocalName} as ${exportedName}`;
+      })
+      .join(", ");
   }
 
   /**

@@ -21,4 +21,32 @@ Umkel add(1);
       'KethicTypeError [Line 7, Col 1] — Umkel: Kelthar "add" expected 2 argument(s) but received 1',
     ]);
   });
+
+  it("allows Ovrin import lists and validates Ovrin exports", () => {
+    const source: string = `
+Ovrin { remoteValue, remoteAdd } from "./remote.js";
+Navā local = remoteValue;
+Ovrin { local };
+`;
+
+    const ast = new Parser(new Lexer(source).scanTokens()).parse();
+    const checker: TypeChecker = new TypeChecker();
+    const output: string[] = checker.formatDiagnostics(checker.check(ast));
+
+    expect(output).toEqual([]);
+  });
+
+  it("reports Ovrin exports before declaration", () => {
+    const source: string = `
+Ovrin { missing };
+`;
+
+    const ast = new Parser(new Lexer(source).scanTokens()).parse();
+    const checker: TypeChecker = new TypeChecker();
+    const output: string[] = checker.formatDiagnostics(checker.check(ast));
+
+    expect(output).toEqual([
+      'KethicTypeError [Line 2, Col 1] — Ovrin: cannot export "missing" before it is declared',
+    ]);
+  });
 });

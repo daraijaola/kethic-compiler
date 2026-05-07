@@ -23,4 +23,19 @@ Eshnak {
     expect(obfuscated.code).not.toContain("calculate");
     expect(obfuscated.sourceMap.length).toBe(generated.sourceMap.length);
   });
+
+  it("keeps Ovrin public names stable while obfuscating local bindings", () => {
+    const source: string = `
+Ovrin { remoteValue } from "./remote.js";
+Navā local = remoteValue;
+Ovrin { local };
+`;
+    const generated = new CodeGenerator().generate(new Parser(new Lexer(source).scanTokens()).parse());
+    const obfuscated = new Obfuscator().obfuscate({ ...generated, seed: "module-test" });
+
+    expect(obfuscated.code).toContain('from "./remote.js";');
+    expect(obfuscated.code).toMatch(/import \{ remoteValue as _0x[0-9a-f]+ \}/);
+    expect(obfuscated.code).toMatch(/export \{ _0x[0-9a-f]+ as local \}/);
+    expect(obfuscated.code).not.toContain("let local");
+  });
 });

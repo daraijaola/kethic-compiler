@@ -484,22 +484,31 @@ export class TypeChecker {
   }
 
   /**
-   * checkOvrinDeclaration records imported names as Unknown values for now.
+   * checkOvrinDeclaration declares imported names and validates exported names.
    */
   private checkOvrinDeclaration(statement: OvrinDeclarationNode): void {
-    if (this.symbols.resolveCurrent(statement.name.lexeme) !== null) {
-      this.report(statement.keyword, `duplicate declaration of "${statement.name.lexeme}"`);
-      return;
-    }
+    for (const specifier of statement.specifiers) {
+      if (statement.source === null) {
+        if (this.symbols.resolve(specifier.name.lexeme) === null) {
+          this.report(statement.keyword, `cannot export "${specifier.name.lexeme}" before it is declared`);
+        }
+        continue;
+      }
 
-    const symbol: ValueSymbol = {
-      kind: "Variable",
-      name: statement.name.lexeme,
-      type: UNKNOWN_TYPE,
-      declarationKeyword: statement.keyword,
-      declarationName: statement.name,
-    };
-    this.symbols.define(symbol);
+      if (this.symbols.resolveCurrent(specifier.name.lexeme) !== null) {
+        this.report(statement.keyword, `duplicate declaration of "${specifier.name.lexeme}"`);
+        continue;
+      }
+
+      const symbol: ValueSymbol = {
+        kind: "Variable",
+        name: specifier.name.lexeme,
+        type: UNKNOWN_TYPE,
+        declarationKeyword: statement.keyword,
+        declarationName: specifier.name,
+      };
+      this.symbols.define(symbol);
+    }
   }
 
   /**

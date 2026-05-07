@@ -217,12 +217,14 @@ export class CodeGenerator {
    * emitOvrinDeclaration emits Ovrin as import or export syntax.
    */
   private emitOvrinDeclaration(statement: OvrinDeclarationNode): void {
+    const names: string = statement.specifiers.map((specifier) => specifier.name.lexeme).join(", ");
+
     if (statement.source !== null) {
-      this.emitMappedLine(`import { ${statement.name.lexeme} } from ${statement.source.token.lexeme};`, statement.keyword.line);
+      this.emitMappedLine(`import { ${names} } from ${statement.source.token.lexeme};`, statement.keyword.line);
       return;
     }
 
-    this.emitMappedLine(`export { ${statement.name.lexeme} };`, statement.keyword.line);
+    this.emitMappedLine(`export { ${names} };`, statement.keyword.line);
   }
 
   /**
@@ -451,10 +453,11 @@ export class CodeGenerator {
       case "GenericTypeDefinition":
         return [`${indent}/** @typedef {*} ${statement.name.lexeme} */`];
       case "OvrinDeclaration":
+        const names: string = statement.specifiers.map((specifier) => specifier.name.lexeme).join(", ");
         return [
           statement.source === null
-            ? `${indent}export { ${statement.name.lexeme} };`
-            : `${indent}import { ${statement.name.lexeme} } from ${statement.source.token.lexeme};`,
+            ? `${indent}export { ${names} };`
+            : `${indent}import { ${names} } from ${statement.source.token.lexeme};`,
         ];
       default:
         return [`${indent}/* unsupported nested statement: ${statement.kind} */`];

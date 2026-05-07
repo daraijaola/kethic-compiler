@@ -175,13 +175,21 @@ export type TypeExpressionNode =
   | ObjectTypeExpressionNode;
 
 /**
+ * OvrinSpecifierNode stores one named value crossing a module boundary.
+ */
+export interface OvrinSpecifierNode extends BaseNode {
+  readonly kind: "OvrinSpecifier";
+  readonly name: Token;
+}
+
+/**
  * Ovrin represents controlled crossing at a module boundary. If source is
  * present, the node is an import. If source is null, the node is an export.
  */
 export interface OvrinDeclarationNode extends BaseNode {
   readonly kind: "OvrinDeclaration";
   readonly keyword: Token;
-  readonly name: Token;
+  readonly specifiers: OvrinSpecifierNode[];
   readonly source: StringLiteralNode | null;
 }
 
