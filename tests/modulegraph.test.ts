@@ -106,4 +106,32 @@ Navā total = hidden;
       'module "./math.keth" does not export "hidden"',
     );
   });
+
+  it("type-checks Native module gates across files", () => {
+    const compiler = new ModuleGraphCompiler(
+      new MemoryModuleFileSystem({
+        "app/math.keth": `
+Kelthar add receives a: Number, b: Number
+  Duren a plus b
+Tor
+Torūn label oath "sum"
+Ovrin send add, label
+`,
+        "app/main.keth": `
+Ovrin receive add, label from "./math.keth"
+Navā total holds Umkel add with 1, 2
+Ovrin send total
+`,
+      }),
+      { nativeMode: true },
+    );
+
+    const result = compiler.compile("app/main.keth");
+
+    expect(result.diagnostics).toEqual([]);
+    expect(result.modules.map((module) => module.filePath)).toEqual(["app/math.keth", "app/main.keth"]);
+    expect(result.modules[1].output.code).toContain('import { add, label } from "./math.js";');
+    expect(result.modules[1].output.code).toContain("let total = add(1, 2);");
+    expect(result.modules[1].output.code).toContain("export { total };");
+  });
 });

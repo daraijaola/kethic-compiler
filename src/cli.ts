@@ -159,11 +159,7 @@ function runCompile(command: CompileCommand): void {
   }
 
   if (command.outputDirectory !== null) {
-    if (command.nativeMode) {
-      throw new Error("--native with --out-dir is not supported until Native module parsing lands.\n\n" + usage());
-    }
-
-    runGraphCompile(absoluteInput, path.resolve(command.outputDirectory));
+    runGraphCompile(absoluteInput, path.resolve(command.outputDirectory), command.nativeMode);
     return;
   }
 
@@ -184,8 +180,8 @@ function runCompile(command: CompileCommand): void {
 /**
  * runGraphCompile writes every compiled .keth module into an output directory.
  */
-function runGraphCompile(absoluteInput: string, absoluteOutputDirectory: string): void {
-  const compiler: ModuleGraphCompiler = new ModuleGraphCompiler(new NodeModuleFileSystem());
+function runGraphCompile(absoluteInput: string, absoluteOutputDirectory: string, nativeMode: boolean): void {
+  const compiler: ModuleGraphCompiler = new ModuleGraphCompiler(new NodeModuleFileSystem(), { nativeMode });
   const result = compiler.compile(absoluteInput);
 
   if (result.diagnostics.length > 0) {

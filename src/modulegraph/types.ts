@@ -12,6 +12,13 @@ export interface ModuleGraphFileSystem {
 }
 
 /**
+ * ModuleGraphCompilerOptions configures the source syntax for every module.
+ */
+export interface ModuleGraphCompilerOptions {
+  readonly nativeMode?: boolean;
+}
+
+/**
  * ModuleGraphDiagnostic attaches a compiler diagnostic to its source file.
  */
 export interface ModuleGraphDiagnostic extends TypeCheckDiagnostic {

@@ -153,4 +153,18 @@ Navā activeLabel holds labels["active"]
     expect(result.code).toContain('let labels = ({ ["active"]: "on", ["paused"]: "off" });');
     expect(result.code).toContain("let nothing = null;");
   });
+
+  it("lowers Native module gates", () => {
+    const result = compileNative(`
+Ovrin receive label from "./math.keth"
+Navā total holds 3
+Ovrin send total, label
+`);
+
+    expect(result.diagnostics).toEqual([]);
+    expect(result.classic).toContain('Ovrin { label } from "./math.keth";');
+    expect(result.classic).toContain("Ovrin { total, label };");
+    expect(result.code).toContain('import { label } from "./math.keth";');
+    expect(result.code).toContain("export { total, label };");
+  });
 });

@@ -1,8 +1,9 @@
 import { CodeGenerator } from "../codegen";
 import { Lexer } from "../lexer/lexer";
+import { NativeParser } from "../native";
 import { OvrinDeclarationNode, Parser, ProgramNode } from "../parser";
 import { KethicSymbol, TypeChecker, TypeCheckDiagnostic, UNKNOWN_TYPE, ValueSymbol } from "../typechecker";
-import { CompiledModule, ModuleGraphDiagnostic, ModuleGraphFileSystem, ModuleGraphResult } from "./types";
+import { CompiledModule, ModuleGraphCompilerOptions, ModuleGraphDiagnostic, ModuleGraphFileSystem, ModuleGraphResult } from "./types";
 
 /**
  * ModuleGraphCompiler compiles an entry file and every reachable Kethic module.
@@ -12,7 +13,10 @@ export class ModuleGraphCompiler {
   private readonly diagnostics: ModuleGraphDiagnostic[] = [];
   private readonly visiting: Set<string> = new Set<string>();
 
-  public constructor(private readonly fileSystem: ModuleGraphFileSystem) {}
+  public constructor(
+    private readonly fileSystem: ModuleGraphFileSystem,
+    private readonly options: ModuleGraphCompilerOptions = {},
+  ) {}
 
   /**
    * compile resolves the entry file, follows local .keth imports, and returns
@@ -50,7 +54,7 @@ export class ModuleGraphCompiler {
 
     let program: ProgramNode;
     try {
-      program = new Parser(new Lexer(this.fileSystem.readFile(filePath)).scanTokens()).parse();
+      program = this.parseSource(this.fileSystem.readFile(filePath));
     } catch (error: unknown) {
       this.report(filePath, 1, 1, "Parser", error instanceof Error ? error.message : String(error));
       this.visiting.delete(filePath);
@@ -83,6 +87,17 @@ export class ModuleGraphCompiler {
       output,
     });
     this.visiting.delete(filePath);
+  }
+
+  /**
+   * parseSource selects Kethic Native or Classic syntax for graph compilation.
+   */
+  private parseSource(source: string): ProgramNode {
+    if (this.options.nativeMode === true) {
+      return new NativeParser(source).parse();
+    }
+
+    return new Parser(new Lexer(source).scanTokens()).parse();
   }
 
   /**

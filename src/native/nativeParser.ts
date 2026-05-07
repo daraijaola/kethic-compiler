@@ -111,6 +111,10 @@ export class NativeParser {
       return [this.lowerStoneOath(line, lineNumber)];
     }
 
+    if (this.startsWithKeyword(line, TokenType.Ovrin)) {
+      return [this.lowerModuleGate(line, lineNumber)];
+    }
+
     if (this.startsWithKeyword(line, TokenType.Rukva)) {
       return [this.lowerArrayVessel(line, lineNumber)];
     }
@@ -233,6 +237,46 @@ export class NativeParser {
     }
 
     return `${TokenType.Torun} ${match[1]} = ${this.lowerExpression(match[2])};`;
+  }
+
+  /**
+   * lowerModuleGate maps Native Ovrin receive/send forms.
+   */
+  private lowerModuleGate(line: string, lineNumber: number): string {
+    const body: string = this.afterKeyword(line, TokenType.Ovrin).trim();
+
+    if (body.startsWith("receive ")) {
+      const receiveBody: string = body.slice("receive ".length).trim();
+      const match: RegExpMatchArray | null = receiveBody.match(/^(.+?)\s+from\s+(.+)$/);
+
+      if (match === null) {
+        throw new NativeParserError(lineNumber, 'expected Ovrin receive name from "source"');
+      }
+
+      return `${TokenType.Ovrin} { ${this.normalizeNameList(match[1])} } from ${match[2].trim()};`;
+    }
+
+    if (body.startsWith("send ")) {
+      const names: string = body.slice("send ".length).trim();
+      if (names.length === 0) {
+        throw new NativeParserError(lineNumber, "expected Ovrin send name");
+      }
+
+      return `${TokenType.Ovrin} { ${this.normalizeNameList(names)} };`;
+    }
+
+    throw new NativeParserError(lineNumber, "expected Ovrin receive or Ovrin send");
+  }
+
+  /**
+   * normalizeNameList keeps comma-separated Ovrin names tidy for Classic syntax.
+   */
+  private normalizeNameList(names: string): string {
+    return names
+      .split(",")
+      .map((name: string) => name.trim())
+      .filter((name: string) => name.length > 0)
+      .join(", ");
   }
 
   /**
