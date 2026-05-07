@@ -75,4 +75,50 @@ Navā sameValue holds Umkel choose with score plus 1, limit minus 1
     expect(result.code).toContain("return a === b;");
     expect(result.code).toContain("let sameValue = choose(score + 1, limit - 1);");
   });
+
+  it("lowers Native control flow blocks", () => {
+    const result = compileNative(`
+Kelthar describe receives status
+  Ikhshev status same "active"
+    Duren "running"
+  Shev
+    Duren "stopped"
+  Tor
+Tor
+
+Rukhar false
+  Rukum
+Tor
+
+Ikhselthar "active"
+  Selikhshev "active"
+    Duruk
+  Ovikhnak
+    Navā fallback holds "unknown"
+Tor
+
+Eshnak
+  Navā value holds 1
+Nak
+  Navā value holds 0
+Tor
+`);
+
+    expect(result.diagnostics).toEqual([]);
+    expect(result.classic).toContain('Ikhshev status == "active" {');
+    expect(result.classic).toContain("} Shev {");
+    expect(result.classic).toContain("Rukhar false {");
+    expect(result.classic).toContain("Rukum;");
+    expect(result.classic).toContain('Ikhselthar "active" {');
+    expect(result.classic).toContain('Selikhshev "active" {');
+    expect(result.classic).toContain("Ovikhnak {");
+    expect(result.classic).toContain("Eshnak {");
+    expect(result.classic).toContain("} {");
+    expect(result.code).toContain('if (status === "active") {');
+    expect(result.code).toContain("} else {");
+    expect(result.code).toContain("while (false) {");
+    expect(result.code).toContain("switch (\"active\") {");
+    expect(result.code).toContain("try {");
+    expect(result.code).toContain("} catch (error) {");
+  });
 });
