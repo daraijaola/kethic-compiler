@@ -1,6 +1,7 @@
 import { CodeGenerator } from "./codegen";
 import { Lexer } from "./lexer/lexer";
 import { CompiledModule, ModuleGraphCompiler, ModuleGraphDiagnostic, ModuleGraphFileSystem } from "./modulegraph";
+import { NativeParser } from "./native";
 import { Parser, ProgramNode } from "./parser";
 import { TypeChecker, TypeCheckDiagnostic } from "./typechecker";
 
@@ -42,6 +43,7 @@ interface CompileCommand {
   readonly inputPath: string;
   readonly outputPath: string | null;
   readonly outputDirectory: string | null;
+  readonly nativeMode: boolean;
 }
 
 /**
@@ -74,8 +76,10 @@ class NodeModuleFileSystem implements ModuleGraphFileSystem {
 /**
  * compileSource runs the current Kethic compiler phases through clean JS codegen.
  */
-function compileSource(source: string): CompileResult {
-  const ast: ProgramNode = new Parser(new Lexer(source).scanTokens()).parse();
+function compileSource(source: string, nativeMode: boolean): CompileResult {
+  const ast: ProgramNode = nativeMode
+    ? new NativeParser(source).parse()
+    : new Parser(new Lexer(source).scanTokens()).parse();
   const checker: TypeChecker = new TypeChecker();
   const diagnostics: TypeCheckDiagnostic[] = checker.check(ast);
 
@@ -101,6 +105,7 @@ function parseCompileCommand(args: readonly string[]): CompileCommand {
   const inputPath: string = args[1];
   let outputPath: string | null = null;
   let outputDirectory: string | null = null;
+  let nativeMode: boolean = false;
   let index: number = 2;
 
   while (index < args.length) {
@@ -126,6 +131,12 @@ function parseCompileCommand(args: readonly string[]): CompileCommand {
       continue;
     }
 
+    if (current === "--native") {
+      nativeMode = true;
+      index += 1;
+      continue;
+    }
+
     throw new Error(`Unknown option "${current}".\n\n${usage()}`);
   }
 
@@ -133,6 +144,7 @@ function parseCompileCommand(args: readonly string[]): CompileCommand {
     inputPath,
     outputPath,
     outputDirectory,
+    nativeMode,
   };
 }
 
@@ -147,12 +159,16 @@ function runCompile(command: CompileCommand): void {
   }
 
   if (command.outputDirectory !== null) {
+    if (command.nativeMode) {
+      throw new Error("--native with --out-dir is not supported until Native module parsing lands.\n\n" + usage());
+    }
+
     runGraphCompile(absoluteInput, path.resolve(command.outputDirectory));
     return;
   }
 
   const source: string = fs.readFileSync(absoluteInput, "utf8");
-  const result: CompileResult = compileSource(source);
+  const result: CompileResult = compileSource(source, command.nativeMode);
 
   if (command.outputPath === null) {
     process.stdout.write(result.code + "\n");
@@ -209,11 +225,12 @@ function formatGraphDiagnostics(diagnostics: readonly ModuleGraphDiagnostic[]): 
 function usage(): string {
   return [
     "Usage:",
-    "  kethic compile <input.keth> [--out output.js]",
+    "  kethic compile <input.keth> [--out output.js] [--native]",
     "  kethic compile <input.keth> --out-dir dist",
     "",
     "Examples:",
     "  kethic compile examples/milestone1.keth",
+    "  kethic compile examples/native-core.keth --native",
     "  kethic compile examples/milestone1.keth --out dist/milestone1.js",
     "  kethic compile examples/app.keth --out-dir dist",
   ].join("\n");
