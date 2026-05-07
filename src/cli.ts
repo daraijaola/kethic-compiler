@@ -252,12 +252,18 @@ function runWebCompile(command: WebCommand): void {
   const result: WebCompileResult = new WebCompiler().compile(source);
   const htmlPath: string = path.join(absoluteOutputDirectory, "index.html");
   const cssPath: string = path.join(absoluteOutputDirectory, "styles.css");
+  const runtimePath: string = path.join(absoluteOutputDirectory, "runtime.js");
 
   fs.mkdirSync(absoluteOutputDirectory, { recursive: true });
   fs.writeFileSync(htmlPath, result.html + "\n", "utf8");
   fs.writeFileSync(cssPath, result.css + "\n", "utf8");
   process.stdout.write(`Wrote ${htmlPath}\n`);
   process.stdout.write(`Wrote ${cssPath}\n`);
+
+  if (result.runtime.length > 0) {
+    fs.writeFileSync(runtimePath, result.runtime + "\n", "utf8");
+    process.stdout.write(`Wrote ${runtimePath}\n`);
+  }
 }
 
 /**

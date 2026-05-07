@@ -2,6 +2,7 @@ import { WebProgramNode } from "./ast";
 import { CssGenerator } from "./cssGenerator";
 import { WebCompilerError, WebDiagnostic } from "./diagnostics";
 import { HtmlGenerator } from "./htmlGenerator";
+import { RuntimeGenerator } from "./runtimeGenerator";
 import { WebParser } from "./webParser";
 import { WebTypeChecker } from "./webTypeChecker";
 
@@ -12,6 +13,7 @@ export interface WebCompileResult {
   readonly ast: WebProgramNode;
   readonly html: string;
   readonly css: string;
+  readonly runtime: string;
 }
 
 /**
@@ -30,11 +32,13 @@ export class WebCompiler {
       throw new WebCompilerError(diagnostics);
     }
 
+    const runtime: string = new RuntimeGenerator().generate(ast);
+
     return {
       ast,
-      html: new HtmlGenerator().generate(ast),
+      html: new HtmlGenerator(runtime.length > 0).generate(ast),
       css: new CssGenerator().generate(ast),
+      runtime,
     };
   }
 }
-

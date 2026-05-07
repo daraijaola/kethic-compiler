@@ -1,8 +1,12 @@
 import {
   ButtonNode,
+  ActionNode,
   ComponentNode,
   ComponentUseNode,
   ContainerNode,
+  StateNode,
+  StateUpdateNode,
+  WebExpression,
   HeadingNode,
   PageNode,
   SectionNode,
@@ -28,7 +32,8 @@ type OpenBlock =
       readonly node: PageNode | SectionNode | ContainerNode | ButtonNode | ComponentNode | ComponentUseNode;
       readonly children: WebChildNode[];
     }
-  | { readonly mode: "style"; readonly node: StyleBlockNode; readonly declarations: StyleDeclarationNode[] };
+  | { readonly mode: "style"; readonly node: StyleBlockNode; readonly declarations: StyleDeclarationNode[] }
+  | { readonly mode: "action"; readonly node: ActionNode; readonly updates: StateUpdateNode[] };
 
 /**
  * WebParser parses the first static Kethic Native web slice.
@@ -121,6 +126,16 @@ export class WebParser {
       return;
     }
 
+    if (line.startsWith("Lumva ")) {
+      this.addTopLevel(this.parseState(line, location));
+      return;
+    }
+
+    if (line.startsWith("Umrin ")) {
+      this.stack.push({ mode: "action", node: this.parseAction(line, location), updates: [] });
+      return;
+    }
+
     if (line.startsWith("Keltor ")) {
       this.addChild(this.parseHeading(line, location));
       return;
@@ -138,6 +153,11 @@ export class WebParser {
 
     if (this.isInsideStyleBlock()) {
       this.addStyleDeclaration(this.parseStyleDeclaration(line, location));
+      return;
+    }
+
+    if (this.isInsideActionBlock()) {
+      this.addStateUpdate(this.parseStateUpdate(line, location));
       return;
     }
 
@@ -164,6 +184,11 @@ export class WebParser {
 
     if (open.mode === "style") {
       this.addTopLevel({ ...open.node, declarations: open.declarations });
+      return;
+    }
+
+    if (open.mode === "action") {
+      this.addTopLevel({ ...open.node, updates: open.updates });
       return;
     }
 
@@ -220,6 +245,17 @@ export class WebParser {
     open.declarations.push(node);
   }
 
+  private addStateUpdate(node: StateUpdateNode): void {
+    const open: OpenBlock | undefined = this.stack[this.stack.length - 1];
+
+    if (open === undefined || open.mode !== "action") {
+      this.report(node.location, "Umrin", "state update must appear inside Umrin");
+      return;
+    }
+
+    open.updates.push(node);
+  }
+
   private parsePage(line: string, location: WebSourceLocation): PageNode {
     return { kind: WebNodeKind.Page, location, name: this.requiredName(line, "Torvathar", location), children: [] };
   }
@@ -254,6 +290,40 @@ export class WebParser {
       location,
       target: this.requiredName(line, "Tharsel", location),
       declarations: [],
+    };
+  }
+
+  private parseState(line: string, location: WebSourceLocation): StateNode {
+    const match: RegExpMatchArray | null = line.match(/^Lumva\s+([A-Za-z_][A-Za-z0-9_]*)\s+holds\s+(.+)$/);
+    if (match === null) {
+      this.report(location, "Lumva", "expected Lumva name holds value");
+      return { kind: WebNodeKind.State, location, name: "", initialValue: { kind: "literal", value: false } };
+    }
+
+    return {
+      kind: WebNodeKind.State,
+      location,
+      name: match[1],
+      initialValue: this.parseExpression(match[2], location, "Lumva"),
+    };
+  }
+
+  private parseAction(line: string, location: WebSourceLocation): ActionNode {
+    return { kind: WebNodeKind.Action, location, name: this.requiredName(line, "Umrin", location), updates: [] };
+  }
+
+  private parseStateUpdate(line: string, location: WebSourceLocation): StateUpdateNode {
+    const match: RegExpMatchArray | null = line.match(/^([A-Za-z_][A-Za-z0-9_]*)\s+holds\s+(.+)$/);
+    if (match === null) {
+      this.report(location, "Umrin", "expected stateName holds expression");
+      return { kind: WebNodeKind.StateUpdate, location, stateName: "", value: { kind: "literal", value: false } };
+    }
+
+    return {
+      kind: WebNodeKind.StateUpdate,
+      location,
+      stateName: match[1],
+      value: this.parseExpression(match[2], location, "Umrin"),
     };
   }
 
@@ -404,9 +474,65 @@ export class WebParser {
     return { kind: "literal", value };
   }
 
+  private parseExpression(raw: string, location: WebSourceLocation, keyword: string): WebExpression {
+    const value: string = raw.trim();
+
+    if (value.startsWith("not ")) {
+      return { kind: "unary", operator: "not", argument: this.parseExpression(value.slice("not ".length), location, keyword) };
+    }
+
+    const plusIndex: number = value.indexOf(" plus ");
+    if (plusIndex >= 0) {
+      return {
+        kind: "binary",
+        operator: "plus",
+        left: this.parseExpression(value.slice(0, plusIndex), location, keyword),
+        right: this.parseExpression(value.slice(plusIndex + " plus ".length), location, keyword),
+      };
+    }
+
+    const minusIndex: number = value.indexOf(" minus ");
+    if (minusIndex >= 0) {
+      return {
+        kind: "binary",
+        operator: "minus",
+        left: this.parseExpression(value.slice(0, minusIndex), location, keyword),
+        right: this.parseExpression(value.slice(minusIndex + " minus ".length), location, keyword),
+      };
+    }
+
+    if (value.startsWith('"') && value.endsWith('"') && value.length >= 2) {
+      return { kind: "literal", value: value.slice(1, -1) };
+    }
+
+    if (value === "true") {
+      return { kind: "literal", value: true };
+    }
+
+    if (value === "false") {
+      return { kind: "literal", value: false };
+    }
+
+    if (/^-?\d+(?:\.\d+)?$/.test(value)) {
+      return { kind: "literal", value: Number(value) };
+    }
+
+    if (/^[A-Za-z_][A-Za-z0-9_]*$/.test(value)) {
+      return { kind: "identifier", name: value };
+    }
+
+    this.report(location, keyword, `unsupported web expression "${value}"`);
+    return { kind: "literal", value: false };
+  }
+
   private isInsideStyleBlock(): boolean {
     const open: OpenBlock | undefined = this.stack[this.stack.length - 1];
     return open !== undefined && open.mode === "style";
+  }
+
+  private isInsideActionBlock(): boolean {
+    const open: OpenBlock | undefined = this.stack[this.stack.length - 1];
+    return open !== undefined && open.mode === "action";
   }
 
   private report(location: WebSourceLocation, keyword: string, message: string): void {

@@ -67,9 +67,10 @@ Initial approved keyword candidates:
 - `Rinshev` - route/path;
 - `Ikhna` - responsive/container condition;
 - `Umrin` - event handler;
-- `Umvator` - mount/render target.
+- `Umvator` - mount/render target;
+- `Lumva` - reactive UI state, a light-awakening vessel.
 
-Important: `Nava` for interface state is not accepted yet because it visually conflicts with `Navā`. State needs a replacement term before implementation.
+`Lumva` replaces the rejected `Nava` candidate for interface state. It means a light-awakening vessel whose change causes the visible interface to update.
 
 ### 3.2 Web Primitives
 
@@ -166,8 +167,8 @@ This table records the first web lexicon in implementation categories.
 
 | Category | Terms |
 | --- | --- |
-| True keyword candidates | `Torvathar`, `Selthar`, `Tharsel`, `Rinshev`, `Ikhna`, `Umrin`, `Umvator` |
-| Needs rename before use | `Nava` for state, because it conflicts with `Navā`; `Umdur-na` should become `Umdurna` if used |
+| True keyword candidates | `Torvathar`, `Selthar`, `Tharsel`, `Rinshev`, `Ikhna`, `Umrin`, `Umvator`, `Lumva` |
+| Needs rename before use | `Umdur-na` should become `Umdurna` if used |
 | Page and structure primitives | `Shevva`, `Vakar`, `Umva`, `Rukshev`, `Durkel` |
 | Content primitives | `Kelen`, `Keltor`, `Ovshev`, `Mirva`, `Ruksel`, `Selkarva` |
 | Interaction primitives | `Umkar`, `Umtharva`, `Enva`, `Kelrinva`, `Shevsel`, `Selvathar` |
@@ -580,7 +581,7 @@ Goal: basic interactive web output.
 Include:
 
 - event bindings through `Umrin`;
-- state term after rename is approved;
+- `Lumva` reactive UI state;
 - generated runtime for click events;
 - Button Truth basic version;
 - Focus Covenant;
@@ -721,7 +722,6 @@ These are not MVP features.
 Before implementation, get approved Namaru names for:
 
 - Brand DNA;
-- state value replacement for `Nava`;
 - Page Constitution;
 - Motion Signature;
 - Brand Motion Dialect;
@@ -814,4 +814,3 @@ Start with one static page slice:
 - write one example page.
 
 Only after that works should Kethic move into components, state, events, routing, forms, and visual signature.
-

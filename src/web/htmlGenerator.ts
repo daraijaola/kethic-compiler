@@ -7,6 +7,7 @@ import {
   MountNode,
   PageNode,
   SectionNode,
+  StateNode,
   SlotNode,
   TextNode,
   WebChildNode,
@@ -28,15 +29,23 @@ interface RenderContext {
  */
 export class HtmlGenerator {
   private readonly components: Map<string, ComponentNode> = new Map<string, ComponentNode>();
+  private readonly stateValues: Map<string, string> = new Map<string, string>();
+
+  public constructor(private readonly includeRuntime: boolean) {}
 
   /**
    * generate emits one complete HTML document.
    */
   public generate(program: WebProgramNode): string {
     this.components.clear();
+    this.stateValues.clear();
     for (const node of program.body) {
       if (node.kind === WebNodeKind.Component) {
         this.components.set(node.name, node);
+      }
+
+      if (node.kind === WebNodeKind.State) {
+        this.stateValues.set(node.name, this.evaluateInitialState(node));
       }
     }
 
@@ -54,6 +63,7 @@ export class HtmlGenerator {
       '    <meta name="viewport" content="width=device-width, initial-scale=1">',
       `    <title>${this.escapeHtml(page.name)}</title>`,
       '    <link rel="stylesheet" href="./styles.css">',
+      ...(this.includeRuntime ? ['    <script defer src="./runtime.js"></script>'] : []),
       "  </head>",
       "  <body>",
       `    <main id="${this.escapeHtml(mountId)}" class="${this.className(page.name)} kethic-page">`,
@@ -125,7 +135,12 @@ export class HtmlGenerator {
   }
 
   private renderText(node: TextNode, depth: number, context: RenderContext): string {
-    return `${this.indent(depth)}<p>${this.escapeHtml(this.resolveValue(node.value, context))}</p>`;
+    const text: string = this.resolveValue(node.value, context);
+    if (node.value.kind === "literal" && this.hasInterpolation(text)) {
+      return `${this.indent(depth)}<p data-kethic-bind data-kethic-template="${this.escapeHtml(text)}">${this.escapeHtml(this.renderTemplate(text))}</p>`;
+    }
+
+    return `${this.indent(depth)}<p>${this.escapeHtml(text)}</p>`;
   }
 
   private renderHeading(node: HeadingNode, depth: number, context: RenderContext): string {
@@ -142,7 +157,12 @@ export class HtmlGenerator {
 
   private renderButtonChild(node: WebChildNode, depth: number, context: RenderContext): string {
     if (node.kind === WebNodeKind.Text) {
-      return `${this.indent(depth)}<span>${this.escapeHtml(this.resolveValue(node.value, context))}</span>`;
+      const text: string = this.resolveValue(node.value, context);
+      if (node.value.kind === "literal" && this.hasInterpolation(text)) {
+        return `${this.indent(depth)}<span data-kethic-bind data-kethic-template="${this.escapeHtml(text)}">${this.escapeHtml(this.renderTemplate(text))}</span>`;
+      }
+
+      return `${this.indent(depth)}<span>${this.escapeHtml(text)}</span>`;
     }
 
     return this.renderChild(node, depth, context);
@@ -192,6 +212,22 @@ export class HtmlGenerator {
     }
 
     return context.values.get(value.value) ?? "";
+  }
+
+  private evaluateInitialState(node: StateNode): string {
+    if (node.initialValue.kind === "literal") {
+      return String(node.initialValue.value);
+    }
+
+    return "";
+  }
+
+  private hasInterpolation(value: string): boolean {
+    return /\{[A-Za-z_][A-Za-z0-9_]*\}/.test(value);
+  }
+
+  private renderTemplate(value: string): string {
+    return value.replace(/\{([A-Za-z_][A-Za-z0-9_]*)\}/g, (_match: string, name: string) => this.stateValues.get(name) ?? "");
   }
 
   private className(name: string): string {

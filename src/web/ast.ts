@@ -15,6 +15,9 @@ export enum WebNodeKind {
   StyleBlock = "StyleBlock",
   StyleDeclaration = "StyleDeclaration",
   Mount = "Mount",
+  State = "State",
+  Action = "Action",
+  StateUpdate = "StateUpdate",
 }
 
 /**
@@ -44,7 +47,7 @@ export interface WebProgramNode extends WebNode {
 /**
  * WebTopLevelNode lists declarations allowed at the top level.
  */
-export type WebTopLevelNode = PageNode | ComponentNode | StyleBlockNode | MountNode;
+export type WebTopLevelNode = PageNode | ComponentNode | StyleBlockNode | MountNode | StateNode | ActionNode;
 
 /**
  * WebChildNode lists nodes that can render inside page/component content.
@@ -57,6 +60,34 @@ export type WebChildNode = SectionNode | ContainerNode | TextNode | HeadingNode 
 export interface WebValue {
   readonly kind: "literal" | "reference";
   readonly value: string;
+}
+
+/**
+ * WebExpression is the small expression model used by Web Phase 3 runtime actions.
+ */
+export type WebExpression = LiteralExpression | IdentifierExpression | UnaryExpression | BinaryExpression;
+
+export interface LiteralExpression {
+  readonly kind: "literal";
+  readonly value: string | number | boolean;
+}
+
+export interface IdentifierExpression {
+  readonly kind: "identifier";
+  readonly name: string;
+}
+
+export interface UnaryExpression {
+  readonly kind: "unary";
+  readonly operator: "not";
+  readonly argument: WebExpression;
+}
+
+export interface BinaryExpression {
+  readonly kind: "binary";
+  readonly operator: "plus" | "minus";
+  readonly left: WebExpression;
+  readonly right: WebExpression;
 }
 
 /**
@@ -165,4 +196,31 @@ export interface MountNode extends WebNode {
   readonly kind: WebNodeKind.Mount;
   readonly selector: string;
   readonly pageName: string;
+}
+
+/**
+ * StateNode represents Lumva, reactive UI state.
+ */
+export interface StateNode extends WebNode {
+  readonly kind: WebNodeKind.State;
+  readonly name: string;
+  readonly initialValue: WebExpression;
+}
+
+/**
+ * ActionNode represents Umrin, an event handler that updates Lumva state.
+ */
+export interface ActionNode extends WebNode {
+  readonly kind: WebNodeKind.Action;
+  readonly name: string;
+  readonly updates: readonly StateUpdateNode[];
+}
+
+/**
+ * StateUpdateNode represents one state update inside Umrin.
+ */
+export interface StateUpdateNode extends WebNode {
+  readonly kind: WebNodeKind.StateUpdate;
+  readonly stateName: string;
+  readonly value: WebExpression;
 }

@@ -10,6 +10,12 @@ Tharsel Hero
   Mireshel "raised"
 Tor
 
+Lumva count holds 0
+
+Umrin increment
+  count holds count plus 1
+Tor
+
 Selthar ActionCard receives title, body
   Vakar ActionCard
     Keltor level:3 title
@@ -23,8 +29,12 @@ Torvathar Home
     Keltor level:1 "Kethic"
     Kelen "Ritual architecture for living interfaces."
     Umkel ActionCard with "Sealed Components", "Reusable UI without style leakage."
-      Umkar action:begin
+      Kelen "Count: {count}"
+      Umkar
         Kelen "Enter"
+      Tor
+      Umkar action:increment
+        Kelen "Add"
       Tor
     Tor
   Tor
@@ -40,6 +50,8 @@ describe("WebCompiler", () => {
     expect(ast.kind).toBe(WebNodeKind.Program);
     expect(ast.body.map((node) => node.kind)).toEqual([
       WebNodeKind.StyleBlock,
+      WebNodeKind.State,
+      WebNodeKind.Action,
       WebNodeKind.Component,
       WebNodeKind.Page,
       WebNodeKind.Mount,
@@ -57,14 +69,20 @@ describe("WebCompiler", () => {
     expect(result.html).toContain('data-kethic-component="ActionCard"');
     expect(result.html).toContain("Sealed Components");
     expect(result.html).toContain("Reusable UI without style leakage.");
-    expect(result.html).toContain('data-kethic-action="begin"');
+    expect(result.html).toContain('data-kethic-template="Count: {count}"');
+    expect(result.html).toContain("Count: 0");
+    expect(result.html).toContain('data-kethic-action="increment"');
     expect(result.html).toContain("<span>Enter</span>");
+    expect(result.html).toContain('<script defer src="./runtime.js"></script>');
     expect(result.css).toContain("@layer kethic.reset, kethic.tokens, kethic.components;");
     expect(result.css).toContain(".kethic-hero {");
     expect(result.css).toContain("padding: var(--sa-6);");
     expect(result.css).toContain("background: var(--color-sand-50);");
     expect(result.css).toContain("color: var(--color-ink-900);");
     expect(result.css).toContain("box-shadow: var(--shadow-raised);");
+    expect(result.runtime).toContain('"count": 0');
+    expect(result.runtime).toContain('"increment": () =>');
+    expect(result.runtime).toContain('state["count"] = (state["count"] + 1);');
   });
 
   it("rejects unsupported style attributes in Web Phase 1", () => {
@@ -90,6 +108,19 @@ Selthar Card receives title, body
 Tor
 Torvathar Home
   Umkel Card with "Only title"
+  Tor
+Tor
+Umvator "#app" receives Home
+`),
+    ).toThrow(WebCompilerError);
+  });
+
+  it("rejects buttons that reference missing actions", () => {
+    expect(() =>
+      new WebCompiler().compile(`
+Torvathar Home
+  Umkar action:missing
+    Kelen "Click"
   Tor
 Tor
 Umvator "#app" receives Home
