@@ -50,6 +50,8 @@ export class CssGenerator {
       "  .kethic-page { min-block-size: 100vh; }",
       "  .kethic-section { padding: var(--sa-6); }",
       "  .kethic-container { max-inline-size: 72rem; margin-inline: auto; }",
+      "  .kethic-navigation { position: sticky; inset-block-start: 0; z-index: 10; display: flex; gap: var(--sa-3); align-items: center; padding: var(--sa-3) var(--sa-6); background: rgb(248 244 236 / 0.92); backdrop-filter: blur(12px); border-block-end: 1px solid rgb(23 21 18 / 0.12); }",
+      "  .kethic-link { color: var(--color-river-700); font-weight: 700; text-decoration-thickness: 0.12em; text-underline-offset: 0.22em; }",
       "  .kethic-button { border: 0; border-radius: var(--radius-soft); padding: var(--sa-3) var(--sa-4); cursor: pointer; background: var(--color-river-700); color: white; }",
       "  .kethic-form { display: grid; gap: var(--sa-4); max-inline-size: 42rem; }",
       "  .kethic-field { display: grid; gap: var(--sa-2); }",
@@ -57,6 +59,7 @@ export class CssGenerator {
       "  .kethic-field input, .kethic-field textarea { inline-size: 100%; border: 1px solid rgb(23 21 18 / 0.28); border-radius: var(--radius-soft); padding: var(--sa-3); font: inherit; background: white; color: var(--color-ink-900); }",
       "  .kethic-field textarea { resize: vertical; }",
       "  .kethic-validation { margin: calc(var(--sa-3) * -1) 0 0; color: #8a230f; font-size: 0.95rem; }",
+      "  .kethic-footer { padding: var(--sa-5) var(--sa-6); border-block-start: 1px solid rgb(23 21 18 / 0.12); color: rgb(23 21 18 / 0.72); }",
       "}",
     ].join("\n");
   }

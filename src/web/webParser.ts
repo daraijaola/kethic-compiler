@@ -4,13 +4,17 @@ import {
   ComponentNode,
   ComponentUseNode,
   ContainerNode,
+  FooterNode,
   FormNode,
   StateNode,
   StateUpdateNode,
   WebExpression,
   HeadingNode,
   InputNode,
+  LinkNode,
+  NavigationNode,
   PageNode,
+  RouteNode,
   SectionNode,
   SlotNode,
   StyleBlockNode,
@@ -33,7 +37,16 @@ import { WebCompilerError, WebDiagnostic } from "./diagnostics";
 type OpenBlock =
   | {
       readonly mode: "children";
-      readonly node: PageNode | SectionNode | ContainerNode | ButtonNode | FormNode | ComponentNode | ComponentUseNode;
+      readonly node:
+        | PageNode
+        | SectionNode
+        | ContainerNode
+        | ButtonNode
+        | NavigationNode
+        | FooterNode
+        | FormNode
+        | ComponentNode
+        | ComponentUseNode;
       readonly children: WebChildNode[];
     }
   | { readonly mode: "style"; readonly node: StyleBlockNode; readonly declarations: StyleDeclarationNode[] }
@@ -102,6 +115,21 @@ export class WebParser {
 
     if (line.startsWith("Shevva ")) {
       this.openContainerBlock(this.parseSection(line, location));
+      return;
+    }
+
+    if (line.startsWith("Rukshev ")) {
+      this.openContainerBlock(this.parseNavigation(line, location));
+      return;
+    }
+
+    if (line === "Durkel") {
+      this.openContainerBlock(this.parseFooter(location));
+      return;
+    }
+
+    if (line.startsWith("Ovshev ")) {
+      this.addChild(this.parseLink(line, location));
       return;
     }
 
@@ -175,6 +203,11 @@ export class WebParser {
       return;
     }
 
+    if (line.startsWith("Rinshev ")) {
+      this.addTopLevel(this.parseRoute(line, location));
+      return;
+    }
+
     if (this.isInsideStyleBlock()) {
       this.addStyleDeclaration(this.parseStyleDeclaration(line, location));
       return;
@@ -191,7 +224,9 @@ export class WebParser {
   /**
    * openContainerBlock starts a node that may hold renderable child nodes.
    */
-  private openContainerBlock(node: PageNode | SectionNode | ContainerNode | ButtonNode | FormNode | ComponentNode | ComponentUseNode): void {
+  private openContainerBlock(
+    node: PageNode | SectionNode | ContainerNode | ButtonNode | NavigationNode | FooterNode | FormNode | ComponentNode | ComponentUseNode,
+  ): void {
     this.stack.push({ mode: "children", node, children: [] });
   }
 
@@ -216,7 +251,7 @@ export class WebParser {
       return;
     }
 
-    const closedNode: PageNode | SectionNode | ContainerNode | ButtonNode | FormNode | ComponentNode | ComponentUseNode = {
+    const closedNode: PageNode | SectionNode | ContainerNode | ButtonNode | NavigationNode | FooterNode | FormNode | ComponentNode | ComponentUseNode = {
       ...open.node,
       children: open.children,
     };
@@ -286,6 +321,29 @@ export class WebParser {
 
   private parseSection(line: string, location: WebSourceLocation): SectionNode {
     return { kind: WebNodeKind.Section, location, name: this.requiredName(line, "Shevva", location), children: [] };
+  }
+
+  private parseNavigation(line: string, location: WebSourceLocation): NavigationNode {
+    return { kind: WebNodeKind.Navigation, location, name: this.requiredName(line, "Rukshev", location), children: [] };
+  }
+
+  private parseFooter(location: WebSourceLocation): FooterNode {
+    return { kind: WebNodeKind.Footer, location, children: [] };
+  }
+
+  private parseLink(line: string, location: WebSourceLocation): LinkNode {
+    const match: RegExpMatchArray | null = line.match(/^Ovshev\s+to:(?:"([^"]+)"|([A-Za-z_][A-Za-z0-9_]*))\s+(.+)$/);
+    if (match === null) {
+      this.report(location, "Ovshev", 'expected Ovshev to:RouteName "Label" or Ovshev to:"#path" "Label"');
+      return { kind: WebNodeKind.Link, location, target: "", label: "" };
+    }
+
+    return {
+      kind: WebNodeKind.Link,
+      location,
+      target: match[1] ?? match[2],
+      label: this.parseValue(match[3], location, "Ovshev"),
+    };
   }
 
   private parseContainer(line: string, location: WebSourceLocation): ContainerNode {
@@ -474,6 +532,21 @@ export class WebParser {
       location,
       selector: this.parseValue(match[1], location, "Umvator"),
       pageName: match[2],
+    };
+  }
+
+  private parseRoute(line: string, location: WebSourceLocation): RouteNode {
+    const match: RegExpMatchArray | null = line.match(/^Rinshev\s+"([^"]+)"\s+receives\s+([A-Za-z_][A-Za-z0-9_]*)$/);
+    if (match === null) {
+      this.report(location, "Rinshev", 'expected Rinshev "#path" receives SectionName');
+      return { kind: WebNodeKind.Route, location, path: "", target: "" };
+    }
+
+    return {
+      kind: WebNodeKind.Route,
+      location,
+      path: match[1],
+      target: match[2],
     };
   }
 

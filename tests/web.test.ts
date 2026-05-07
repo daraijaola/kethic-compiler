@@ -16,6 +16,9 @@ Umrin increment
   count holds count plus 1
 Tor
 
+Rinshev "#hero" receives Hero
+Rinshev "#contact" receives Contact
+
 Selthar ActionCard receives title, body
   Vakar ActionCard
     Keltor level:3 title
@@ -25,6 +28,10 @@ Selthar ActionCard receives title, body
 Tor
 
 Torvathar Home
+  Rukshev Main
+    Ovshev to:Hero "Hero"
+    Ovshev to:Contact "Contact"
+  Tor
   Shevva Hero
     Keltor level:1 "Kethic"
     Kelen "Ritual architecture for living interfaces."
@@ -37,15 +44,20 @@ Torvathar Home
         Kelen "Add"
       Tor
     Tor
-    Selvathar Contact
-      Enva email label:"Email" Torikh
-      Kelrinva message label:"Message" rows:5 Torikh
-      Ikhen for:email "Enter an email before sending."
-      Ikhen for:message "Write the message you want carried."
-      Umkar
-        Kelen "Send"
+    Shevva Contact
+      Selvathar Contact
+        Enva email label:"Email" Torikh
+        Kelrinva message label:"Message" rows:5 Torikh
+        Ikhen for:email "Enter an email before sending."
+        Ikhen for:message "Write the message you want carried."
+        Umkar
+          Kelen "Send"
+        Tor
       Tor
     Tor
+  Tor
+  Durkel
+    Kelen "Kethic Native web shell."
   Tor
 Tor
 
@@ -61,6 +73,8 @@ describe("WebCompiler", () => {
       WebNodeKind.StyleBlock,
       WebNodeKind.State,
       WebNodeKind.Action,
+      WebNodeKind.Route,
+      WebNodeKind.Route,
       WebNodeKind.Component,
       WebNodeKind.Page,
       WebNodeKind.Mount,
@@ -71,7 +85,10 @@ describe("WebCompiler", () => {
     const result = new WebCompiler().compile(sample);
 
     expect(result.html).toContain('<main id="app" class="kethic-home kethic-page">');
-    expect(result.html).toContain('<section class="kethic-hero kethic-section"');
+    expect(result.html).toContain('<nav class="kethic-main kethic-navigation" aria-label="Main">');
+    expect(result.html).toContain('<a class="kethic-link" href="#hero">Hero</a>');
+    expect(result.html).toContain('<a class="kethic-link" href="#contact">Contact</a>');
+    expect(result.html).toContain('<section id="hero" class="kethic-hero kethic-section"');
     expect(result.html).toContain("<h1");
     expect(result.html).toContain("Ritual architecture for living interfaces.");
     expect(result.html).toContain('class="kethic-selthar-actioncard kethic-component"');
@@ -88,6 +105,8 @@ describe("WebCompiler", () => {
     expect(result.html).toContain('<textarea id="field-message" name="message" rows="5" required aria-describedby="field-message-message"></textarea>');
     expect(result.html).toContain('<p id="field-email-message" class="kethic-validation">Enter an email before sending.</p>');
     expect(result.html).toContain('<button type="submit" class="kethic-button">');
+    expect(result.html).toContain('<footer class="kethic-footer">');
+    expect(result.html).toContain("Kethic Native web shell.");
     expect(result.html).toContain('<script defer src="./runtime.js"></script>');
     expect(result.css).toContain("@layer kethic.reset, kethic.tokens, kethic.components;");
     expect(result.css).toContain(".kethic-hero {");
@@ -97,6 +116,8 @@ describe("WebCompiler", () => {
     expect(result.css).toContain("box-shadow: var(--shadow-raised);");
     expect(result.css).toContain(".kethic-form { display: grid; gap: var(--sa-4); max-inline-size: 42rem; }");
     expect(result.css).toContain(".kethic-field input, .kethic-field textarea");
+    expect(result.css).toContain(".kethic-navigation {");
+    expect(result.css).toContain(".kethic-footer {");
     expect(result.runtime).toContain('"count": 0');
     expect(result.runtime).toContain('"increment": () =>');
     expect(result.runtime).toContain('state["count"] = (state["count"] + 1);');
@@ -166,6 +187,31 @@ Torvathar Home
     Enva email label:"Email" Torikh
     Ikhen for:message "Missing message."
   Tor
+Tor
+Umvator "#app" receives Home
+`),
+    ).toThrow(WebCompilerError);
+  });
+
+  it("rejects links to missing route targets", () => {
+    expect(() =>
+      new WebCompiler().compile(`
+Torvathar Home
+  Rukshev Main
+    Ovshev to:Missing "Missing"
+  Tor
+Tor
+Umvator "#app" receives Home
+`),
+    ).toThrow(WebCompilerError);
+  });
+
+  it("rejects routes to missing sections", () => {
+    expect(() =>
+      new WebCompiler().compile(`
+Rinshev "#missing" receives Missing
+Torvathar Home
+  Kelen "Hello"
 Tor
 Umvator "#app" receives Home
 `),

@@ -3,11 +3,15 @@ import {
   ComponentNode,
   ComponentUseNode,
   ContainerNode,
+  FooterNode,
   FormNode,
   HeadingNode,
   InputNode,
+  LinkNode,
   MountNode,
+  NavigationNode,
   PageNode,
+  RouteNode,
   SectionNode,
   StateNode,
   SlotNode,
@@ -36,6 +40,7 @@ interface RenderContext {
 export class HtmlGenerator {
   private readonly components: Map<string, ComponentNode> = new Map<string, ComponentNode>();
   private readonly stateValues: Map<string, string> = new Map<string, string>();
+  private readonly routes: Map<string, string> = new Map<string, string>();
 
   public constructor(private readonly includeRuntime: boolean) {}
 
@@ -45,9 +50,14 @@ export class HtmlGenerator {
   public generate(program: WebProgramNode): string {
     this.components.clear();
     this.stateValues.clear();
+    this.routes.clear();
     for (const node of program.body) {
       if (node.kind === WebNodeKind.Component) {
         this.components.set(node.name, node);
+      }
+
+      if (node.kind === WebNodeKind.Route) {
+        this.routes.set(node.target, node.path);
       }
 
       if (node.kind === WebNodeKind.State) {
@@ -111,8 +121,14 @@ export class HtmlGenerator {
         return this.renderText(node, depth, context);
       case WebNodeKind.Heading:
         return this.renderHeading(node, depth, context);
+      case WebNodeKind.Link:
+        return this.renderLink(node, depth);
       case WebNodeKind.Button:
         return this.renderButton(node, depth, context);
+      case WebNodeKind.Navigation:
+        return this.renderNavigation(node, depth, context);
+      case WebNodeKind.Footer:
+        return this.renderFooter(node, depth, context);
       case WebNodeKind.Form:
         return this.renderForm(node, depth, context);
       case WebNodeKind.Input:
@@ -133,7 +149,7 @@ export class HtmlGenerator {
   private renderSection(node: SectionNode, depth: number, context: RenderContext): string {
     const inner: string = node.children.map((child: WebChildNode) => this.renderChild(child, depth + 1, context)).join("\n");
     return [
-      `${this.indent(depth)}<section class="${this.className(node.name)} kethic-section">`,
+      `${this.indent(depth)}<section id="${this.idFor(node.name)}" class="${this.className(node.name)} kethic-section">`,
       inner,
       `${this.indent(depth)}</section>`,
     ].join("\n");
@@ -168,6 +184,25 @@ export class HtmlGenerator {
     const action: string = node.action === null ? "" : ` data-kethic-action="${this.escapeHtml(node.action)}"`;
     const type: string = node.action === null && context.insideForm ? "submit" : "button";
     return [`${this.indent(depth)}<button type="${type}"${action} class="kethic-button">`, inner, `${this.indent(depth)}</button>`].join("\n");
+  }
+
+  private renderLink(node: LinkNode, depth: number): string {
+    const href: string = this.hrefFor(node.target);
+    return `${this.indent(depth)}<a class="kethic-link" href="${this.escapeHtml(href)}">${this.escapeHtml(node.label)}</a>`;
+  }
+
+  private renderNavigation(node: NavigationNode, depth: number, context: RenderContext): string {
+    const inner: string = node.children.map((child: WebChildNode) => this.renderChild(child, depth + 1, context)).join("\n");
+    return [
+      `${this.indent(depth)}<nav class="${this.className(node.name)} kethic-navigation" aria-label="${this.escapeHtml(node.name)}">`,
+      inner,
+      `${this.indent(depth)}</nav>`,
+    ].join("\n");
+  }
+
+  private renderFooter(node: FooterNode, depth: number, context: RenderContext): string {
+    const inner: string = node.children.map((child: WebChildNode) => this.renderChild(child, depth + 1, context)).join("\n");
+    return [`${this.indent(depth)}<footer class="kethic-footer">`, inner, `${this.indent(depth)}</footer>`].join("\n");
   }
 
   private renderButtonChild(node: WebChildNode, depth: number, context: RenderContext): string {
@@ -308,6 +343,10 @@ export class HtmlGenerator {
 
   private componentClassName(name: string): string {
     return `kethic-selthar-${name.replace(/[^A-Za-z0-9_-]/g, "-").toLowerCase()}`;
+  }
+
+  private hrefFor(target: string): string {
+    return this.routes.get(target) ?? target;
   }
 
   private idFor(name: string): string {

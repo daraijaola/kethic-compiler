@@ -8,7 +8,10 @@ export enum WebNodeKind {
   Container = "Container",
   Text = "Text",
   Heading = "Heading",
+  Link = "Link",
   Button = "Button",
+  Navigation = "Navigation",
+  Footer = "Footer",
   Form = "Form",
   Input = "Input",
   Textarea = "Textarea",
@@ -18,6 +21,7 @@ export enum WebNodeKind {
   Slot = "Slot",
   StyleBlock = "StyleBlock",
   StyleDeclaration = "StyleDeclaration",
+  Route = "Route",
   Mount = "Mount",
   State = "State",
   Action = "Action",
@@ -51,7 +55,7 @@ export interface WebProgramNode extends WebNode {
 /**
  * WebTopLevelNode lists declarations allowed at the top level.
  */
-export type WebTopLevelNode = PageNode | ComponentNode | StyleBlockNode | MountNode | StateNode | ActionNode;
+export type WebTopLevelNode = PageNode | ComponentNode | StyleBlockNode | RouteNode | MountNode | StateNode | ActionNode;
 
 /**
  * WebChildNode lists nodes that can render inside page/component content.
@@ -61,7 +65,10 @@ export type WebChildNode =
   | ContainerNode
   | TextNode
   | HeadingNode
+  | LinkNode
   | ButtonNode
+  | NavigationNode
+  | FooterNode
   | FormNode
   | InputNode
   | TextareaNode
@@ -150,11 +157,37 @@ export interface HeadingNode extends WebNode {
 }
 
 /**
+ * LinkNode represents Ovshev, a safe path across an interface boundary.
+ */
+export interface LinkNode extends WebNode {
+  readonly kind: WebNodeKind.Link;
+  readonly target: string;
+  readonly label: string;
+}
+
+/**
  * ButtonNode represents Umkar, an action trigger.
  */
 export interface ButtonNode extends WebNode {
   readonly kind: WebNodeKind.Button;
   readonly action: string | null;
+  readonly children: readonly WebChildNode[];
+}
+
+/**
+ * NavigationNode represents Rukshev, repeated paths through the page or app.
+ */
+export interface NavigationNode extends WebNode {
+  readonly kind: WebNodeKind.Navigation;
+  readonly name: string;
+  readonly children: readonly WebChildNode[];
+}
+
+/**
+ * FooterNode represents Durkel, the returning declaration at the page edge.
+ */
+export interface FooterNode extends WebNode {
+  readonly kind: WebNodeKind.Footer;
   readonly children: readonly WebChildNode[];
 }
 
@@ -241,6 +274,15 @@ export interface StyleDeclarationNode extends WebNode {
   readonly kind: WebNodeKind.StyleDeclaration;
   readonly name: string;
   readonly value: string;
+}
+
+/**
+ * RouteNode represents Rinshev, a declared route/path to a page region.
+ */
+export interface RouteNode extends WebNode {
+  readonly kind: WebNodeKind.Route;
+  readonly path: string;
+  readonly target: string;
 }
 
 /**

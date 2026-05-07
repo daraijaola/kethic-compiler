@@ -3,11 +3,15 @@ import {
   ActionNode,
   ComponentNode,
   ComponentUseNode,
+  FooterNode,
   FormNode,
   HeadingNode,
   InputNode,
+  LinkNode,
   MountNode,
+  NavigationNode,
   PageNode,
+  RouteNode,
   StateNode,
   StateUpdateNode,
   StyleBlockNode,
@@ -43,6 +47,9 @@ export class WebTypeChecker {
   private readonly components: Map<string, ComponentNode> = new Map<string, ComponentNode>();
   private readonly states: Map<string, StateNode> = new Map<string, StateNode>();
   private readonly actions: Map<string, ActionNode> = new Map<string, ActionNode>();
+  private readonly routesByTarget: Map<string, RouteNode> = new Map<string, RouteNode>();
+  private readonly routePaths: Set<string> = new Set<string>();
+  private readonly sectionTargets: Set<string> = new Set<string>();
 
   /**
    * check validates a web program and returns all diagnostics.
@@ -53,8 +60,15 @@ export class WebTypeChecker {
     this.components.clear();
     this.states.clear();
     this.actions.clear();
+    this.routesByTarget.clear();
+    this.routePaths.clear();
+    this.sectionTargets.clear();
 
     for (const node of program.body) {
+      if (node.kind === WebNodeKind.Page) {
+        this.registerPage(node);
+      }
+
       if (node.kind === WebNodeKind.Component) {
         this.registerComponent(node);
       }
@@ -65,6 +79,10 @@ export class WebTypeChecker {
 
       if (node.kind === WebNodeKind.Action) {
         this.registerAction(node);
+      }
+
+      if (node.kind === WebNodeKind.Route) {
+        this.registerRoute(node);
       }
     }
 
@@ -86,6 +104,9 @@ export class WebTypeChecker {
       case WebNodeKind.StyleBlock:
         this.checkStyleBlock(node);
         return;
+      case WebNodeKind.Route:
+        this.checkRoute(node);
+        return;
       case WebNodeKind.Mount:
         this.checkMount(node);
         return;
@@ -101,13 +122,17 @@ export class WebTypeChecker {
   }
 
   private checkPage(node: PageNode): void {
+    this.checkChildren(node.children, null);
+  }
+
+  private registerPage(node: PageNode): void {
     if (this.pages.has(node.name)) {
       this.report(node, "Torvathar", `page "${node.name}" is already declared`);
       return;
     }
 
     this.pages.set(node.name, node);
-    this.checkChildren(node.children, null);
+    this.collectSectionTargets(node.children);
   }
 
   private registerComponent(node: ComponentNode): void {
@@ -135,6 +160,21 @@ export class WebTypeChecker {
     }
 
     this.actions.set(node.name, node);
+  }
+
+  private registerRoute(node: RouteNode): void {
+    if (this.routesByTarget.has(node.target)) {
+      this.report(node, "Rinshev", `route target "${node.target}" is already declared`);
+      return;
+    }
+
+    if (this.routePaths.has(node.path)) {
+      this.report(node, "Rinshev", `route path "${node.path}" is already declared`);
+      return;
+    }
+
+    this.routesByTarget.set(node.target, node);
+    this.routePaths.add(node.path);
   }
 
   private checkComponent(node: ComponentNode): void {
@@ -217,6 +257,18 @@ export class WebTypeChecker {
         this.checkComponentUse(child);
       }
 
+      if (child.kind === WebNodeKind.Navigation) {
+        this.checkNavigation(child);
+      }
+
+      if (child.kind === WebNodeKind.Link) {
+        this.checkLink(child);
+      }
+
+      if (child.kind === WebNodeKind.Footer) {
+        this.checkFooter(child);
+      }
+
       if (child.kind === WebNodeKind.Form) {
         this.checkForm(child, currentComponent);
         continue;
@@ -255,6 +307,34 @@ export class WebTypeChecker {
 
     if (node.action !== null && !this.actions.has(node.action)) {
       this.report(node, "Umkar", `action "${node.action}" does not exist`);
+    }
+  }
+
+  private checkNavigation(node: NavigationNode): void {
+    const links: LinkNode[] = node.children.filter((child: WebChildNode): child is LinkNode => child.kind === WebNodeKind.Link);
+    if (links.length === 0) {
+      this.report(node, "Rukshev", `navigation "${node.name}" must contain at least one Ovshev link`);
+    }
+  }
+
+  private checkLink(node: LinkNode): void {
+    if (node.label.trim().length === 0) {
+      this.report(node, "Ovshev", "link label cannot be empty");
+    }
+
+    if (this.isLiteralHref(node.target)) {
+      return;
+    }
+
+    if (!this.routesByTarget.has(node.target)) {
+      this.report(node, "Ovshev", `route target "${node.target}" does not exist`);
+    }
+  }
+
+  private checkFooter(node: FooterNode): void {
+    const hasText: boolean = node.children.some((child: WebChildNode) => child.kind === WebNodeKind.Text);
+    if (!hasText) {
+      this.report(node, "Durkel", "footer must contain Kelen text in this web phase");
     }
   }
 
@@ -307,6 +387,16 @@ export class WebTypeChecker {
     }
   }
 
+  private checkRoute(node: RouteNode): void {
+    if (!this.isLiteralHref(node.path)) {
+      this.report(node, "Rinshev", `route path "${node.path}" must start with /, #, http://, https://, or mailto:`);
+    }
+
+    if (!this.sectionTargets.has(node.target) && !this.pages.has(node.target)) {
+      this.report(node, "Rinshev", `route target "${node.target}" does not exist`);
+    }
+  }
+
   private checkValueReference(
     node: { readonly location: { readonly line: number; readonly column: number } },
     keyword: string,
@@ -329,6 +419,28 @@ export class WebTypeChecker {
     }
 
     return names;
+  }
+
+  private collectSectionTargets(children: readonly WebChildNode[]): void {
+    for (const child of children) {
+      if (child.kind === WebNodeKind.Section) {
+        this.sectionTargets.add(child.name);
+      }
+
+      if ("children" in child) {
+        this.collectSectionTargets(child.children);
+      }
+    }
+  }
+
+  private isLiteralHref(value: string): boolean {
+    return (
+      value.startsWith("/") ||
+      value.startsWith("#") ||
+      value.startsWith("http://") ||
+      value.startsWith("https://") ||
+      value.startsWith("mailto:")
+    );
   }
 
   private checkExpression(
