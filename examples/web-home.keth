@@ -6,14 +6,32 @@ Tharsel Hero
   Mireshel "raised"
 Tor
 
+Tharsel ActionCard
+  Savarin 5
+  Mirlu "sand.50"
+  Kellu "ink.900"
+  Natorkar "soft"
+  Mireshel "low"
+Tor
+
+Selthar ActionCard receives title, body
+  Vakar ActionCard
+    Keltor level:3 title
+    Kelen body
+    Umva actions
+  Tor
+Tor
+
 Torvathar Home
   Shevva Hero
     Keltor level:1 "Kethic"
     Kelen "Ritual architecture for living interfaces."
     Vakar Intro
       Kelen "This page is written in Kethic Native web syntax and compiled into standard HTML and CSS."
-      Umkar action:begin
-        Kelen "Enter"
+      Umkel ActionCard with "Sealed Components", "Selthar lets Kethic reuse interface patterns without leaking style."
+        Umkar action:begin
+          Kelen "Enter"
+        Tor
       Tor
     Tor
   Tor

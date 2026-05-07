@@ -1,9 +1,12 @@
 import {
   ButtonNode,
+  ComponentNode,
+  ComponentUseNode,
   ContainerNode,
   HeadingNode,
   PageNode,
   SectionNode,
+  SlotNode,
   StyleBlockNode,
   StyleDeclarationNode,
   TextNode,
@@ -12,6 +15,7 @@ import {
   WebProgramNode,
   WebSourceLocation,
   WebTopLevelNode,
+  WebValue,
 } from "./ast";
 import { WebCompilerError, WebDiagnostic } from "./diagnostics";
 
@@ -19,7 +23,11 @@ import { WebCompilerError, WebDiagnostic } from "./diagnostics";
  * OpenBlock tracks nested Native web blocks until a closing Tor appears.
  */
 type OpenBlock =
-  | { readonly mode: "children"; readonly node: PageNode | SectionNode | ContainerNode | ButtonNode; readonly children: WebChildNode[] }
+  | {
+      readonly mode: "children";
+      readonly node: PageNode | SectionNode | ContainerNode | ButtonNode | ComponentNode | ComponentUseNode;
+      readonly children: WebChildNode[];
+    }
   | { readonly mode: "style"; readonly node: StyleBlockNode; readonly declarations: StyleDeclarationNode[] };
 
 /**
@@ -78,6 +86,11 @@ export class WebParser {
       return;
     }
 
+    if (line.startsWith("Selthar ")) {
+      this.openContainerBlock(this.parseComponent(line, location));
+      return;
+    }
+
     if (line.startsWith("Shevva ")) {
       this.openContainerBlock(this.parseSection(line, location));
       return;
@@ -90,6 +103,16 @@ export class WebParser {
 
     if (line.startsWith("Umkar")) {
       this.openContainerBlock(this.parseButton(line, location));
+      return;
+    }
+
+    if (line.startsWith("Umkel ")) {
+      this.openContainerBlock(this.parseComponentUse(line, location));
+      return;
+    }
+
+    if (line.startsWith("Umva ")) {
+      this.addChild(this.parseSlot(line, location));
       return;
     }
 
@@ -124,7 +147,7 @@ export class WebParser {
   /**
    * openContainerBlock starts a node that may hold renderable child nodes.
    */
-  private openContainerBlock(node: PageNode | SectionNode | ContainerNode | ButtonNode): void {
+  private openContainerBlock(node: PageNode | SectionNode | ContainerNode | ButtonNode | ComponentNode | ComponentUseNode): void {
     this.stack.push({ mode: "children", node, children: [] });
   }
 
@@ -144,9 +167,12 @@ export class WebParser {
       return;
     }
 
-    const closedNode: PageNode | SectionNode | ContainerNode | ButtonNode = { ...open.node, children: open.children };
+    const closedNode: PageNode | SectionNode | ContainerNode | ButtonNode | ComponentNode | ComponentUseNode = {
+      ...open.node,
+      children: open.children,
+    };
 
-    if (closedNode.kind === WebNodeKind.Page) {
+    if (closedNode.kind === WebNodeKind.Page || closedNode.kind === WebNodeKind.Component) {
       this.addTopLevel(closedNode);
       return;
     }
@@ -206,6 +232,22 @@ export class WebParser {
     return { kind: WebNodeKind.Container, location, name: this.requiredName(line, "Vakar", location), children: [] };
   }
 
+  private parseComponent(line: string, location: WebSourceLocation): ComponentNode {
+    const match: RegExpMatchArray | null = line.match(/^Selthar\s+([A-Za-z_][A-Za-z0-9_]*)(?:\s+receives\s+(.+))?$/);
+    if (match === null) {
+      this.report(location, "Selthar", "expected Selthar Name or Selthar Name receives prop, other");
+      return { kind: WebNodeKind.Component, location, name: "", parameters: [], children: [] };
+    }
+
+    return {
+      kind: WebNodeKind.Component,
+      location,
+      name: match[1],
+      parameters: match[2] === undefined ? [] : this.parseNameList(match[2], location, "Selthar"),
+      children: [],
+    };
+  }
+
   private parseStyleBlock(line: string, location: WebSourceLocation): StyleBlockNode {
     return {
       kind: WebNodeKind.StyleBlock,
@@ -229,18 +271,38 @@ export class WebParser {
     };
   }
 
+  private parseComponentUse(line: string, location: WebSourceLocation): ComponentUseNode {
+    const match: RegExpMatchArray | null = line.match(/^Umkel\s+([A-Za-z_][A-Za-z0-9_]*)(?:\s+with\s+(.+))?$/);
+    if (match === null) {
+      this.report(location, "Umkel", "expected Umkel ComponentName or Umkel ComponentName with value, other");
+      return { kind: WebNodeKind.ComponentUse, location, name: "", arguments: [], children: [] };
+    }
+
+    return {
+      kind: WebNodeKind.ComponentUse,
+      location,
+      name: match[1],
+      arguments: match[2] === undefined ? [] : this.parseValueList(match[2], location, "Umkel"),
+      children: [],
+    };
+  }
+
+  private parseSlot(line: string, location: WebSourceLocation): SlotNode {
+    return { kind: WebNodeKind.Slot, location, name: this.requiredName(line, "Umva", location) };
+  }
+
   private parseHeading(line: string, location: WebSourceLocation): HeadingNode {
     const match: RegExpMatchArray | null = line.match(/^Keltor\s+level:([1-6])\s+(.+)$/);
     if (match === null) {
       this.report(location, "Keltor", 'expected Keltor level:1 "Text"');
-      return { kind: WebNodeKind.Heading, location, level: 1, value: "" };
+      return { kind: WebNodeKind.Heading, location, level: 1, value: { kind: "literal", value: "" } };
     }
 
     return {
       kind: WebNodeKind.Heading,
       location,
       level: Number(match[1]),
-      value: this.parseValue(match[2], location, "Keltor"),
+      value: this.parseContentValue(match[2], location, "Keltor"),
     };
   }
 
@@ -248,7 +310,7 @@ export class WebParser {
     return {
       kind: WebNodeKind.Text,
       location,
-      value: this.parseValue(line.slice("Kelen ".length).trim(), location, "Kelen"),
+      value: this.parseContentValue(line.slice("Kelen ".length).trim(), location, "Kelen"),
     };
   }
 
@@ -282,6 +344,24 @@ export class WebParser {
     };
   }
 
+  private parseNameList(raw: string, location: WebSourceLocation, keyword: string): string[] {
+    return raw
+      .split(",")
+      .map((name: string) => name.trim())
+      .filter((name: string) => {
+        if (!/^[A-Za-z_][A-Za-z0-9_]*$/.test(name)) {
+          this.report(location, keyword, `invalid name "${name}"`);
+          return false;
+        }
+
+        return true;
+      });
+  }
+
+  private parseValueList(raw: string, location: WebSourceLocation, keyword: string): WebValue[] {
+    return raw.split(",").map((value: string) => this.parseContentValue(value, location, keyword));
+  }
+
   private requiredName(line: string, keyword: string, location: WebSourceLocation): string {
     const name: string = line.slice(keyword.length).trim();
     if (!/^[A-Za-z_][A-Za-z0-9_]*$/.test(name)) {
@@ -303,6 +383,25 @@ export class WebParser {
     }
 
     return value;
+  }
+
+  private parseContentValue(raw: string, location: WebSourceLocation, keyword: string): WebValue {
+    const value: string = raw.trim();
+
+    if (value.startsWith('"') && value.endsWith('"') && value.length >= 2) {
+      return { kind: "literal", value: value.slice(1, -1) };
+    }
+
+    if (/^[A-Za-z_][A-Za-z0-9_]*$/.test(value)) {
+      return { kind: "reference", value };
+    }
+
+    if (value.length === 0) {
+      this.report(location, keyword, "expected a value");
+      return { kind: "literal", value: "" };
+    }
+
+    return { kind: "literal", value };
   }
 
   private isInsideStyleBlock(): boolean {

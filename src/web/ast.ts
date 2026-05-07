@@ -9,6 +9,9 @@ export enum WebNodeKind {
   Text = "Text",
   Heading = "Heading",
   Button = "Button",
+  Component = "Component",
+  ComponentUse = "ComponentUse",
+  Slot = "Slot",
   StyleBlock = "StyleBlock",
   StyleDeclaration = "StyleDeclaration",
   Mount = "Mount",
@@ -41,12 +44,20 @@ export interface WebProgramNode extends WebNode {
 /**
  * WebTopLevelNode lists declarations allowed at the top level.
  */
-export type WebTopLevelNode = PageNode | StyleBlockNode | MountNode;
+export type WebTopLevelNode = PageNode | ComponentNode | StyleBlockNode | MountNode;
 
 /**
  * WebChildNode lists nodes that can render inside page/component content.
  */
-export type WebChildNode = SectionNode | ContainerNode | TextNode | HeadingNode | ButtonNode;
+export type WebChildNode = SectionNode | ContainerNode | TextNode | HeadingNode | ButtonNode | ComponentUseNode | SlotNode;
+
+/**
+ * WebValue stores either literal text or a reference to a component parameter.
+ */
+export interface WebValue {
+  readonly kind: "literal" | "reference";
+  readonly value: string;
+}
 
 /**
  * PageNode represents Torvathar, the page/document root.
@@ -80,7 +91,7 @@ export interface ContainerNode extends WebNode {
  */
 export interface TextNode extends WebNode {
   readonly kind: WebNodeKind.Text;
-  readonly value: string;
+  readonly value: WebValue;
 }
 
 /**
@@ -89,7 +100,7 @@ export interface TextNode extends WebNode {
 export interface HeadingNode extends WebNode {
   readonly kind: WebNodeKind.Heading;
   readonly level: number;
-  readonly value: string;
+  readonly value: WebValue;
 }
 
 /**
@@ -99,6 +110,34 @@ export interface ButtonNode extends WebNode {
   readonly kind: WebNodeKind.Button;
   readonly action: string | null;
   readonly children: readonly WebChildNode[];
+}
+
+/**
+ * ComponentNode represents Selthar, a sealed reusable interface pattern.
+ */
+export interface ComponentNode extends WebNode {
+  readonly kind: WebNodeKind.Component;
+  readonly name: string;
+  readonly parameters: readonly string[];
+  readonly children: readonly WebChildNode[];
+}
+
+/**
+ * ComponentUseNode represents Umkel, awakening a sealed component pattern.
+ */
+export interface ComponentUseNode extends WebNode {
+  readonly kind: WebNodeKind.ComponentUse;
+  readonly name: string;
+  readonly arguments: readonly WebValue[];
+  readonly children: readonly WebChildNode[];
+}
+
+/**
+ * SlotNode represents Umva, a content opening inside a component.
+ */
+export interface SlotNode extends WebNode {
+  readonly kind: WebNodeKind.Slot;
+  readonly name: string;
 }
 
 /**
