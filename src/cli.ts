@@ -4,6 +4,7 @@ import { CompiledModule, ModuleGraphCompiler, ModuleGraphDiagnostic, ModuleGraph
 import { NativeParser } from "./native";
 import { Parser, ProgramNode } from "./parser";
 import { TypeChecker, TypeCheckDiagnostic } from "./typechecker";
+import { WebCompiler, WebCompileResult } from "./web";
 
 /**
  * Minimal Node declarations keep the project dependency-free and avoid adding
@@ -44,6 +45,14 @@ interface CompileCommand {
   readonly outputPath: string | null;
   readonly outputDirectory: string | null;
   readonly nativeMode: boolean;
+}
+
+/**
+ * WebCommand stores parsed command-line arguments for `kethic web`.
+ */
+interface WebCommand {
+  readonly inputPath: string;
+  readonly outputDirectory: string;
 }
 
 /**
@@ -149,6 +158,42 @@ function parseCompileCommand(args: readonly string[]): CompileCommand {
 }
 
 /**
+ * parseWebCommand accepts:
+ * kethic web input.keth --out-dir dist
+ */
+function parseWebCommand(args: readonly string[]): WebCommand {
+  if (args.length < 4 || args[0] !== "web") {
+    throw new Error(usage());
+  }
+
+  const inputPath: string = args[1];
+  let outputDirectory: string | null = null;
+  let index: number = 2;
+
+  while (index < args.length) {
+    const current: string = args[index];
+
+    if (current === "--out-dir") {
+      if (index + 1 >= args.length) {
+        throw new Error("Expected output directory after --out-dir.\n\n" + usage());
+      }
+
+      outputDirectory = args[index + 1];
+      index += 2;
+      continue;
+    }
+
+    throw new Error(`Unknown option "${current}".\n\n${usage()}`);
+  }
+
+  if (outputDirectory === null) {
+    throw new Error("Expected --out-dir for web output.\n\n" + usage());
+  }
+
+  return { inputPath, outputDirectory };
+}
+
+/**
  * runCompile reads the source file and either prints or writes generated JS.
  */
 function runCompile(command: CompileCommand): void {
@@ -198,6 +243,24 @@ function runGraphCompile(absoluteInput: string, absoluteOutputDirectory: string,
 }
 
 /**
+ * runWebCompile writes the first static Kethic web bundle.
+ */
+function runWebCompile(command: WebCommand): void {
+  const absoluteInput: string = path.resolve(command.inputPath);
+  const absoluteOutputDirectory: string = path.resolve(command.outputDirectory);
+  const source: string = fs.readFileSync(absoluteInput, "utf8");
+  const result: WebCompileResult = new WebCompiler().compile(source);
+  const htmlPath: string = path.join(absoluteOutputDirectory, "index.html");
+  const cssPath: string = path.join(absoluteOutputDirectory, "styles.css");
+
+  fs.mkdirSync(absoluteOutputDirectory, { recursive: true });
+  fs.writeFileSync(htmlPath, result.html + "\n", "utf8");
+  fs.writeFileSync(cssPath, result.css + "\n", "utf8");
+  process.stdout.write(`Wrote ${htmlPath}\n`);
+  process.stdout.write(`Wrote ${cssPath}\n`);
+}
+
+/**
  * outputPathForModule preserves source-relative layout and changes .keth to .js.
  */
 function outputPathForModule(entryDirectory: string, outputDirectory: string, module: CompiledModule): string {
@@ -223,12 +286,14 @@ function usage(): string {
     "Usage:",
     "  kethic compile <input.keth> [--out output.js] [--native]",
     "  kethic compile <input.keth> --out-dir dist",
+    "  kethic web <input.keth> --out-dir dist-web",
     "",
     "Examples:",
     "  kethic compile examples/milestone1.keth",
     "  kethic compile examples/native-core.keth --native",
     "  kethic compile examples/milestone1.keth --out dist/milestone1.js",
     "  kethic compile examples/app.keth --out-dir dist",
+    "  kethic web examples/web-home.keth --out-dir dist-web",
   ].join("\n");
 }
 
@@ -237,7 +302,13 @@ function usage(): string {
  */
 function main(): void {
   try {
-    runCompile(parseCompileCommand(process.argv.slice(2)));
+    const args: readonly string[] = process.argv.slice(2);
+    if (args[0] === "web") {
+      runWebCompile(parseWebCommand(args));
+      return;
+    }
+
+    runCompile(parseCompileCommand(args));
   } catch (error: unknown) {
     const message: string = error instanceof Error ? error.message : String(error);
     process.stderr.write(message + "\n");

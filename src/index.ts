@@ -8,3 +8,4 @@ export * from "./rotator";
 export * from "./stdlib";
 export * from "./modulegraph";
 export * from "./native";
+export * from "./web";
