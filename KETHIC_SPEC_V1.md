@@ -4,6 +4,8 @@ Status: draft stabilization document.
 
 This document freezes the implemented Kethic language surface before further security-type and runtime-authority work. New syntax should be added only by updating this document first.
 
+Important direction note: this document describes the currently implemented **Kethic Classic** surface. The future user-facing language is **Kethic Native**, defined in `KETHIC_NATIVE_SYNTAX.md`. Classic remains a compatibility and regression surface while Native becomes the alien ritual-engineering syntax.
+
 ## 1. Purpose
 
 Kethic is a proprietary, ahead-of-time compiled programming language for web applications. Its current compiler emits JavaScript through these phases:
