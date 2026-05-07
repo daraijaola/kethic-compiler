@@ -21,6 +21,23 @@ export class NativeParserError extends Error {
  * existing parser so all later compiler phases keep working.
  */
 export class NativeParser {
+  private readonly wordOperators: ReadonlyMap<string, string> = new Map<string, string>([
+    ["plus", "+"],
+    ["minus", "-"],
+    ["times", "*"],
+    ["over", "/"],
+    ["remains", "%"],
+    ["same", "=="],
+    ["unlike", "!="],
+    ["above", ">"],
+    ["below", "<"],
+    ["atleast", ">="],
+    ["atmost", "<="],
+    ["and", "&&"],
+    ["or", "||"],
+    ["not", "!"],
+  ]);
+
   public constructor(private readonly source: string) {}
 
   /**
@@ -140,7 +157,7 @@ export class NativeParser {
   }
 
   /**
-   * lowerExpression handles Native expression forms that exist in Phase 1.
+   * lowerExpression handles Native calls and word operators.
    */
   private lowerExpression(expression: string): string {
     const trimmed: string = expression.trim();
@@ -149,7 +166,7 @@ export class NativeParser {
       return this.lowerUmkelExpression(trimmed, 0);
     }
 
-    return trimmed;
+    return this.lowerWordOperators(trimmed);
   }
 
   /**
@@ -163,8 +180,139 @@ export class NativeParser {
       throw new NativeParserError(lineNumber, "expected Umkel name with arguments");
     }
 
-    const args: string = (match[2] ?? "").trim();
+    const args: string = this.lowerArgumentList((match[2] ?? "").trim());
     return `${TokenType.Umkel} ${match[1]}(${args})`;
+  }
+
+  /**
+   * lowerArgumentList lowers each comma-separated call argument expression.
+   */
+  private lowerArgumentList(argumentsText: string): string {
+    if (argumentsText.length === 0) {
+      return "";
+    }
+
+    return this.splitArguments(argumentsText)
+      .map((argument: string) => this.lowerExpression(argument))
+      .join(", ");
+  }
+
+  /**
+   * lowerWordOperators replaces operator words outside quoted strings.
+   */
+  private lowerWordOperators(expression: string): string {
+    let output: string = "";
+    let index: number = 0;
+
+    while (index < expression.length) {
+      const character: string = expression.charAt(index);
+
+      if (character === "\"" || character === "'") {
+        const stringEnd: number = this.findQuotedEnd(expression, index, character);
+        output += expression.slice(index, stringEnd);
+        index = stringEnd;
+        continue;
+      }
+
+      if (character === "`") {
+        const templateEnd: number = this.findQuotedEnd(expression, index, "`");
+        output += expression.slice(index, templateEnd);
+        index = templateEnd;
+        continue;
+      }
+
+      if (this.isIdentifierStart(character)) {
+        const start: number = index;
+        index += 1;
+        while (index < expression.length && this.isIdentifierPart(expression.charAt(index))) {
+          index += 1;
+        }
+
+        const word: string = expression.slice(start, index);
+        output += this.wordOperators.get(word) ?? word;
+        continue;
+      }
+
+      output += character;
+      index += 1;
+    }
+
+    return output;
+  }
+
+  /**
+   * splitArguments separates call arguments while respecting strings and groups.
+   */
+  private splitArguments(argumentsText: string): string[] {
+    const args: string[] = [];
+    let start: number = 0;
+    let depth: number = 0;
+    let index: number = 0;
+
+    while (index < argumentsText.length) {
+      const character: string = argumentsText.charAt(index);
+
+      if (character === "\"" || character === "'" || character === "`") {
+        index = this.findQuotedEnd(argumentsText, index, character);
+        continue;
+      }
+
+      if (character === "(" || character === "[" || character === "{") {
+        depth += 1;
+      }
+
+      if (character === ")" || character === "]" || character === "}") {
+        depth -= 1;
+      }
+
+      if (character === "," && depth === 0) {
+        args.push(argumentsText.slice(start, index).trim());
+        start = index + 1;
+      }
+
+      index += 1;
+    }
+
+    args.push(argumentsText.slice(start).trim());
+    return args;
+  }
+
+  /**
+   * findQuotedEnd scans to the end of one quoted string or template literal.
+   */
+  private findQuotedEnd(text: string, start: number, quote: string): number {
+    let index: number = start + 1;
+
+    while (index < text.length) {
+      const character: string = text.charAt(index);
+
+      if (character === "\\") {
+        index += 2;
+        continue;
+      }
+
+      if (character === quote) {
+        return index + 1;
+      }
+
+      index += 1;
+    }
+
+    return text.length;
+  }
+
+  /**
+   * isIdentifierStart checks Native expression word starts.
+   */
+  private isIdentifierStart(character: string): boolean {
+    return /[A-Za-z_]/.test(character);
+  }
+
+  /**
+   * isIdentifierPart checks Native expression word continuations.
+   */
+  private isIdentifierPart(character: string): boolean {
+    return /[A-Za-z0-9_]/.test(character);
   }
 
   /**

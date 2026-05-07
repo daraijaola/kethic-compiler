@@ -46,4 +46,33 @@ Umkel Print with total
   it("reports unsupported Native syntax before Classic parsing", () => {
     expect(() => new NativeParser("price holds 100").parse()).toThrow("unsupported Native syntax");
   });
+
+  it("lowers Native word operators outside strings", () => {
+    const result = compileNative(`
+Navā score holds 85
+Navā limit holds 50
+Navā passed holds score above limit
+Navā label holds "plus above same"
+Navā combined holds score plus limit times 2
+Navā inverted holds not false
+Kelthar choose receives a, b
+  Duren a same b
+Tor
+Navā sameValue holds Umkel choose with score plus 1, limit minus 1
+`);
+
+    expect(result.diagnostics).toEqual([]);
+    expect(result.classic).toContain("Navā passed = score > limit;");
+    expect(result.classic).toContain('Navā label = "plus above same";');
+    expect(result.classic).toContain("Navā combined = score + limit * 2;");
+    expect(result.classic).toContain("Navā inverted = ! false;");
+    expect(result.classic).toContain("Duren a == b;");
+    expect(result.classic).toContain("Navā sameValue = Umkel choose(score + 1, limit - 1);");
+    expect(result.code).toContain("let passed = score > limit;");
+    expect(result.code).toContain('let label = "plus above same";');
+    expect(result.code).toContain("let combined = score + limit * 2;");
+    expect(result.code).toContain("let inverted = !false;");
+    expect(result.code).toContain("return a === b;");
+    expect(result.code).toContain("let sameValue = choose(score + 1, limit - 1);");
+  });
 });
