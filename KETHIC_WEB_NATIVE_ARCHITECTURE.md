@@ -2,6 +2,8 @@
 
 Status: planning document. No compiler behavior is defined as implemented until a later phase says so.
 
+Strategic update: Kethic's primary product direction is now AI-native source compression. The web architecture still applies, but future syntax decisions must be measured against token reduction, AI generation reliability, and compiler-enforced output quality. See `docs/KETHIC_AI_COMPRESSION_STRATEGY.md`.
+
 This document maps the Kethic web layer carefully before code is written. It merges three design inputs:
 
 - the Kethic Web Lexicon of 90 Namaru web terms;
