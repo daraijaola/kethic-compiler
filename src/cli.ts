@@ -1,5 +1,6 @@
 import { CodeGenerator } from "./codegen";
 import { Lexer } from "./lexer/lexer";
+import { CompiledModule, ModuleGraphCompiler, ModuleGraphDiagnostic, ModuleGraphFileSystem } from "./modulegraph";
 import { Parser, ProgramNode } from "./parser";
 import { TypeChecker, TypeCheckDiagnostic } from "./typechecker";
 
@@ -29,7 +30,9 @@ interface FsModule {
  */
 interface PathModule {
   dirname(path: string): string;
-  resolve(path: string): string;
+  join(...paths: string[]): string;
+  relative(from: string, to: string): string;
+  resolve(...paths: string[]): string;
 }
 
 /**
@@ -38,6 +41,7 @@ interface PathModule {
 interface CompileCommand {
   readonly inputPath: string;
   readonly outputPath: string | null;
+  readonly outputDirectory: string | null;
 }
 
 /**
@@ -49,6 +53,23 @@ interface CompileResult {
 
 const fs: FsModule = require("fs") as FsModule;
 const path: PathModule = require("path") as PathModule;
+
+/**
+ * NodeModuleFileSystem adapts Node built-ins to the module graph compiler.
+ */
+class NodeModuleFileSystem implements ModuleGraphFileSystem {
+  public readFile(filePath: string): string {
+    return fs.readFileSync(filePath, "utf8");
+  }
+
+  public resolvePath(filePath: string): string {
+    return path.resolve(filePath);
+  }
+
+  public resolveImport(fromFile: string, source: string): string {
+    return path.resolve(path.dirname(fromFile), source);
+  }
+}
 
 /**
  * compileSource runs the current Kethic compiler phases through clean JS codegen.
@@ -79,6 +100,7 @@ function parseCompileCommand(args: readonly string[]): CompileCommand {
 
   const inputPath: string = args[1];
   let outputPath: string | null = null;
+  let outputDirectory: string | null = null;
   let index: number = 2;
 
   while (index < args.length) {
@@ -94,12 +116,23 @@ function parseCompileCommand(args: readonly string[]): CompileCommand {
       continue;
     }
 
+    if (current === "--out-dir") {
+      if (index + 1 >= args.length) {
+        throw new Error("Expected output directory after --out-dir.\n\n" + usage());
+      }
+
+      outputDirectory = args[index + 1];
+      index += 2;
+      continue;
+    }
+
     throw new Error(`Unknown option "${current}".\n\n${usage()}`);
   }
 
   return {
     inputPath,
     outputPath,
+    outputDirectory,
   };
 }
 
@@ -108,6 +141,16 @@ function parseCompileCommand(args: readonly string[]): CompileCommand {
  */
 function runCompile(command: CompileCommand): void {
   const absoluteInput: string = path.resolve(command.inputPath);
+
+  if (command.outputPath !== null && command.outputDirectory !== null) {
+    throw new Error("Use either --out or --out-dir, not both.\n\n" + usage());
+  }
+
+  if (command.outputDirectory !== null) {
+    runGraphCompile(absoluteInput, path.resolve(command.outputDirectory));
+    return;
+  }
+
   const source: string = fs.readFileSync(absoluteInput, "utf8");
   const result: CompileResult = compileSource(source);
 
@@ -123,16 +166,56 @@ function runCompile(command: CompileCommand): void {
 }
 
 /**
+ * runGraphCompile writes every compiled .keth module into an output directory.
+ */
+function runGraphCompile(absoluteInput: string, absoluteOutputDirectory: string): void {
+  const compiler: ModuleGraphCompiler = new ModuleGraphCompiler(new NodeModuleFileSystem());
+  const result = compiler.compile(absoluteInput);
+
+  if (result.diagnostics.length > 0) {
+    throw new Error(formatGraphDiagnostics(result.diagnostics).join("\n"));
+  }
+
+  const entryDirectory: string = path.dirname(result.entryPath);
+  for (const module of result.modules) {
+    const outputPath: string = outputPathForModule(entryDirectory, absoluteOutputDirectory, module);
+    fs.mkdirSync(path.dirname(outputPath), { recursive: true });
+    fs.writeFileSync(outputPath, module.output.code + "\n", "utf8");
+    process.stdout.write(`Wrote ${outputPath}\n`);
+  }
+}
+
+/**
+ * outputPathForModule preserves source-relative layout and changes .keth to .js.
+ */
+function outputPathForModule(entryDirectory: string, outputDirectory: string, module: CompiledModule): string {
+  const relativePath: string = path.relative(entryDirectory, module.filePath);
+  const jsRelativePath: string = relativePath.replace(/\.keth$/i, ".js");
+  return path.join(outputDirectory, jsRelativePath);
+}
+
+/**
+ * formatGraphDiagnostics includes file paths in multi-file diagnostics.
+ */
+function formatGraphDiagnostics(diagnostics: readonly ModuleGraphDiagnostic[]): string[] {
+  return diagnostics.map((diagnostic: ModuleGraphDiagnostic) =>
+    `${diagnostic.filePath}: KethicTypeError [Line ${diagnostic.line}, Col ${diagnostic.column}] — ${diagnostic.keyword}: ${diagnostic.message}`,
+  );
+}
+
+/**
  * usage returns the supported CLI surface.
  */
 function usage(): string {
   return [
     "Usage:",
     "  kethic compile <input.keth> [--out output.js]",
+    "  kethic compile <input.keth> --out-dir dist",
     "",
     "Examples:",
     "  kethic compile examples/milestone1.keth",
     "  kethic compile examples/milestone1.keth --out dist/milestone1.js",
+    "  kethic compile examples/app.keth --out-dir dist",
   ].join("\n");
 }
 

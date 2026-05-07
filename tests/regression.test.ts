@@ -31,7 +31,9 @@ describe("Kethic regression coverage", () => {
     const cliSource: string = readFileSync("src/cli.ts", "utf8");
 
     expect(cliSource).toContain("kethic compile <input.keth> [--out output.js]");
+    expect(cliSource).toContain("kethic compile <input.keth> --out-dir dist");
     expect(cliSource).toContain("compileSource");
+    expect(cliSource).toContain("runGraphCompile");
     expect(cliSource).toContain("new CodeGenerator().generate(ast).code");
   });
 

@@ -22,12 +22,21 @@ import { standardLibraryByName, StandardLibraryFunction } from "../stdlib";
 import { CodeGenerationResult, SourceMapEntry } from "./types";
 
 /**
+ * CodeGeneratorOptions lets graph compilation rewrite module specifiers.
+ */
+export interface CodeGeneratorOptions {
+  readonly mapImportSource?: (source: string) => string;
+}
+
+/**
  * CodeGenerator walks a validated AST and emits clean, runnable JavaScript.
  */
 export class CodeGenerator {
   private readonly lines: string[] = [];
   private readonly sourceMap: SourceMapEntry[] = [];
   private indentLevel: number = 0;
+
+  public constructor(private readonly options: CodeGeneratorOptions = {}) {}
 
   /**
    * generate returns JavaScript plus a Kethic-line to JS-line source map.
@@ -220,7 +229,7 @@ export class CodeGenerator {
     const names: string = statement.specifiers.map((specifier) => specifier.name.lexeme).join(", ");
 
     if (statement.source !== null) {
-      this.emitMappedLine(`import { ${names} } from ${statement.source.token.lexeme};`, statement.keyword.line);
+      this.emitMappedLine(`import { ${names} } from ${this.emitModuleSource(statement.source)};`, statement.keyword.line);
       return;
     }
 
@@ -351,6 +360,17 @@ export class CodeGenerator {
   }
 
   /**
+   * emitModuleSource optionally rewrites import sources for emitted JS files.
+   */
+  private emitModuleSource(source: { readonly token: { readonly lexeme: string }; readonly value: string }): string {
+    if (this.options.mapImportSource === undefined) {
+      return source.token.lexeme;
+    }
+
+    return JSON.stringify(this.options.mapImportSource(source.value));
+  }
+
+  /**
    * emitFunctionExpression emits Tharva/Kelthar expression functions inline.
    */
   private emitFunctionExpression(expression: FunctionExpressionNode): string {
@@ -457,7 +477,7 @@ export class CodeGenerator {
         return [
           statement.source === null
             ? `${indent}export { ${names} };`
-            : `${indent}import { ${names} } from ${statement.source.token.lexeme};`,
+            : `${indent}import { ${names} } from ${this.emitModuleSource(statement.source)};`,
         ];
       default:
         return [`${indent}/* unsupported nested statement: ${statement.kind} */`];

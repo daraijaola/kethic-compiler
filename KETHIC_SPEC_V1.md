@@ -292,6 +292,8 @@ When `Ovrin` has a source string, it is an import and declares each incoming nam
 
 When `Ovrin` has no source string, it is an export and every exported name must already be declared in the current file.
 
+During module graph compilation, Kethic follows local `.keth` imports, type-checks dependencies first, and injects the real exported symbol types into importing files. External non-Kethic imports remain `Unknown` until a package declaration system exists.
+
 Generated JavaScript:
 
 ```js
@@ -299,6 +301,16 @@ export { local };
 export { local, add };
 import { remoteValue } from "./remote.js";
 import { remoteValue, remoteAdd } from "./remote.js";
+```
+
+When a Kethic source imports another Kethic source, generated JavaScript rewrites the extension:
+
+```keth
+Ovrin { add } from "./math.keth";
+```
+
+```js
+import { add } from "./math.js";
 ```
 
 ## 12. Standard Library
@@ -382,6 +394,7 @@ The type checker currently supports:
 - `Torduren` placement inside `Ovdurthar` functions
 - `Torduren` await-target diagnostics for non-promise values
 - switch case type matching
+- module graph import/export validation for local `.keth` files
 
 Unknown values use `Unknown` to avoid cascaded errors.
 

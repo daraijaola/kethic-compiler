@@ -1,0 +1,4 @@
+Ovrin { add } from "./math.keth";
+
+Navā total = Umkel add(20, 22);
+Umkel Print("Module total:", total);

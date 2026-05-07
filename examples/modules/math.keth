@@ -1,0 +1,5 @@
+Kelthar add(a: Number, b: Number) {
+  Duren a + b;
+}
+
+Ovrin { add };

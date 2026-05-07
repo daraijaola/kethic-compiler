@@ -87,12 +87,17 @@ export class KethicTypeError extends Error {
 export class TypeChecker {
   private readonly symbols: SymbolTable = new SymbolTable();
   private readonly diagnostics: TypeCheckDiagnostic[] = [];
+  private readonly injectedImportedNames: Set<string> = new Set<string>();
   private currentFunction: FunctionSymbol | null = null;
   private loopDepth: number = 0;
   private switchDepth: number = 0;
 
-  public constructor() {
+  public constructor(importedSymbols: readonly KethicSymbol[] = []) {
     this.predeclareStandardLibrary();
+    for (const symbol of importedSymbols) {
+      this.symbols.define(symbol);
+      this.injectedImportedNames.add(symbol.name);
+    }
   }
 
   /**
@@ -114,6 +119,13 @@ export class TypeChecker {
    */
   public formatDiagnostics(diagnostics: TypeCheckDiagnostic[]): string[] {
     return diagnostics.map((diagnostic: TypeCheckDiagnostic) => new KethicTypeError(diagnostic).message);
+  }
+
+  /**
+   * resolveSymbol exposes checked top-level symbols to the module graph compiler.
+   */
+  public resolveSymbol(name: string): KethicSymbol | null {
+    return this.symbols.resolve(name);
   }
 
   /**
@@ -496,6 +508,10 @@ export class TypeChecker {
       }
 
       if (this.symbols.resolveCurrent(specifier.name.lexeme) !== null) {
+        if (this.injectedImportedNames.has(specifier.name.lexeme)) {
+          continue;
+        }
+
         this.report(statement.keyword, `duplicate declaration of "${specifier.name.lexeme}"`);
         continue;
       }
