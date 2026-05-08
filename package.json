@@ -10,6 +10,7 @@
   "scripts": {
     "build": "tsc",
     "test": "vitest run",
+    "benchmark:ai": "node scripts/benchmark-ai-compression.cjs",
     "compile": "ts-node src/cli.ts compile"
   },
   "devDependencies": {
