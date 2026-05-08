@@ -59,6 +59,7 @@ export class WebParser {
   private readonly diagnostics: WebDiagnostic[] = [];
   private readonly body: WebTopLevelNode[] = [];
   private readonly stack: OpenBlock[] = [];
+  private pendingFeatures: { readonly location: WebSourceLocation; readonly items: string[] } | null = null;
 
   public constructor(private readonly source: string) {}
 
@@ -77,6 +78,10 @@ export class WebParser {
       this.report(open.node.location, open.node.kind, "block was not closed with Tor");
     }
 
+    if (this.pendingFeatures !== null) {
+      this.report(this.pendingFeatures.location, "features", "features block was not closed with end");
+    }
+
     if (this.diagnostics.length > 0) {
       throw new WebCompilerError(this.diagnostics);
     }
@@ -92,14 +97,43 @@ export class WebParser {
    * parseLine dispatches one non-empty source line by keyword.
    */
   private parseLine(line: string, lineNumber: number): void {
+    const location: WebSourceLocation = { line: lineNumber, column: 1 };
+
+    if (this.pendingFeatures !== null) {
+      if (line === "Tor" || line === "end") {
+        this.finishFeaturesMacro();
+        return;
+      }
+
+      if (line.length === 0 || line.startsWith("#")) {
+        return;
+      }
+
+      this.addFeatureMacroItem(line, location);
+      return;
+    }
+
     if (line.length === 0 || line.startsWith("#")) {
       return;
     }
 
-    const location: WebSourceLocation = { line: lineNumber, column: 1 };
-
     if (line === "Tor" || line === "end") {
       this.closeBlock(location);
+      return;
+    }
+
+    if (line.startsWith("hero ")) {
+      this.addChild(this.parseHeroMacro(line, location));
+      return;
+    }
+
+    if (line.startsWith("signup ")) {
+      this.addChild(this.parseSignupMacro(line, location));
+      return;
+    }
+
+    if (line === "features") {
+      this.pendingFeatures = { location, items: [] };
       return;
     }
 
@@ -393,6 +427,103 @@ export class WebParser {
     }
 
     open.children.push(node);
+  }
+
+  private parseHeroMacro(line: string, location: WebSourceLocation): SectionNode {
+    const match: RegExpMatchArray | null = line.match(/^hero\s+"([^"]+)"\s+"([^"]+)"(?:\s+btn:([A-Za-z_][A-Za-z0-9_]*)\s+"([^"]+)")?$/);
+    if (match === null) {
+      this.report(location, "hero", 'expected hero "Title" "Subtitle" or hero "Title" "Subtitle" btn:action "Label"');
+      return { kind: WebNodeKind.Section, location, name: "Hero", children: [] };
+    }
+
+    const children: WebChildNode[] = [
+      { kind: WebNodeKind.Heading, location, level: 1, value: { kind: "literal", value: match[1] } },
+      { kind: WebNodeKind.Text, location, value: { kind: "literal", value: match[2] } },
+    ];
+
+    if (match[3] !== undefined && match[4] !== undefined) {
+      children.push({
+        kind: WebNodeKind.Button,
+        location,
+        action: match[3],
+        children: [{ kind: WebNodeKind.Text, location, value: { kind: "literal", value: match[4] } }],
+      });
+    }
+
+    return { kind: WebNodeKind.Section, location, name: "Hero", children };
+  }
+
+  private parseSignupMacro(line: string, location: WebSourceLocation): SectionNode {
+    const match: RegExpMatchArray | null = line.match(/^signup\s+(.+?)\s+submit:"([^"]+)"$/);
+    if (match === null) {
+      this.report(location, "signup", 'expected signup name email submit:"Join"');
+      return { kind: WebNodeKind.Section, location, name: "Signup", children: [] };
+    }
+
+    const fieldNames: string[] = match[1].split(/\s+/).filter((name: string) => name.length > 0);
+    const formChildren: WebChildNode[] = [];
+
+    for (const fieldName of fieldNames) {
+      if (!/^[A-Za-z_][A-Za-z0-9_]*$/.test(fieldName)) {
+        this.report(location, "signup", `invalid field name "${fieldName}"`);
+        continue;
+      }
+
+      const label: string = this.labelFromName(fieldName);
+      formChildren.push({ kind: WebNodeKind.Input, location, name: fieldName, label, required: true });
+      formChildren.push({
+        kind: WebNodeKind.ValidationMessage,
+        location,
+        fieldName,
+        message: `Enter your ${label.toLowerCase()}.`,
+      });
+    }
+
+    formChildren.push({
+      kind: WebNodeKind.Button,
+      location,
+      action: null,
+      children: [{ kind: WebNodeKind.Text, location, value: { kind: "literal", value: match[2] } }],
+    });
+
+    return {
+      kind: WebNodeKind.Section,
+      location,
+      name: "Signup",
+      children: [{ kind: WebNodeKind.Form, location, name: "Signup", children: formChildren }],
+    };
+  }
+
+  private addFeatureMacroItem(line: string, location: WebSourceLocation): void {
+    const value: string = this.parseValue(line, location, "features");
+    if (value.length === 0) {
+      return;
+    }
+
+    this.pendingFeatures = {
+      location: this.pendingFeatures?.location ?? location,
+      items: [...(this.pendingFeatures?.items ?? []), value],
+    };
+  }
+
+  private finishFeaturesMacro(): void {
+    if (this.pendingFeatures === null) {
+      return;
+    }
+
+    const location: WebSourceLocation = this.pendingFeatures.location;
+    const children: WebChildNode[] = [
+      { kind: WebNodeKind.Heading, location, level: 2, value: { kind: "literal", value: "Features" } },
+      ...this.pendingFeatures.items.map((item: string, index: number): ContainerNode => ({
+        kind: WebNodeKind.Container,
+        location,
+        name: `Feature${index + 1}`,
+        children: [{ kind: WebNodeKind.Heading, location, level: 3, value: { kind: "literal", value: item } }],
+      })),
+    ];
+
+    this.pendingFeatures = null;
+    this.addChild({ kind: WebNodeKind.Section, location, name: "Features", children });
   }
 
   /**
@@ -930,6 +1061,13 @@ export class WebParser {
     }
 
     return value;
+  }
+
+  private labelFromName(name: string): string {
+    return name
+      .replace(/([a-z])([A-Z])/g, "$1 $2")
+      .replace(/[_-]+/g, " ")
+      .replace(/^./, (first: string) => first.toUpperCase());
   }
 
   private parseContentValue(raw: string, location: WebSourceLocation, keyword: string): WebValue {

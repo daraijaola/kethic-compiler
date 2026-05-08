@@ -113,6 +113,38 @@ end
 mount "#app" Home
 `;
 
+const macroSample: string = `
+st joins = 0
+
+act join
+  set joins = joins plus 1
+end
+
+rt "#hero" Hero
+rt "#features" Features
+rt "#signup" Signup
+
+pg Landing
+  nav Main
+    link Hero "Hero"
+    link Features "Features"
+    link Signup "Signup"
+  end
+  hero "Kethic" "AI-native websites with fewer tokens." btn:join "Join"
+  features
+    "Fast generation"
+    "Accessible by default"
+    "Compiled to real web code"
+  end
+  signup name email submit:"Join waitlist"
+  foot
+    txt "Built with Kethic."
+  end
+end
+
+mount "#app" Landing
+`;
+
 describe("WebCompiler", () => {
   it("parses the static Native web slice into a Web AST", () => {
     const ast = new WebParser(sample).parse();
@@ -188,6 +220,26 @@ describe("WebCompiler", () => {
     expect(result.html).toContain('<textarea id="field-message" name="message" rows="5" required aria-describedby="field-message-message"></textarea>');
     expect(result.html).toContain('<footer class="kethic-footer">');
     expect(result.runtime).toContain('"increment": () =>');
+  });
+
+  it("expands semantic macros into valid web output", () => {
+    const result = new WebCompiler().compile(macroSample);
+
+    expect(result.html).toContain('<main id="app" class="kethic-landing kethic-page">');
+    expect(result.html).toContain('<a class="kethic-link" href="#features">Features</a>');
+    expect(result.html).toContain('<section id="hero" class="kethic-hero kethic-section">');
+    expect(result.html).toContain("<h1");
+    expect(result.html).toContain("AI-native websites with fewer tokens.");
+    expect(result.html).toContain('data-kethic-action="join"');
+    expect(result.html).toContain('<section id="features" class="kethic-features kethic-section">');
+    expect(result.html).toContain("Fast generation");
+    expect(result.html).toContain("Accessible by default");
+    expect(result.html).toContain("Compiled to real web code");
+    expect(result.html).toContain('<section id="signup" class="kethic-signup kethic-section">');
+    expect(result.html).toContain('<form class="kethic-signup kethic-form">');
+    expect(result.html).toContain('<input id="field-name" name="name" required aria-describedby="field-name-message">');
+    expect(result.html).toContain('<input id="field-email" name="email" required aria-describedby="field-email-message">');
+    expect(result.html).toContain("Join waitlist");
   });
 
   it("rejects unsupported style attributes in Web Phase 1", () => {

@@ -1,6 +1,6 @@
 # Compact Kethic Syntax
 
-Status: first implemented slice.
+Status: compact aliases plus Semantic Macros V1 are implemented.
 
 Compact Kethic is the AI-output mode of Kethic Native Web. It maps to the same Web AST as readable Kethic, but uses short regular aliases that are easier for AI models to emit correctly and cheaper in output tokens.
 
@@ -81,16 +81,70 @@ The first compact showcase is smaller than the readable showcase:
 
 This is only alias compression. Larger savings will come from semantic macros such as `hero`, `signup`, `features`, `pricing`, and `shell`.
 
-## Next Compression Layer
+## Semantic Macros V1
 
-The next layer should add semantic macros. Example target:
+Semantic macros expand one short line or block into multiple normal Web AST nodes. They are the main path toward large AI output-token savings.
 
 ```keth
 pg Landing
   hero "Kethic" "AI-native websites with fewer tokens."
   signup name email submit:"Join"
-  features "Fast" "Accessible" "Compiled"
+  features
+    "Fast"
+    "Accessible"
+    "Compiled"
+  end
 end
 ```
 
-The compiler should expand those macros into sections, headings, forms, cards, labels, validation text, layout, and accessibility defaults.
+Implemented macros:
+
+| Macro | Expands To |
+| --- | --- |
+| `hero "Title" "Subtitle"` | `sec Hero` with `h1` and text |
+| `hero "Title" "Subtitle" btn:action "Label"` | hero section plus action button |
+| `signup name email submit:"Join"` | `sec Signup` with form, required inputs, validation messages, submit button |
+| `features ... end` | `sec Features` with repeated feature containers |
+
+The compiler expands those macros into sections, headings, forms, labels, validation text, containers, and buttons.
+
+## Macro Example
+
+```keth
+st joins = 0
+
+act join
+  set joins = joins plus 1
+end
+
+rt "#hero" Hero
+rt "#features" Features
+rt "#signup" Signup
+
+pg Landing
+  nav Main
+    link Hero "Hero"
+    link Features "Features"
+    link Signup "Signup"
+  end
+  hero "Kethic" "AI-native websites with fewer tokens." btn:join "Join waitlist"
+  features
+    "Fast generation"
+    "Accessible by default"
+    "Compiled to real web code"
+  end
+  signup name email submit:"Join waitlist"
+end
+
+mount "#app" Landing
+```
+
+Next macro candidates:
+
+- `pricing`;
+- `faq`;
+- `testimonial`;
+- `shell`;
+- `dashboard`;
+- `crud`;
+- `api`.

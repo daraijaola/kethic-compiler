@@ -1,0 +1,29 @@
+st joins = 0
+
+act join
+  set joins = joins plus 1
+end
+
+rt "#hero" Hero
+rt "#features" Features
+rt "#signup" Signup
+
+pg Landing
+  nav Main
+    link Hero "Hero"
+    link Features "Features"
+    link Signup "Signup"
+  end
+  hero "Kethic" "AI-native websites with fewer tokens." btn:join "Join waitlist"
+  features
+    "Fast generation"
+    "Accessible by default"
+    "Compiled to real web code"
+  end
+  signup name email submit:"Join waitlist"
+  foot
+    txt "Built with Kethic."
+  end
+end
+
+mount "#app" Landing
