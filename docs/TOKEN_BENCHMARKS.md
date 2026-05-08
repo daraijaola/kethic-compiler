@@ -21,6 +21,19 @@ The benchmark script is:
 npm run benchmark:ai
 ```
 
+The benchmark can run multiple scenarios:
+
+```text
+KETHIC_BENCHMARK_SCENARIO=standalone-html npm run benchmark:ai
+KETHIC_BENCHMARK_SCENARIO=react-tailwind npm run benchmark:ai
+```
+
+On Windows PowerShell:
+
+```text
+$env:KETHIC_BENCHMARK_SCENARIO="react-tailwind"; npm run benchmark:ai
+```
+
 It requires this environment variable:
 
 ```text
@@ -87,3 +100,39 @@ This result supports the new Kethic thesis: semantic macros matter more than key
 The earlier compact-alias showcase reduced source characters by 27.29 percent against readable Kethic. The first macro landing page reduced source characters by 78.85 percent against the readable showcase. In the live model benchmark above, macro Kethic reduced model completion tokens by 97.03 percent against standalone HTML/CSS/JS and compiled on the first attempt.
 
 This is not yet a complete product benchmark. The next benchmark should compare Kethic against React plus Tailwind, then compare quality using screenshots and accessibility checks.
+
+## 2026-05-09 React/Tailwind Comparison
+
+Model requested: `gpt-5.2`.
+
+Scenario: `react-tailwind`.
+
+Task: create the same Kethic landing page as a complete React component using Tailwind CSS classes, with hero, CTA button, three feature cards, signup form, footer, responsive layout, accessible labels, and a small click handler.
+
+| Metric | React/Tailwind Component | Kethic Web Macro |
+| --- | ---: | ---: |
+| Prompt tokens | 86 | 191 |
+| Completion tokens | 5,806 | 207 |
+| Total tokens | 5,892 | 398 |
+| Source characters | 24,736 | 831 |
+| Compiled successfully | N/A | Yes |
+| Generated platform output characters | N/A | 5,991 |
+
+Savings:
+
+- output-token reduction: 96.43 percent;
+- total-token reduction: 93.25 percent;
+- source-character reduction: 96.64 percent.
+
+Interpretation:
+
+This result matters more than the standalone HTML benchmark because React plus Tailwind is closer to how AI website builders commonly emit frontend code. Kethic's macro output remained under 1,000 source characters and compiled successfully on the first attempt.
+
+## Next Benchmark Work
+
+The next benchmark layer should test quality, not only token count:
+
+- render the React/Tailwind baseline and Kethic output side by side;
+- capture screenshots at desktop and mobile widths;
+- run basic accessibility checks for labels, headings, focusable controls, and landmarks;
+- record repair-loop cost when generated source fails validation.

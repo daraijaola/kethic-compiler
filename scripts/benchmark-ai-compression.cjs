@@ -8,6 +8,7 @@ const gatewayToken = process.env.KETHIC_GATEWAY_TOKEN;
 const gatewayHost = process.env.KETHIC_GATEWAY_HOST ?? "cozy-ai-gate.lovable.app";
 const gatewayPath = process.env.KETHIC_GATEWAY_PATH ?? "/api/public/chat";
 const model = process.env.KETHIC_BENCHMARK_MODEL ?? "gpt-5.2";
+const scenario = process.env.KETHIC_BENCHMARK_SCENARIO ?? "standalone-html";
 
 if (gatewayToken === undefined || gatewayToken.trim().length === 0) {
   console.error("Set KETHIC_GATEWAY_TOKEN before running this benchmark.");
@@ -71,8 +72,23 @@ function percentReduction(candidate, baseline) {
   return Number(((1 - candidate / baseline) * 100).toFixed(2));
 }
 
-const normalPrompt =
-  "Create a polished, production-quality landing page for an open-source AI-native programming language called Kethic. Requirements: hero section with headline and CTA button, three feature cards, email signup form with name and email inputs, footer, responsive CSS, accessible labels, and a tiny JavaScript click handler for the CTA. Return one complete standalone HTML file only. No explanation.";
+const scenarios = {
+  "standalone-html": {
+    baselineLabel: "Standalone HTML/CSS/JS",
+    baselinePrompt:
+      "Create a polished, production-quality landing page for an open-source AI-native programming language called Kethic. Requirements: hero section with headline and CTA button, three feature cards, email signup form with name and email inputs, footer, responsive CSS, accessible labels, and a tiny JavaScript click handler for the CTA. Return one complete standalone HTML file only. No explanation.",
+  },
+  "react-tailwind": {
+    baselineLabel: "React/Tailwind component",
+    baselinePrompt:
+      "Create a polished, production-quality React landing page component for an open-source AI-native programming language called Kethic. Use Tailwind CSS classes. Requirements: hero section with headline and CTA button, three feature cards, email signup form with name and email inputs, footer, responsive layout, accessible labels, and a tiny click handler for the CTA. Return one complete React component file only. No explanation.",
+  },
+};
+
+if (scenarios[scenario] === undefined) {
+  console.error(`Unknown KETHIC_BENCHMARK_SCENARIO "${scenario}". Use one of: ${Object.keys(scenarios).join(", ")}.`);
+  process.exit(1);
+}
 
 const kethicPrompt = `Create the same landing page, but output only Kethic Web Macro source. No markdown. No explanation.
 Use only this syntax:
@@ -107,7 +123,8 @@ async function main() {
   const outputDirectory = path.join(os.tmpdir(), `kethic-ai-benchmark-${Date.now()}`);
   fs.mkdirSync(outputDirectory, { recursive: true });
 
-  const normalResponse = await sendChat(normalPrompt);
+  const activeScenario = scenarios[scenario];
+  const normalResponse = await sendChat(activeScenario.baselinePrompt);
   const kethicResponse = await sendChat(kethicPrompt);
   const normalUsage = requireUsage(normalResponse);
   const kethicUsage = requireUsage(kethicResponse);
@@ -143,6 +160,8 @@ async function main() {
 
   const result = {
     model,
+    scenario,
+    baselineLabel: activeScenario.baselineLabel,
     outputDirectory,
     normal: {
       promptTokens: normalUsage.prompt_tokens,
