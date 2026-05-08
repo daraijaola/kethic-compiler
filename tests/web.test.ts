@@ -242,6 +242,16 @@ describe("WebCompiler", () => {
     expect(result.html).toContain("Join waitlist");
   });
 
+  it("keeps generated HTML ids unique when section names and headings match", () => {
+    const result = new WebCompiler().compile(macroSample);
+    const ids: string[] = [...result.html.matchAll(/id="([^"]+)"/g)].map((match: RegExpMatchArray) => match[1]);
+    const duplicates: string[] = ids.filter((id: string, index: number) => ids.indexOf(id) !== index);
+
+    expect(result.html).toContain('<section id="features" class="kethic-features kethic-section">');
+    expect(result.html).toContain('<h2 id="features-2">Features</h2>');
+    expect(duplicates).toEqual([]);
+  });
+
   it("rejects unsupported style attributes in Web Phase 1", () => {
     expect(() =>
       new WebCompiler().compile(`

@@ -41,6 +41,7 @@ export class HtmlGenerator {
   private readonly components: Map<string, ComponentNode> = new Map<string, ComponentNode>();
   private readonly stateValues: Map<string, string> = new Map<string, string>();
   private readonly routes: Map<string, string> = new Map<string, string>();
+  private readonly usedIds: Set<string> = new Set<string>();
 
   public constructor(private readonly includeRuntime: boolean) {}
 
@@ -51,6 +52,7 @@ export class HtmlGenerator {
     this.components.clear();
     this.stateValues.clear();
     this.routes.clear();
+    this.usedIds.clear();
     for (const node of program.body) {
       if (node.kind === WebNodeKind.Component) {
         this.components.set(node.name, node);
@@ -147,9 +149,10 @@ export class HtmlGenerator {
   }
 
   private renderSection(node: SectionNode, depth: number, context: RenderContext): string {
+    const id: string = this.reserveId(this.idFor(node.name));
     const inner: string = node.children.map((child: WebChildNode) => this.renderChild(child, depth + 1, context)).join("\n");
     return [
-      `${this.indent(depth)}<section id="${this.idFor(node.name)}" class="${this.className(node.name)} kethic-section">`,
+      `${this.indent(depth)}<section id="${id}" class="${this.className(node.name)} kethic-section">`,
       inner,
       `${this.indent(depth)}</section>`,
     ].join("\n");
@@ -176,7 +179,8 @@ export class HtmlGenerator {
   private renderHeading(node: HeadingNode, depth: number, context: RenderContext): string {
     const tag: string = `h${node.level}`;
     const text: string = this.resolveValue(node.value, context);
-    return `${this.indent(depth)}<${tag} id="${this.idFor(text)}">${this.escapeHtml(text)}</${tag}>`;
+    const id: string = this.reserveId(this.idFor(text));
+    return `${this.indent(depth)}<${tag} id="${id}">${this.escapeHtml(text)}</${tag}>`;
   }
 
   private renderButton(node: ButtonNode, depth: number, context: RenderContext): string {
@@ -351,6 +355,20 @@ export class HtmlGenerator {
 
   private idFor(name: string): string {
     return this.className(name).replace(/^kethic-/, "");
+  }
+
+  private reserveId(baseId: string): string {
+    const safeBaseId: string = baseId.length === 0 ? "node" : baseId;
+    let candidate: string = safeBaseId;
+    let index: number = 2;
+
+    while (this.usedIds.has(candidate)) {
+      candidate = `${safeBaseId}-${index}`;
+      index += 1;
+    }
+
+    this.usedIds.add(candidate);
+    return candidate;
   }
 
   private fieldId(name: string): string {

@@ -60,6 +60,13 @@ export class CssGenerator {
       "  .kethic-field textarea { resize: vertical; }",
       "  .kethic-validation { margin: calc(var(--sa-3) * -1) 0 0; color: #8a230f; font-size: 0.95rem; }",
       "  .kethic-footer { padding: var(--sa-5) var(--sa-6); border-block-start: 1px solid rgb(23 21 18 / 0.12); color: rgb(23 21 18 / 0.72); }",
+      "",
+      "  @media (max-width: 720px) {",
+      "    .kethic-section { padding: var(--sa-5) var(--sa-4); }",
+      "    .kethic-navigation { align-items: flex-start; flex-direction: column; padding: var(--sa-3) var(--sa-4); }",
+      "    .kethic-button { inline-size: 100%; }",
+      "    .kethic-footer { padding: var(--sa-4); }",
+      "  }",
       "}",
     ].join("\n");
   }
