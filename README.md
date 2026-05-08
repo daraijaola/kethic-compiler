@@ -10,3 +10,5 @@ Current strategic direction:
 - keep a readable Kethic syntax for humans and a compact syntax for AI output;
 - benchmark token savings against equivalent production examples;
 - make the language open source while keeping hosted platform services commercial.
+
+Implemented web syntax now includes readable Kethic Native and a first compact alias layer. See `docs/COMPACT_SYNTAX.md`.

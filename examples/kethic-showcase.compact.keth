@@ -1,0 +1,61 @@
+st count = 0
+
+act addOffering
+  set count = count plus 1
+end
+
+rt "#hero" Hero
+rt "#system" System
+rt "#contact" Contact
+
+cmp PrincipleCard receives title, body
+  box PrincipleCard
+    h3 title
+    txt body
+    slot actions
+  end
+end
+
+pg KethicShowcase
+  nav Main
+    link Hero "Hero"
+    link System "System"
+    link Contact "Contact"
+  end
+  sec Hero
+    h1 "Kethic Native"
+    txt "An AI-native compression language for building typed programs and living websites."
+    box Intro
+      txt "This page is written in compact Kethic source and compiled into standard HTML, CSS, and runtime JavaScript."
+      btn addOffering "Add Offering"
+      txt "Offerings counted: {count}"
+    end
+  end
+  sec System
+    h2 "The Native Web Shape"
+    use PrincipleCard "Sealed Components", "Selthar creates reusable interface patterns with scoped structure."
+      txt "Components compile into safe HTML without exposing Kethic source."
+    end
+    use PrincipleCard "Living State", "Lumva stores reactive interface values and wakes the visible surface when changed."
+      txt "The counter above is controlled by a Kethic Umrin action."
+    end
+    use PrincipleCard "Accessible Forms", "Forms and inputs compile into labeled controls."
+      txt "The contact rite below uses required fields and accessible validation text."
+    end
+  end
+  sec Contact
+    h2 "Contact Rite"
+    form Contact
+      in email "Email" !
+      area message "Message" rows:5 !
+      msg email "Enter an email before sending."
+      msg message "Write the message you want carried."
+      btn "Send Message"
+    end
+  end
+  foot
+    txt "Kethic Native is being built as a complete AI-native compression language for typed logic and web surfaces."
+  end
+end
+
+mount "#app" KethicShowcase

@@ -64,6 +64,55 @@ Tor
 Umvator "#app" receives Home
 `;
 
+const compactSample: string = `
+st count = 0
+
+act increment
+  set count = count plus 1
+end
+
+rt "#hero" Hero
+rt "#contact" Contact
+
+cmp ActionCard receives title, body
+  box ActionCard
+    h3 title
+    txt body
+    slot actions
+  end
+end
+
+pg Home
+  nav Main
+    link Hero "Hero"
+    link Contact "Contact"
+  end
+  sec Hero
+    h1 "Kethic"
+    txt "Ritual architecture for living interfaces."
+    use ActionCard "Sealed Components", "Reusable UI without style leakage."
+      txt "Count: {count}"
+      btn "Enter"
+      btn increment "Add"
+    end
+    sec Contact
+      form Contact
+        in email "Email" !
+        area message "Message" rows:5 !
+        msg email "Enter an email before sending."
+        msg message "Write the message you want carried."
+        btn "Send"
+      end
+    end
+  end
+  foot
+    txt "Kethic Native web shell."
+  end
+end
+
+mount "#app" Home
+`;
+
 describe("WebCompiler", () => {
   it("parses the static Native web slice into a Web AST", () => {
     const ast = new WebParser(sample).parse();
@@ -121,6 +170,24 @@ describe("WebCompiler", () => {
     expect(result.runtime).toContain('"count": 0');
     expect(result.runtime).toContain('"increment": () =>');
     expect(result.runtime).toContain('state["count"] = (state["count"] + 1);');
+  });
+
+  it("compiles compact Kethic web aliases to the same output shape", () => {
+    const result = new WebCompiler().compile(compactSample);
+
+    expect(result.html).toContain('<main id="app" class="kethic-home kethic-page">');
+    expect(result.html).toContain('<nav class="kethic-main kethic-navigation" aria-label="Main">');
+    expect(result.html).toContain('<a class="kethic-link" href="#hero">Hero</a>');
+    expect(result.html).toContain('<section id="hero" class="kethic-hero kethic-section"');
+    expect(result.html).toContain("Ritual architecture for living interfaces.");
+    expect(result.html).toContain("Sealed Components");
+    expect(result.html).toContain('data-kethic-template="Count: {count}"');
+    expect(result.html).toContain('data-kethic-action="increment"');
+    expect(result.html).toContain('<form class="kethic-contact kethic-form">');
+    expect(result.html).toContain('<input id="field-email" name="email" required aria-describedby="field-email-message">');
+    expect(result.html).toContain('<textarea id="field-message" name="message" rows="5" required aria-describedby="field-message-message"></textarea>');
+    expect(result.html).toContain('<footer class="kethic-footer">');
+    expect(result.runtime).toContain('"increment": () =>');
   });
 
   it("rejects unsupported style attributes in Web Phase 1", () => {
