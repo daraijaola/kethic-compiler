@@ -61,10 +61,15 @@ export class CssGenerator {
       "  .kethic-field textarea { resize: vertical; }",
       "  .kethic-validation { margin: calc(var(--sa-3) * -1) 0 0; color: #8a230f; font-size: 0.95rem; }",
       "  .kethic-footer { padding: var(--sa-5) var(--sa-6); border-block-start: 1px solid rgb(23 21 18 / 0.12); color: rgb(23 21 18 / 0.72); }",
+      "  .kethic-layout-stack { display: flex; flex-direction: column; gap: var(--sa-4); }",
+      "  .kethic-layout-row { display: flex; flex-direction: row; align-items: center; gap: var(--sa-4); }",
+      "  .kethic-layout-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(16rem, 100%), 1fr)); gap: var(--sa-4); }",
+      "  .kethic-layout-center { display: grid; place-items: center; text-align: center; }",
       "",
       "  @media (max-width: 720px) {",
       "    .kethic-section { padding: var(--sa-5) var(--sa-4); }",
       "    .kethic-navigation { align-items: flex-start; flex-direction: column; padding: var(--sa-3) var(--sa-4); }",
+      "    .kethic-layout-row { align-items: stretch; flex-direction: column; }",
       "    .kethic-button { inline-size: 100%; }",
       "    .kethic-footer { padding: var(--sa-4); }",
       "  }",
@@ -134,6 +139,16 @@ export class CssGenerator {
         return `    inset: ${this.space(declaration.value)};`;
       case "Karum":
         return `    display: ${declaration.value};`;
+      case "Seltorkar":
+        return `    align-items: ${this.alignment(declaration.value)};`;
+      case "Rinshevsa":
+        return `    justify-content: ${this.distribution(declaration.value)};`;
+      case "Naruk":
+        return `    flex-wrap: ${this.wrap(declaration.value)};`;
+      case "Vatornak":
+        return `    max-inline-size: ${this.size(declaration.value)};\n    margin-inline: auto;\n    padding-inline: var(--sa-4);`;
+      case "Karlu":
+        return `    aspect-ratio: ${declaration.value};`;
       default:
         return "";
     }
@@ -231,5 +246,41 @@ export class CssGenerator {
 
   private position(value: string): string {
     return value === "anchor" ? "relative" : value;
+  }
+
+  private alignment(value: string): string {
+    const alignments: ReadonlyMap<string, string> = new Map<string, string>([
+      ["start", "flex-start"],
+      ["center", "center"],
+      ["end", "flex-end"],
+      ["stretch", "stretch"],
+    ]);
+
+    return alignments.get(value) ?? value;
+  }
+
+  private distribution(value: string): string {
+    const distributions: ReadonlyMap<string, string> = new Map<string, string>([
+      ["start", "flex-start"],
+      ["center", "center"],
+      ["end", "flex-end"],
+      ["between", "space-between"],
+      ["around", "space-around"],
+      ["evenly", "space-evenly"],
+    ]);
+
+    return distributions.get(value) ?? value;
+  }
+
+  private wrap(value: string): string {
+    if (value === "true") {
+      return "wrap";
+    }
+
+    if (value === "false") {
+      return "nowrap";
+    }
+
+    return value;
   }
 }

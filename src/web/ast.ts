@@ -85,6 +85,11 @@ export interface WebValue {
 }
 
 /**
+ * WebLayoutKind marks built-in layout vessels.
+ */
+export type WebLayoutKind = "stack" | "row" | "grid" | "center";
+
+/**
  * WebExpression is the small expression model used by Web Phase 3 runtime actions.
  */
 export type WebExpression = LiteralExpression | IdentifierExpression | UnaryExpression | BinaryExpression;
@@ -136,6 +141,7 @@ export interface SectionNode extends WebNode {
 export interface ContainerNode extends WebNode {
   readonly kind: WebNodeKind.Container;
   readonly name: string;
+  readonly layout?: WebLayoutKind;
   readonly children: readonly WebChildNode[];
 }
 

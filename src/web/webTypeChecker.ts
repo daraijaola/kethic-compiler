@@ -55,6 +55,11 @@ const SUPPORTED_STYLE_ATTRIBUTES: ReadonlySet<string> = new Set<string>([
   "Torrin",
   "Rintor",
   "Karum",
+  "Seltorkar",
+  "Rinshevsa",
+  "Naruk",
+  "Vatornak",
+  "Karlu",
 ]);
 
 /**

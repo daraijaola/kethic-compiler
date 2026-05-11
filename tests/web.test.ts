@@ -184,6 +184,42 @@ end
 mount "#app" Home
 `;
 
+const layoutCoreSample: string = `
+style HeroGrid
+  seltorkar center
+  rinshevsa between
+  naruk true
+  vatornak wide
+  karlu 16/9
+end
+
+pg Home
+  sec Hero
+    stack HeroStack
+      h1 "Kethic"
+      txt "Layout Core V1"
+      row HeroActions
+        btn "Start"
+        btn "Docs"
+      end
+    end
+    grid HeroGrid
+      box First
+        h2 "Fast"
+      end
+      box Second
+        h2 "Small"
+      end
+    end
+    center HeroCenter
+      txt "Centered proof."
+    end
+  end
+end
+
+mount "#app" Home
+`;
+
 describe("WebCompiler", () => {
   it("parses the static Native web slice into a Web AST", () => {
     const ast = new WebParser(sample).parse();
@@ -319,6 +355,27 @@ describe("WebCompiler", () => {
     expect(result.css).toContain("position: relative;");
     expect(result.css).toContain("inset: var(--sa-0);");
     expect(result.css).toContain("display: grid;");
+  });
+
+  it("compiles Layout Core V1 primitives into structured HTML and CSS", () => {
+    const result = new WebCompiler().compile(layoutCoreSample);
+
+    expect(result.html).toContain('class="kethic-herostack kethic-container kethic-layout-stack"');
+    expect(result.html).toContain('class="kethic-heroactions kethic-container kethic-layout-row"');
+    expect(result.html).toContain('class="kethic-herogrid kethic-container kethic-layout-grid"');
+    expect(result.html).toContain('class="kethic-herocenter kethic-container kethic-layout-center"');
+    expect(result.css).toContain(".kethic-layout-stack { display: flex; flex-direction: column; gap: var(--sa-4); }");
+    expect(result.css).toContain(".kethic-layout-row { display: flex; flex-direction: row; align-items: center; gap: var(--sa-4); }");
+    expect(result.css).toContain(".kethic-layout-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(16rem, 100%), 1fr)); gap: var(--sa-4); }");
+    expect(result.css).toContain(".kethic-layout-center { display: grid; place-items: center; text-align: center; }");
+    expect(result.css).toContain(".kethic-herogrid {");
+    expect(result.css).toContain("align-items: center;");
+    expect(result.css).toContain("justify-content: space-between;");
+    expect(result.css).toContain("flex-wrap: wrap;");
+    expect(result.css).toContain("max-inline-size: 72rem;");
+    expect(result.css).toContain("margin-inline: auto;");
+    expect(result.css).toContain("padding-inline: var(--sa-4);");
+    expect(result.css).toContain("aspect-ratio: 16/9;");
   });
 
   it("rejects unsupported style attributes in Web Phase 1", () => {

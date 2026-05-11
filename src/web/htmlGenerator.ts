@@ -160,8 +160,9 @@ export class HtmlGenerator {
 
   private renderContainer(node: ContainerNode, depth: number, context: RenderContext): string {
     const inner: string = node.children.map((child: WebChildNode) => this.renderChild(child, depth + 1, context)).join("\n");
+    const layoutClass: string = node.layout === undefined ? "" : ` kethic-layout-${node.layout}`;
     return [
-      `${this.indent(depth)}<div class="${this.className(node.name)} kethic-container">`,
+      `${this.indent(depth)}<div class="${this.className(node.name)} kethic-container${layoutClass}">`,
       inner,
       `${this.indent(depth)}</div>`,
     ].join("\n");

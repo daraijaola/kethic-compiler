@@ -172,6 +172,26 @@ export class WebParser {
       return;
     }
 
+    if (line.startsWith("stack ")) {
+      this.openContainerBlock(this.parseCompactLayoutContainer(line, location, "stack"));
+      return;
+    }
+
+    if (line.startsWith("row ")) {
+      this.openContainerBlock(this.parseCompactLayoutContainer(line, location, "row"));
+      return;
+    }
+
+    if (line.startsWith("grid ")) {
+      this.openContainerBlock(this.parseCompactLayoutContainer(line, location, "grid"));
+      return;
+    }
+
+    if (line.startsWith("center ")) {
+      this.openContainerBlock(this.parseCompactLayoutContainer(line, location, "center"));
+      return;
+    }
+
     if (line.startsWith("btn ")) {
       this.addChild(this.parseCompactButton(line, location));
       return;
@@ -279,6 +299,26 @@ export class WebParser {
 
     if (line.startsWith("Vakar ")) {
       this.openContainerBlock(this.parseContainer(line, location));
+      return;
+    }
+
+    if (line.startsWith("Rukdur ")) {
+      this.openContainerBlock(this.parseLayoutContainer(line, location, "Rukdur", "stack"));
+      return;
+    }
+
+    if (line.startsWith("Rinruk ")) {
+      this.openContainerBlock(this.parseLayoutContainer(line, location, "Rinruk", "row"));
+      return;
+    }
+
+    if (line.startsWith("Selrukkar ")) {
+      this.openContainerBlock(this.parseLayoutContainer(line, location, "Selrukkar", "grid"));
+      return;
+    }
+
+    if (line.startsWith("Torum ")) {
+      this.openContainerBlock(this.parseLayoutContainer(line, location, "Torum", "center"));
       return;
     }
 
@@ -620,6 +660,14 @@ export class WebParser {
 
   private parseCompactContainer(line: string, location: WebSourceLocation): ContainerNode {
     return { kind: WebNodeKind.Container, location, name: this.requiredName(line, "box", location), children: [] };
+  }
+
+  private parseLayoutContainer(line: string, location: WebSourceLocation, keyword: string, layout: "stack" | "row" | "grid" | "center"): ContainerNode {
+    return { kind: WebNodeKind.Container, location, name: this.requiredName(line, keyword, location), layout, children: [] };
+  }
+
+  private parseCompactLayoutContainer(line: string, location: WebSourceLocation, layout: "stack" | "row" | "grid" | "center"): ContainerNode {
+    return { kind: WebNodeKind.Container, location, name: this.requiredName(line, layout, location), layout, children: [] };
   }
 
   private parseForm(line: string, location: WebSourceLocation): FormNode {
@@ -1064,6 +1112,11 @@ export class WebParser {
       ["torrin", "Torrin"],
       ["rintor", "Rintor"],
       ["karum", "Karum"],
+      ["seltorkar", "Seltorkar"],
+      ["rinshevsa", "Rinshevsa"],
+      ["naruk", "Naruk"],
+      ["vatornak", "Vatornak"],
+      ["karlu", "Karlu"],
     ]);
 
     return aliases.get(name.toLowerCase()) ?? name;
