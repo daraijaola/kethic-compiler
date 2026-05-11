@@ -11,4 +11,9 @@ Current strategic direction:
 - benchmark token savings against equivalent production examples;
 - make the language open source while keeping hosted platform services commercial.
 
-Implemented web syntax now includes readable Kethic Native and a first compact alias layer. See `docs/COMPACT_SYNTAX.md`.
+Implemented web syntax now includes readable Kethic Native, compact aliases, and Semantic Macros V1. Start with:
+
+- `docs/AI_GUIDE.md` for AI generation rules;
+- `docs/COMPACT_SYNTAX.md` for compact syntax and macros;
+- `docs/TOKEN_BENCHMARKS.md` for measured token savings;
+- `docs/WEB_QUALITY_CHECKS.md` for compiler output quality gates.
