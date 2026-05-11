@@ -9,6 +9,7 @@ const gatewayHost = process.env.KETHIC_GATEWAY_HOST ?? "cozy-ai-gate.lovable.app
 const gatewayPath = process.env.KETHIC_GATEWAY_PATH ?? "/api/public/chat";
 const model = process.env.KETHIC_BENCHMARK_MODEL ?? "gpt-5.2";
 const scenario = process.env.KETHIC_BENCHMARK_SCENARIO ?? "standalone-html";
+const promptCapsulePath = process.env.KETHIC_PROMPT_CAPSULE_PATH ?? "docs/AI_PROMPT_CAPSULE.md";
 
 if (gatewayToken === undefined || gatewayToken.trim().length === 0) {
   console.error("Set KETHIC_GATEWAY_TOKEN before running this benchmark.");
@@ -72,6 +73,17 @@ function percentReduction(candidate, baseline) {
   return Number(((1 - candidate / baseline) * 100).toFixed(2));
 }
 
+function readPromptCapsule() {
+  const document = fs.readFileSync(promptCapsulePath, "utf8");
+  const fenced = document.match(/```text\s*([\s\S]*?)```/);
+
+  if (fenced === null) {
+    throw new Error(`Prompt capsule at ${promptCapsulePath} must contain a text code block.`);
+  }
+
+  return fenced[1].trim();
+}
+
 const scenarios = {
   "standalone-html": {
     baselineLabel: "Standalone HTML/CSS/JS",
@@ -90,34 +102,9 @@ if (scenarios[scenario] === undefined) {
   process.exit(1);
 }
 
-const kethicPrompt = `Create the same landing page, but output only Kethic Web Macro source. No markdown. No explanation.
-Use only this syntax:
-st joins = 0
-act join
-  set joins = joins plus 1
-end
-rt "#hero" Hero
-rt "#features" Features
-rt "#signup" Signup
-pg Landing
-  nav Main
-    link Hero "Hero"
-    link Features "Features"
-    link Signup "Signup"
-  end
-  hero "Title" "Subtitle" btn:join "Button label"
-  features
-    "Feature one"
-    "Feature two"
-    "Feature three"
-  end
-  signup name email submit:"Join waitlist"
-  foot
-    txt "Footer text"
-  end
-end
-mount "#app" Landing
-Create it for an open-source AI-native programming language called Kethic, focused on building quality websites with fewer AI output tokens.`;
+const kethicPrompt = `${readPromptCapsule()}
+
+Task: Create the same landing page for an open-source AI-native programming language called Kethic, focused on building quality websites with fewer AI output tokens. Include hero, navigation, three features, signup form, footer, mount, and a CTA action.`;
 
 async function main() {
   const outputDirectory = path.join(os.tmpdir(), `kethic-ai-benchmark-${Date.now()}`);
@@ -162,6 +149,7 @@ async function main() {
     model,
     scenario,
     baselineLabel: activeScenario.baselineLabel,
+    promptCapsulePath,
     outputDirectory,
     normal: {
       promptTokens: normalUsage.prompt_tokens,

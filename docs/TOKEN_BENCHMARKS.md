@@ -42,6 +42,12 @@ KETHIC_GATEWAY_TOKEN
 
 Do not commit gateway tokens.
 
+The Kethic prompt is built from:
+
+```text
+docs/AI_PROMPT_CAPSULE.md
+```
+
 ## 2026-05-09 Macro Benchmark
 
 Model reported by gateway: `gpt-5.2-2025-12-11`.
@@ -127,6 +133,37 @@ Savings:
 Interpretation:
 
 This result matters more than the standalone HTML benchmark because React plus Tailwind is closer to how AI website builders commonly emit frontend code. Kethic's macro output remained under 1,000 source characters and compiled successfully on the first attempt.
+
+## 2026-05-11 Prompt Capsule React/Tailwind Comparison
+
+Model requested: `gpt-5.2`.
+
+Scenario: `react-tailwind`.
+
+Kethic prompt source: `docs/AI_PROMPT_CAPSULE.md`.
+
+The first capsule run produced strong token savings but failed compilation because the model invented `Home`, `Docs`, and `GitHub` route targets without matching sections. The capsule was tightened to require `Hero`, `Features`, and `Signup` route targets unless matching sections are created.
+
+After tightening, the benchmark compiled on the first attempt.
+
+| Metric | React/Tailwind Component | Kethic Web Macro |
+| --- | ---: | ---: |
+| Prompt tokens | 86 | 248 |
+| Completion tokens | 5,224 | 198 |
+| Total tokens | 5,310 | 446 |
+| Source characters | 21,449 | 782 |
+| Compiled successfully | N/A | Yes |
+| Generated platform output characters | N/A | 6,282 |
+
+Savings:
+
+- output-token reduction: 96.21 percent;
+- total-token reduction: 91.60 percent;
+- source-character reduction: 96.35 percent.
+
+Interpretation:
+
+The prompt capsule is slightly more expensive on input than the earlier inline benchmark prompt, but it is reusable and documentation-backed. This is the right direction for production because the capsule can become stable cached context while user-specific instructions stay short.
 
 ## Next Benchmark Work
 

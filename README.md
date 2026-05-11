@@ -14,6 +14,7 @@ Current strategic direction:
 Implemented web syntax now includes readable Kethic Native, compact aliases, and Semantic Macros V1. Start with:
 
 - `docs/AI_GUIDE.md` for AI generation rules;
+- `docs/AI_PROMPT_CAPSULE.md` for the short reusable model prompt;
 - `docs/COMPACT_SYNTAX.md` for compact syntax and macros;
 - `docs/TOKEN_BENCHMARKS.md` for measured token savings;
 - `docs/WEB_QUALITY_CHECKS.md` for compiler output quality gates.
