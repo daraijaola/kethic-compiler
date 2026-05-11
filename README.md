@@ -18,5 +18,6 @@ Implemented web syntax now includes readable Kethic Native, compact aliases, and
 - `docs/COMPACT_SYNTAX.md` for compact syntax and macros;
 - `docs/STYLE_CORE_V1.md` for the first controlled CSS/style layer;
 - `docs/LAYOUT_CORE_V1.md` for the first layout primitives;
+- `docs/RESPONSIVE_CORE_V1.md` for mobile/tablet/desktop style blocks;
 - `docs/TOKEN_BENCHMARKS.md` for measured token savings;
 - `docs/WEB_QUALITY_CHECKS.md` for compiler output quality gates.

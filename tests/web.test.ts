@@ -220,6 +220,34 @@ end
 mount "#app" Home
 `;
 
+const responsiveCoreSample: string = `
+style Hero
+  savarin 6
+end
+
+when mobile Hero
+  savarin 4
+  karum block
+end
+
+when tablet Hero
+  savarin 5
+end
+
+Ikhna Torvasa Hero
+  vatornak wide
+Tor
+
+pg Home
+  sec Hero
+    h1 "Kethic"
+    txt "Responsive Core V1"
+  end
+end
+
+mount "#app" Home
+`;
+
 describe("WebCompiler", () => {
   it("parses the static Native web slice into a Web AST", () => {
     const ast = new WebParser(sample).parse();
@@ -376,6 +404,19 @@ describe("WebCompiler", () => {
     expect(result.css).toContain("margin-inline: auto;");
     expect(result.css).toContain("padding-inline: var(--sa-4);");
     expect(result.css).toContain("aspect-ratio: 16/9;");
+  });
+
+  it("compiles Responsive Core V1 style blocks into scoped media CSS", () => {
+    const result = new WebCompiler().compile(responsiveCoreSample);
+
+    expect(result.css).toContain("@media (max-width: 720px) {");
+    expect(result.css).toContain("@media (min-width: 721px) and (max-width: 1024px) {");
+    expect(result.css).toContain("@media (min-width: 1025px) {");
+    expect(result.css).toContain(".kethic-hero {");
+    expect(result.css).toContain("padding: var(--sa-4);");
+    expect(result.css).toContain("display: block;");
+    expect(result.css).toContain("padding: var(--sa-5);");
+    expect(result.css).toContain("max-inline-size: 72rem;");
   });
 
   it("rejects unsupported style attributes in Web Phase 1", () => {

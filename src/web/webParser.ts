@@ -262,6 +262,11 @@ export class WebParser {
       return;
     }
 
+    if (line.startsWith("when ")) {
+      this.stack.push({ mode: "style", node: this.parseCompactResponsiveStyleBlock(line, location), declarations: [] });
+      return;
+    }
+
     if (this.isInsideActionBlock() && line.startsWith("set ")) {
       this.addStateUpdate(this.parseCompactStateUpdate(line, location));
       return;
@@ -359,6 +364,11 @@ export class WebParser {
 
     if (line.startsWith("Tharsel ")) {
       this.stack.push({ mode: "style", node: this.parseStyleBlock(line, location), declarations: [] });
+      return;
+    }
+
+    if (line.startsWith("Ikhna ")) {
+      this.stack.push({ mode: "style", node: this.parseResponsiveStyleBlock(line, location), declarations: [] });
       return;
     }
 
@@ -724,6 +734,38 @@ export class WebParser {
       kind: WebNodeKind.StyleBlock,
       location,
       target: this.requiredName(line, "style", location),
+      declarations: [],
+    };
+  }
+
+  private parseResponsiveStyleBlock(line: string, location: WebSourceLocation): StyleBlockNode {
+    const match: RegExpMatchArray | null = line.match(/^Ikhna\s+([A-Za-z_][A-Za-z0-9_]*)\s+([A-Za-z_][A-Za-z0-9_]*)$/);
+    if (match === null) {
+      this.report(location, "Ikhna", "expected Ikhna Navasa Target");
+      return { kind: WebNodeKind.StyleBlock, location, target: "", responsive: "mobile", declarations: [] };
+    }
+
+    return {
+      kind: WebNodeKind.StyleBlock,
+      location,
+      target: match[2],
+      responsive: this.normalizeResponsiveKind(match[1], location, "Ikhna"),
+      declarations: [],
+    };
+  }
+
+  private parseCompactResponsiveStyleBlock(line: string, location: WebSourceLocation): StyleBlockNode {
+    const match: RegExpMatchArray | null = line.match(/^when\s+([A-Za-z_][A-Za-z0-9_]*)\s+([A-Za-z_][A-Za-z0-9_]*)$/);
+    if (match === null) {
+      this.report(location, "when", "expected when mobile Target");
+      return { kind: WebNodeKind.StyleBlock, location, target: "", responsive: "mobile", declarations: [] };
+    }
+
+    return {
+      kind: WebNodeKind.StyleBlock,
+      location,
+      target: match[2],
+      responsive: this.normalizeResponsiveKind(match[1], location, "when"),
       declarations: [],
     };
   }
@@ -1120,6 +1162,26 @@ export class WebParser {
     ]);
 
     return aliases.get(name.toLowerCase()) ?? name;
+  }
+
+  private normalizeResponsiveKind(name: string, location: WebSourceLocation, keyword: string): "mobile" | "tablet" | "desktop" {
+    const normalized: string = name.toLowerCase();
+    const aliases: ReadonlyMap<string, "mobile" | "tablet" | "desktop"> = new Map<string, "mobile" | "tablet" | "desktop">([
+      ["mobile", "mobile"],
+      ["navasa", "mobile"],
+      ["tablet", "tablet"],
+      ["rinvasa", "tablet"],
+      ["desktop", "desktop"],
+      ["torvasa", "desktop"],
+    ]);
+    const responsive: "mobile" | "tablet" | "desktop" | undefined = aliases.get(normalized);
+
+    if (responsive === undefined) {
+      this.report(location, keyword, `unsupported responsive breakpoint "${name}"`);
+      return "mobile";
+    }
+
+    return responsive;
   }
 
   private parseNameList(raw: string, location: WebSourceLocation, keyword: string): string[] {

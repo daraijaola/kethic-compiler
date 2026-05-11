@@ -82,7 +82,13 @@ export class CssGenerator {
       .map((declaration: StyleDeclarationNode) => this.generateDeclaration(declaration))
       .filter((line: string) => line.length > 0);
 
-    return [`@layer kethic.components {`, `  .${this.className(block.target)} {`, ...declarations, "  }", "}"].join("\n");
+    const styleBlock: string = [`@layer kethic.components {`, `  .${this.className(block.target)} {`, ...declarations, "  }", "}"].join("\n");
+
+    if (block.responsive === undefined) {
+      return styleBlock;
+    }
+
+    return [`@media ${this.mediaQuery(block.responsive)} {`, ...styleBlock.split("\n").map((line: string) => `  ${line}`), "}"].join("\n");
   }
 
   private generateDeclaration(declaration: StyleDeclarationNode): string {
@@ -282,5 +288,18 @@ export class CssGenerator {
     }
 
     return value;
+  }
+
+  private mediaQuery(value: "mobile" | "tablet" | "desktop"): string {
+    switch (value) {
+      case "mobile":
+        return "(max-width: 720px)";
+      case "tablet":
+        return "(min-width: 721px) and (max-width: 1024px)";
+      case "desktop":
+        return "(min-width: 1025px)";
+      default:
+        return "(max-width: 720px)";
+    }
   }
 }

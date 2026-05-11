@@ -90,6 +90,11 @@ export interface WebValue {
 export type WebLayoutKind = "stack" | "row" | "grid" | "center";
 
 /**
+ * WebResponsiveKind names the first responsive breakpoints.
+ */
+export type WebResponsiveKind = "mobile" | "tablet" | "desktop";
+
+/**
  * WebExpression is the small expression model used by Web Phase 3 runtime actions.
  */
 export type WebExpression = LiteralExpression | IdentifierExpression | UnaryExpression | BinaryExpression;
@@ -270,6 +275,7 @@ export interface SlotNode extends WebNode {
 export interface StyleBlockNode extends WebNode {
   readonly kind: WebNodeKind.StyleBlock;
   readonly target: string;
+  readonly responsive?: WebResponsiveKind;
   readonly declarations: readonly StyleDeclarationNode[];
 }
 
