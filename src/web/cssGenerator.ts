@@ -24,6 +24,7 @@ export class CssGenerator {
       "",
       "@layer kethic.tokens {",
       "  :root {",
+      "    --sa-0: 0;",
       "    --sa-1: 0.25rem;",
       "    --sa-2: 0.5rem;",
       "    --sa-3: 0.75rem;",
@@ -81,20 +82,58 @@ export class CssGenerator {
 
   private generateDeclaration(declaration: StyleDeclarationNode): string {
     switch (declaration.name) {
+      case "Sarin":
+        return `    padding: ${this.space(declaration.value)};`;
       case "Savarin":
         return `    padding: ${this.space(declaration.value)};`;
       case "Ovsa":
         return `    margin: ${this.space(declaration.value)};`;
       case "Shevsa":
         return `    gap: ${this.space(declaration.value)};`;
+      case "Vator":
+        return `    inline-size: ${this.size(declaration.value)};`;
+      case "Torkar":
+        return `    block-size: ${this.size(declaration.value)};`;
+      case "Naktor":
+        return `    min-inline-size: ${this.size(declaration.value)};`;
+      case "Tornak":
+        return `    max-inline-size: ${this.size(declaration.value)};`;
+      case "Lusel":
+        return `    color: ${this.color(declaration.value)};`;
       case "Mirlu":
         return `    background: ${this.color(declaration.value)};`;
       case "Kellu":
         return `    color: ${this.color(declaration.value)};`;
+      case "Kelsa":
+        return `    font-size: ${this.fontSize(declaration.value)};`;
+      case "Keltorva":
+        return `    font-weight: ${this.fontWeight(declaration.value)};`;
+      case "Kelruksa":
+        return `    line-height: ${this.lineHeight(declaration.value)};`;
+      case "Kelshev":
+        return `    text-align: ${declaration.value};`;
+      case "Torkarva":
+        return `    border: ${this.border(declaration.value)};`;
+      case "Torlu":
+        return `    border-color: ${this.color(declaration.value)};`;
+      case "Torsa":
+        return `    border-width: ${this.borderWidth(declaration.value)};`;
       case "Natorkar":
         return `    border-radius: ${this.radius(declaration.value)};`;
       case "Mireshel":
         return `    box-shadow: ${this.shadow(declaration.value)};`;
+      case "Luna":
+        return `    opacity: ${declaration.value};`;
+      case "Vashev":
+        return `    overflow: ${declaration.value};`;
+      case "Torshev":
+        return `    z-index: ${this.layer(declaration.value)};`;
+      case "Torrin":
+        return `    position: ${this.position(declaration.value)};`;
+      case "Rintor":
+        return `    inset: ${this.space(declaration.value)};`;
+      case "Karum":
+        return `    display: ${declaration.value};`;
       default:
         return "";
     }
@@ -108,8 +147,66 @@ export class CssGenerator {
     return /^-?\d+$/.test(value) ? `var(--sa-${value})` : value;
   }
 
+  private size(value: string): string {
+    const namedSizes: ReadonlyMap<string, string> = new Map<string, string>([
+      ["full", "100%"],
+      ["screen", "100vh"],
+      ["prose", "65ch"],
+      ["reading", "72ch"],
+      ["wide", "72rem"],
+    ]);
+
+    return namedSizes.get(value) ?? value;
+  }
+
   private color(value: string): string {
     return `var(--color-${value.replace(/\./g, "-")})`;
+  }
+
+  private fontSize(value: string): string {
+    const namedSizes: ReadonlyMap<string, string> = new Map<string, string>([
+      ["body", "1rem"],
+      ["small", "0.875rem"],
+      ["title", "clamp(2rem, 4vw, 4rem)"],
+      ["section", "clamp(1.5rem, 3vw, 2.5rem)"],
+    ]);
+
+    return namedSizes.get(value) ?? value;
+  }
+
+  private fontWeight(value: string): string {
+    const namedWeights: ReadonlyMap<string, string> = new Map<string, string>([
+      ["regular", "400"],
+      ["medium", "500"],
+      ["strong", "700"],
+      ["heavy", "800"],
+    ]);
+
+    return namedWeights.get(value) ?? value;
+  }
+
+  private lineHeight(value: string): string {
+    const namedHeights: ReadonlyMap<string, string> = new Map<string, string>([
+      ["tight", "1.15"],
+      ["normal", "1.5"],
+      ["reading", "1.7"],
+    ]);
+
+    return namedHeights.get(value) ?? value;
+  }
+
+  private border(value: string): string {
+    const namedBorders: ReadonlyMap<string, string> = new Map<string, string>([
+      ["soft", "1px solid rgb(23 21 18 / 0.14)"],
+      ["strong", "2px solid var(--color-river-700)"],
+      ["none", "0"],
+    ]);
+
+    return namedBorders.get(value) ?? value;
+  }
+
+  private borderWidth(value: string): string {
+    return /^\d+$/.test(value) ? `${value}px` : value;
   }
 
   private radius(value: string): string {
@@ -118,5 +215,21 @@ export class CssGenerator {
 
   private shadow(value: string): string {
     return value === "raised" ? "var(--shadow-raised)" : "var(--shadow-low)";
+  }
+
+  private layer(value: string): string {
+    const layers: ReadonlyMap<string, string> = new Map<string, string>([
+      ["base", "0"],
+      ["raised", "10"],
+      ["popover", "30"],
+      ["dialog", "50"],
+      ["toast", "60"],
+    ]);
+
+    return layers.get(value) ?? value;
+  }
+
+  private position(value: string): string {
+    return value === "anchor" ? "relative" : value;
   }
 }

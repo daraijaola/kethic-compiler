@@ -29,13 +29,32 @@ import {
 import { WebDiagnostic } from "./diagnostics";
 
 const SUPPORTED_STYLE_ATTRIBUTES: ReadonlySet<string> = new Set<string>([
+  "Sarin",
   "Savarin",
   "Ovsa",
   "Shevsa",
+  "Vator",
+  "Torkar",
+  "Naktor",
+  "Tornak",
+  "Lusel",
   "Mirlu",
   "Kellu",
+  "Kelsa",
+  "Keltorva",
+  "Kelruksa",
+  "Kelshev",
+  "Torkarva",
+  "Torlu",
+  "Torsa",
   "Natorkar",
   "Mireshel",
+  "Luna",
+  "Vashev",
+  "Torshev",
+  "Torrin",
+  "Rintor",
+  "Karum",
 ]);
 
 /**

@@ -16,5 +16,6 @@ Implemented web syntax now includes readable Kethic Native, compact aliases, and
 - `docs/AI_GUIDE.md` for AI generation rules;
 - `docs/AI_PROMPT_CAPSULE.md` for the short reusable model prompt;
 - `docs/COMPACT_SYNTAX.md` for compact syntax and macros;
+- `docs/STYLE_CORE_V1.md` for the first controlled CSS/style layer;
 - `docs/TOKEN_BENCHMARKS.md` for measured token savings;
 - `docs/WEB_QUALITY_CHECKS.md` for compiler output quality gates.

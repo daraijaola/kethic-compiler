@@ -145,6 +145,45 @@ end
 mount "#app" Landing
 `;
 
+const styleCoreSample: string = `
+style Hero
+  savarin 6
+  ovsa auto
+  shevsa 4
+  vator full
+  torkar auto
+  naktor 20rem
+  tornak wide
+  lusel "ink.900"
+  mirlu "sand.50"
+  kellu "river.700"
+  kelsa title
+  keltorva strong
+  kelruksa reading
+  kelshev center
+  torkarva soft
+  torlu "river.700"
+  torsa 1
+  natorkar soft
+  mireshel raised
+  luna 0.95
+  vashev hidden
+  torshev raised
+  torrin relative
+  rintor 0
+  karum grid
+end
+
+pg Home
+  sec Hero
+    h1 "Kethic"
+    txt "Style Core V1"
+  end
+end
+
+mount "#app" Home
+`;
+
 describe("WebCompiler", () => {
   it("parses the static Native web slice into a Web AST", () => {
     const ast = new WebParser(sample).parse();
@@ -250,6 +289,36 @@ describe("WebCompiler", () => {
     expect(result.html).toContain('<section id="features" class="kethic-features kethic-section">');
     expect(result.html).toContain('<h2 id="features-2">Features</h2>');
     expect(duplicates).toEqual([]);
+  });
+
+  it("compiles Style Core V1 compact attributes into CSS", () => {
+    const result = new WebCompiler().compile(styleCoreSample);
+
+    expect(result.css).toContain(".kethic-hero {");
+    expect(result.css).toContain("padding: var(--sa-6);");
+    expect(result.css).toContain("margin: auto;");
+    expect(result.css).toContain("gap: var(--sa-4);");
+    expect(result.css).toContain("inline-size: 100%;");
+    expect(result.css).toContain("block-size: auto;");
+    expect(result.css).toContain("min-inline-size: 20rem;");
+    expect(result.css).toContain("max-inline-size: 72rem;");
+    expect(result.css).toContain("color: var(--color-river-700);");
+    expect(result.css).toContain("background: var(--color-sand-50);");
+    expect(result.css).toContain("font-size: clamp(2rem, 4vw, 4rem);");
+    expect(result.css).toContain("font-weight: 700;");
+    expect(result.css).toContain("line-height: 1.7;");
+    expect(result.css).toContain("text-align: center;");
+    expect(result.css).toContain("border: 1px solid rgb(23 21 18 / 0.14);");
+    expect(result.css).toContain("border-color: var(--color-river-700);");
+    expect(result.css).toContain("border-width: 1px;");
+    expect(result.css).toContain("border-radius: var(--radius-soft);");
+    expect(result.css).toContain("box-shadow: var(--shadow-raised);");
+    expect(result.css).toContain("opacity: 0.95;");
+    expect(result.css).toContain("overflow: hidden;");
+    expect(result.css).toContain("z-index: 10;");
+    expect(result.css).toContain("position: relative;");
+    expect(result.css).toContain("inset: var(--sa-0);");
+    expect(result.css).toContain("display: grid;");
   });
 
   it("rejects unsupported style attributes in Web Phase 1", () => {

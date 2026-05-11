@@ -237,6 +237,11 @@ export class WebParser {
       return;
     }
 
+    if (line.startsWith("style ")) {
+      this.stack.push({ mode: "style", node: this.parseCompactStyleBlock(line, location), declarations: [] });
+      return;
+    }
+
     if (this.isInsideActionBlock() && line.startsWith("set ")) {
       this.addStateUpdate(this.parseCompactStateUpdate(line, location));
       return;
@@ -666,6 +671,15 @@ export class WebParser {
     };
   }
 
+  private parseCompactStyleBlock(line: string, location: WebSourceLocation): StyleBlockNode {
+    return {
+      kind: WebNodeKind.StyleBlock,
+      location,
+      target: this.requiredName(line, "style", location),
+      declarations: [],
+    };
+  }
+
   private parseState(line: string, location: WebSourceLocation): StateNode {
     const match: RegExpMatchArray | null = line.match(/^Lumva\s+([A-Za-z_][A-Za-z0-9_]*)\s+holds\s+(.+)$/);
     if (match === null) {
@@ -1017,9 +1031,42 @@ export class WebParser {
     return {
       kind: WebNodeKind.StyleDeclaration,
       location,
-      name: match[1],
+      name: this.normalizeStyleName(match[1]),
       value: this.parseValue(match[2], location, match[1]),
     };
+  }
+
+  private normalizeStyleName(name: string): string {
+    const aliases: ReadonlyMap<string, string> = new Map<string, string>([
+      ["sarin", "Sarin"],
+      ["savarin", "Savarin"],
+      ["ovsa", "Ovsa"],
+      ["shevsa", "Shevsa"],
+      ["vator", "Vator"],
+      ["torkar", "Torkar"],
+      ["naktor", "Naktor"],
+      ["tornak", "Tornak"],
+      ["lusel", "Lusel"],
+      ["mirlu", "Mirlu"],
+      ["kellu", "Kellu"],
+      ["kelsa", "Kelsa"],
+      ["keltorva", "Keltorva"],
+      ["kelruksa", "Kelruksa"],
+      ["kelshev", "Kelshev"],
+      ["torkarva", "Torkarva"],
+      ["torlu", "Torlu"],
+      ["torsa", "Torsa"],
+      ["natorkar", "Natorkar"],
+      ["mireshel", "Mireshel"],
+      ["luna", "Luna"],
+      ["vashev", "Vashev"],
+      ["torshev", "Torshev"],
+      ["torrin", "Torrin"],
+      ["rintor", "Rintor"],
+      ["karum", "Karum"],
+    ]);
+
+    return aliases.get(name.toLowerCase()) ?? name;
   }
 
   private parseNameList(raw: string, location: WebSourceLocation, keyword: string): string[] {
