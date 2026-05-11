@@ -2,6 +2,7 @@ import {
   ButtonNode,
   ComponentNode,
   ComponentUseNode,
+  ConditionalNode,
   ContainerNode,
   FooterNode,
   FormNode,
@@ -127,6 +128,8 @@ export class HtmlGenerator {
         return this.renderLink(node, depth);
       case WebNodeKind.Button:
         return this.renderButton(node, depth, context);
+      case WebNodeKind.Conditional:
+        return this.renderConditional(node, depth, context);
       case WebNodeKind.Navigation:
         return this.renderNavigation(node, depth, context);
       case WebNodeKind.Footer:
@@ -187,8 +190,24 @@ export class HtmlGenerator {
   private renderButton(node: ButtonNode, depth: number, context: RenderContext): string {
     const inner: string = node.children.map((child: WebChildNode) => this.renderButtonChild(child, depth + 1, context)).join("\n");
     const action: string = node.action === null ? "" : ` data-kethic-action="${this.escapeHtml(node.action)}"`;
+    const disabledBinding: string = node.disabledWhen === null ? "" : ` data-kethic-disabled="${this.escapeHtml(node.disabledWhen)}"`;
+    const disabled: string = node.disabledWhen !== null && this.isTruthyState(node.disabledWhen) ? " disabled" : "";
     const type: string = node.action === null && context.insideForm ? "submit" : "button";
-    return [`${this.indent(depth)}<button type="${type}"${action} class="kethic-button">`, inner, `${this.indent(depth)}</button>`].join("\n");
+    return [
+      `${this.indent(depth)}<button type="${type}"${action}${disabledBinding}${disabled} class="kethic-button">`,
+      inner,
+      `${this.indent(depth)}</button>`,
+    ].join("\n");
+  }
+
+  private renderConditional(node: ConditionalNode, depth: number, context: RenderContext): string {
+    const inner: string = node.children.map((child: WebChildNode) => this.renderChild(child, depth + 1, context)).join("\n");
+    const hidden: string = this.isTruthyState(node.stateName) ? "" : " hidden";
+    return [
+      `${this.indent(depth)}<div data-kethic-show="${this.escapeHtml(node.stateName)}"${hidden}>`,
+      inner,
+      `${this.indent(depth)}</div>`,
+    ].join("\n");
   }
 
   private renderLink(node: LinkNode, depth: number): string {
@@ -282,11 +301,13 @@ export class HtmlGenerator {
       ? ` aria-describedby="${this.escapeHtml(this.messageId(node.name))}"`
       : "";
     const required: string = node.required ? " required" : "";
+    const binding: string = node.binding === null ? "" : ` data-kethic-field="${this.escapeHtml(node.binding)}"`;
+    const value: string = node.binding === null ? "" : ` value="${this.escapeHtml(this.stateValues.get(node.binding) ?? "")}"`;
 
     return [
       `${this.indent(depth)}<div class="kethic-field">`,
       `${this.indent(depth + 1)}<label for="${this.escapeHtml(id)}">${this.escapeHtml(node.label)}</label>`,
-      `${this.indent(depth + 1)}<input id="${this.escapeHtml(id)}" name="${this.escapeHtml(node.name)}"${required}${describedBy}>`,
+      `${this.indent(depth + 1)}<input id="${this.escapeHtml(id)}" name="${this.escapeHtml(node.name)}"${binding}${value}${required}${describedBy}>`,
       `${this.indent(depth)}</div>`,
     ].join("\n");
   }
@@ -297,11 +318,13 @@ export class HtmlGenerator {
       ? ` aria-describedby="${this.escapeHtml(this.messageId(node.name))}"`
       : "";
     const required: string = node.required ? " required" : "";
+    const binding: string = node.binding === null ? "" : ` data-kethic-field="${this.escapeHtml(node.binding)}"`;
+    const value: string = node.binding === null ? "" : this.escapeHtml(this.stateValues.get(node.binding) ?? "");
 
     return [
       `${this.indent(depth)}<div class="kethic-field">`,
       `${this.indent(depth + 1)}<label for="${this.escapeHtml(id)}">${this.escapeHtml(node.label)}</label>`,
-      `${this.indent(depth + 1)}<textarea id="${this.escapeHtml(id)}" name="${this.escapeHtml(node.name)}" rows="${node.rows}"${required}${describedBy}></textarea>`,
+      `${this.indent(depth + 1)}<textarea id="${this.escapeHtml(id)}" name="${this.escapeHtml(node.name)}"${binding} rows="${node.rows}"${required}${describedBy}>${value}</textarea>`,
       `${this.indent(depth)}</div>`,
     ].join("\n");
   }
@@ -332,6 +355,11 @@ export class HtmlGenerator {
     }
 
     return "";
+  }
+
+  private isTruthyState(name: string): boolean {
+    const value: string | undefined = this.stateValues.get(name);
+    return value !== undefined && value !== "" && value !== "false" && value !== "0" && value !== "null";
   }
 
   private hasInterpolation(value: string): boolean {

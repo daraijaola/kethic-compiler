@@ -248,6 +248,35 @@ end
 mount "#app" Home
 `;
 
+const interactionCoreSample: string = `
+st open = false
+st blocked = true
+st email = ""
+st message = ""
+
+act toggle
+  set open = not open
+end
+
+pg Home
+  sec Hero
+    h1 "Kethic"
+    btn toggle "Toggle details"
+    btn toggle "Blocked action" disabled:blocked
+    show open
+      txt "Email: {email}"
+      form Contact
+        in email "Email" ! bind:email
+        area message "Message" rows:3 bind:message
+        btn "Send"
+      end
+    end
+  end
+end
+
+mount "#app" Home
+`;
+
 describe("WebCompiler", () => {
   it("parses the static Native web slice into a Web AST", () => {
     const ast = new WebParser(sample).parse();
@@ -419,6 +448,22 @@ describe("WebCompiler", () => {
     expect(result.css).toContain("max-inline-size: 72rem;");
   });
 
+  it("compiles Interaction Core V1 state visibility, disabled controls, and field binding", () => {
+    const result = new WebCompiler().compile(interactionCoreSample);
+
+    expect(result.html).toContain('data-kethic-action="toggle"');
+    expect(result.html).toContain('data-kethic-disabled="blocked" disabled');
+    expect(result.html).toContain('<div data-kethic-show="open" hidden>');
+    expect(result.html).toContain('data-kethic-field="email" value="" required');
+    expect(result.html).toContain('data-kethic-field="message" rows="3"');
+    expect(result.runtime).toContain("document.querySelectorAll('[data-kethic-show]')");
+    expect(result.runtime).toContain("document.querySelectorAll('[data-kethic-disabled]')");
+    expect(result.runtime).toContain("document.querySelectorAll('[data-kethic-field]')");
+    expect(result.runtime).toContain("document.addEventListener('input'");
+    expect(result.css).toContain("[hidden] { display: none !important; }");
+    expect(result.css).toContain(".kethic-button:disabled { cursor: not-allowed; opacity: 0.55; }");
+  });
+
   it("rejects unsupported style attributes in Web Phase 1", () => {
     expect(() =>
       new WebCompiler().compile(`
@@ -458,6 +503,25 @@ Torvathar Home
   Tor
 Tor
 Umvator "#app" receives Home
+`),
+    ).toThrow(WebCompilerError);
+  });
+
+  it("rejects interaction nodes that reference missing state", () => {
+    expect(() =>
+      new WebCompiler().compile(`
+pg Home
+  sec Hero
+    show missing
+      txt "Missing"
+    end
+    btn "Blocked" disabled:missing
+    form Contact
+      in email "Email" bind:missing
+    end
+  end
+end
+mount "#app" Home
 `),
     ).toThrow(WebCompilerError);
   });

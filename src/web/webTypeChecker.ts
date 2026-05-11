@@ -3,6 +3,7 @@ import {
   ActionNode,
   ComponentNode,
   ComponentUseNode,
+  ConditionalNode,
   FooterNode,
   FormNode,
   HeadingNode,
@@ -269,6 +270,10 @@ export class WebTypeChecker {
         this.checkButton(child);
       }
 
+      if (child.kind === WebNodeKind.Conditional) {
+        this.checkConditional(child);
+      }
+
       if (child.kind === WebNodeKind.Heading) {
         this.checkHeading(child, currentComponent);
       }
@@ -332,6 +337,16 @@ export class WebTypeChecker {
     if (node.action !== null && !this.actions.has(node.action)) {
       this.report(node, "Umkar", `action "${node.action}" does not exist`);
     }
+
+    if (node.disabledWhen !== null && !this.states.has(node.disabledWhen)) {
+      this.report(node, "Umkar", `disabled state "${node.disabledWhen}" does not exist`);
+    }
+  }
+
+  private checkConditional(node: ConditionalNode): void {
+    if (!this.states.has(node.stateName)) {
+      this.report(node, "Umralu", `state "${node.stateName}" does not exist`);
+    }
   }
 
   private checkNavigation(node: NavigationNode): void {
@@ -378,6 +393,10 @@ export class WebTypeChecker {
 
         if (child.label.trim().length === 0) {
           this.report(child, keyword, `field "${child.name}" must have a label`);
+        }
+
+        if (child.binding !== null && !this.states.has(child.binding)) {
+          this.report(child, keyword, `bound state "${child.binding}" does not exist`);
         }
       }
 

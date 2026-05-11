@@ -10,6 +10,7 @@ export enum WebNodeKind {
   Heading = "Heading",
   Link = "Link",
   Button = "Button",
+  Conditional = "Conditional",
   Navigation = "Navigation",
   Footer = "Footer",
   Form = "Form",
@@ -67,6 +68,7 @@ export type WebChildNode =
   | HeadingNode
   | LinkNode
   | ButtonNode
+  | ConditionalNode
   | NavigationNode
   | FooterNode
   | FormNode
@@ -182,6 +184,16 @@ export interface LinkNode extends WebNode {
 export interface ButtonNode extends WebNode {
   readonly kind: WebNodeKind.Button;
   readonly action: string | null;
+  readonly disabledWhen: string | null;
+  readonly children: readonly WebChildNode[];
+}
+
+/**
+ * ConditionalNode represents Umralu/show, a visibility gate driven by Lumva state.
+ */
+export interface ConditionalNode extends WebNode {
+  readonly kind: WebNodeKind.Conditional;
+  readonly stateName: string;
   readonly children: readonly WebChildNode[];
 }
 
@@ -219,6 +231,7 @@ export interface InputNode extends WebNode {
   readonly name: string;
   readonly label: string;
   readonly required: boolean;
+  readonly binding: string | null;
 }
 
 /**
@@ -230,6 +243,7 @@ export interface TextareaNode extends WebNode {
   readonly label: string;
   readonly rows: number;
   readonly required: boolean;
+  readonly binding: string | null;
 }
 
 /**
