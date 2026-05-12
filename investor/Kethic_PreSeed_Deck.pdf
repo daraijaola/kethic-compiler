@@ -195,35 +195,37 @@ endobj
 << /Type /Page /Parent 2 0 R /MediaBox [0 0 960 540] /Resources << /Font << /F1 3 0 R /F2 4 0 R >> >> /Contents 16 0 R >>
 endobj
 16 0 obj
-<< /Length 1594 >>
+<< /Length 1757 >>
 stream
 0.985 0.982 0.965 rg 0 0 960 540 re f
 0.020 0.240 0.300 rg 0 530 960 10 re f
 0.950 0.080 0.420 rg 0 530 260 10 re f
 BT 0.950 0.080 0.420 rg /F2 13 Tf 56 485 Td (MARKET) Tj ET
-BT 0.090 0.100 0.120 rg /F2 30 Tf 56 442 Td (AI code generation is already a multi-billion) Tj ET
-BT 0.090 0.100 0.120 rg /F2 30 Tf 56 406 Td (dollar market) Tj ET
-BT 0.440 0.460 0.500 rg /F1 16 Tf 56 362 Td (Kethic targets the source layer underneath AI builders and coding agents.) Tj ET
+BT 0.090 0.100 0.120 rg /F2 30 Tf 56 442 Td (Kethic starts with AI web generation, then) Tj ET
+BT 0.090 0.100 0.120 rg /F2 30 Tf 56 406 Td (expands into AI coding) Tj ET
+BT 0.440 0.460 0.500 rg /F1 16 Tf 56 362 Td (We begin where token waste is easiest to prove: generated websites and app) Tj ET
+BT 0.440 0.460 0.500 rg /F1 16 Tf 56 339 Td (frontends.) Tj ET
 BT 0.440 0.460 0.500 rg /F2 11 Tf 56 25 Td (Kethic) Tj ET
 BT 0.440 0.460 0.500 rg /F1 11 Tf 872 25 Td (6) Tj ET
 1.000 1.000 1.000 rg 56 90 260 180 re f
 0.950 0.080 0.420 rg 56 265 260 5 re f
 BT 0.020 0.240 0.300 rg /F2 32 Tf 78 216 Td ($8.5B) Tj ET
 BT 0.090 0.100 0.120 rg /F2 15 Tf 78 186 Td (TAM) Tj ET
-BT 0.090 0.100 0.120 rg /F1 13 Tf 78 158 Td (AI code assistants market in) Tj ET
-BT 0.090 0.100 0.120 rg /F1 13 Tf 78 140 Td (2025) Tj ET
+BT 0.090 0.100 0.120 rg /F1 13 Tf 78 158 Td (global AI code assistants) Tj ET
+BT 0.090 0.100 0.120 rg /F1 13 Tf 78 140 Td (market in 2025) Tj ET
 1.000 1.000 1.000 rg 346 90 260 180 re f
 0.950 0.080 0.420 rg 346 265 260 5 re f
-BT 0.020 0.240 0.300 rg /F2 32 Tf 368 216 Td ($42.9B) Tj ET
-BT 0.090 0.100 0.120 rg /F2 15 Tf 368 186 Td (2033) Tj ET
-BT 0.090 0.100 0.120 rg /F1 13 Tf 368 158 Td (Projected AI code assistants) Tj ET
-BT 0.090 0.100 0.120 rg /F1 13 Tf 368 140 Td (market) Tj ET
+BT 0.020 0.240 0.300 rg /F2 32 Tf 368 216 Td ($1.2B) Tj ET
+BT 0.090 0.100 0.120 rg /F2 15 Tf 368 186 Td (SAM) Tj ET
+BT 0.090 0.100 0.120 rg /F1 13 Tf 368 158 Td (AI web builders, no-code) Tj ET
+BT 0.090 0.100 0.120 rg /F1 13 Tf 368 140 Td (tools, generated frontend) Tj ET
+BT 0.090 0.100 0.120 rg /F1 13 Tf 368 122 Td (workflows) Tj ET
 1.000 1.000 1.000 rg 636 90 260 180 re f
 0.950 0.080 0.420 rg 636 265 260 5 re f
-BT 0.020 0.240 0.300 rg /F2 32 Tf 658 216 Td (Web) Tj ET
-BT 0.090 0.100 0.120 rg /F2 15 Tf 658 186 Td (Initial wedge) Tj ET
-BT 0.090 0.100 0.120 rg /F1 13 Tf 658 158 Td (AI web builders and no-code) Tj ET
-BT 0.090 0.100 0.120 rg /F1 13 Tf 658 140 Td (tools) Tj ET
+BT 0.020 0.240 0.300 rg /F2 32 Tf 658 216 Td ($12M) Tj ET
+BT 0.090 0.100 0.120 rg /F2 15 Tf 658 186 Td (SOM) Tj ET
+BT 0.090 0.100 0.120 rg /F1 13 Tf 658 158 Td (first 24-month wedge from) Tj ET
+BT 0.090 0.100 0.120 rg /F1 13 Tf 658 140 Td (hosted builder and tooling) Tj ET
 endstream
 endobj
 17 0 obj
@@ -263,7 +265,7 @@ endobj
 << /Type /Page /Parent 2 0 R /MediaBox [0 0 960 540] /Resources << /Font << /F1 3 0 R /F2 4 0 R >> >> /Contents 20 0 R >>
 endobj
 20 0 obj
-<< /Length 1528 >>
+<< /Length 1639 >>
 stream
 0.985 0.982 0.965 rg 0 0 960 540 re f
 0.020 0.240 0.300 rg 0 530 960 10 re f
@@ -275,29 +277,30 @@ BT 0.440 0.460 0.500 rg /F2 11 Tf 56 25 Td (Kethic) Tj ET
 BT 0.440 0.460 0.500 rg /F1 11 Tf 872 25 Td (8) Tj ET
 1.000 1.000 1.000 rg 56 90 260 180 re f
 0.950 0.080 0.420 rg 56 265 260 5 re f
-BT 0.020 0.240 0.300 rg /F2 18 Tf 78 234 Td (1. Proof) Tj ET
-BT 0.090 0.100 0.120 rg /F1 13 Tf 78 202 Td (Publish compiler,) Tj ET
-BT 0.090 0.100 0.120 rg /F1 13 Tf 78 184 Td (benchmarks, examples, and AI) Tj ET
-BT 0.090 0.100 0.120 rg /F1 13 Tf 78 166 Td (guide.) Tj ET
+BT 0.020 0.240 0.300 rg /F2 18 Tf 78 234 Td (0-3 months) Tj ET
+BT 0.090 0.100 0.120 rg /F1 13 Tf 78 202 Td (Publish compiler, AI guide,) Tj ET
+BT 0.090 0.100 0.120 rg /F1 13 Tf 78 184 Td (benchmark page, and 10 demo) Tj ET
+BT 0.090 0.100 0.120 rg /F1 13 Tf 78 166 Td (templates.) Tj ET
 1.000 1.000 1.000 rg 346 90 260 180 re f
 0.950 0.080 0.420 rg 346 265 260 5 re f
-BT 0.020 0.240 0.300 rg /F2 18 Tf 368 234 Td (2. Adoption) Tj ET
-BT 0.090 0.100 0.120 rg /F1 13 Tf 368 202 Td (Win AI builder, developer) Tj ET
-BT 0.090 0.100 0.120 rg /F1 13 Tf 368 184 Td (tool, and founder) Tj ET
-BT 0.090 0.100 0.120 rg /F1 13 Tf 368 166 Td (communities.) Tj ET
+BT 0.020 0.240 0.300 rg /F2 18 Tf 368 234 Td (3-6 months) Tj ET
+BT 0.090 0.100 0.120 rg /F1 13 Tf 368 202 Td (Reach 1,000) Tj ET
+BT 0.090 0.100 0.120 rg /F1 13 Tf 368 184 Td (developers/founders through) Tj ET
+BT 0.090 0.100 0.120 rg /F1 13 Tf 368 166 Td (AI builder communities and) Tj ET
+BT 0.090 0.100 0.120 rg /F1 13 Tf 368 148 Td (open-source demos.) Tj ET
 1.000 1.000 1.000 rg 636 90 260 180 re f
 0.950 0.080 0.420 rg 636 265 260 5 re f
-BT 0.020 0.240 0.300 rg /F2 18 Tf 658 234 Td (3. Revenue) Tj ET
-BT 0.090 0.100 0.120 rg /F1 13 Tf 658 202 Td (Hosted builder, team) Tj ET
-BT 0.090 0.100 0.120 rg /F1 13 Tf 658 184 Td (workspaces, and platform) Tj ET
-BT 0.090 0.100 0.120 rg /F1 13 Tf 658 166 Td (integrations.) Tj ET
+BT 0.020 0.240 0.300 rg /F2 18 Tf 658 234 Td (6-12 months) Tj ET
+BT 0.090 0.100 0.120 rg /F1 13 Tf 658 202 Td (Convert hosted users at) Tj ET
+BT 0.090 0.100 0.120 rg /F1 13 Tf 658 184 Td ($19-$49/month and pursue 3) Tj ET
+BT 0.090 0.100 0.120 rg /F1 13 Tf 658 166 Td (platform integrations.) Tj ET
 endstream
 endobj
 21 0 obj
 << /Type /Page /Parent 2 0 R /MediaBox [0 0 960 540] /Resources << /Font << /F1 3 0 R /F2 4 0 R >> >> /Contents 22 0 R >>
 endobj
 22 0 obj
-<< /Length 1206 >>
+<< /Length 1731 >>
 stream
 0.985 0.982 0.965 rg 0 0 960 540 re f
 0.020 0.240 0.300 rg 0 530 960 10 re f
@@ -306,19 +309,27 @@ BT 0.950 0.080 0.420 rg /F2 13 Tf 56 485 Td (TEAM) Tj ET
 BT 0.090 0.100 0.120 rg /F2 30 Tf 56 442 Td (Founder building from compiler to product) Tj ET
 BT 0.440 0.460 0.500 rg /F2 11 Tf 56 25 Td (Kethic) Tj ET
 BT 0.440 0.460 0.500 rg /F1 11 Tf 872 25 Td (9) Tj ET
-1.000 1.000 1.000 rg 56 90 260 180 re f
-0.950 0.080 0.420 rg 56 265 260 5 re f
-BT 0.020 0.240 0.300 rg /F2 18 Tf 78 234 Td (Micheal Ijaola) Tj ET
-BT 0.090 0.100 0.120 rg /F1 13 Tf 78 202 Td (Founder, Kethic. Built the) Tj ET
-BT 0.090 0.100 0.120 rg /F1 13 Tf 78 184 Td (compiler prototype, native) Tj ET
-BT 0.090 0.100 0.120 rg /F1 13 Tf 78 166 Td (web layer, benchmark) Tj ET
-BT 0.090 0.100 0.120 rg /F1 13 Tf 78 148 Td (harness, and investor demo.) Tj ET
-1.000 1.000 1.000 rg 346 90 260 180 re f
-0.950 0.080 0.420 rg 346 265 260 5 re f
-BT 0.020 0.240 0.300 rg /F2 18 Tf 368 234 Td (Current need) Tj ET
-BT 0.090 0.100 0.120 rg /F1 13 Tf 368 202 Td (Pre-seed capital to bring in) Tj ET
-BT 0.090 0.100 0.120 rg /F1 13 Tf 368 184 Td (design, compiler, and GTM) Tj ET
-BT 0.090 0.100 0.120 rg /F1 13 Tf 368 166 Td (support.) Tj ET
+1.000 1.000 1.000 rg 65 105 225 225 re f
+0.020 0.240 0.300 rg 110 188 135 135 re f
+BT 1.000 1.000 1.000 rg /F2 42 Tf 143 238 Td (MI) Tj ET
+BT 0.090 0.100 0.120 rg /F2 22 Tf 100 155 Td (Micheal Ijaola) Tj ET
+BT 0.440 0.460 0.500 rg /F1 15 Tf 100 126 Td (Founder and CEO) Tj ET
+1.000 1.000 1.000 rg 335 190 255 140 re f
+0.950 0.080 0.420 rg 335 325 255 5 re f
+BT 0.020 0.240 0.300 rg /F2 18 Tf 357 294 Td (Micheal Ijaola) Tj ET
+BT 0.090 0.100 0.120 rg /F1 13 Tf 357 262 Td (Founder and CEO. Built the) Tj ET
+BT 0.090 0.100 0.120 rg /F1 13 Tf 357 244 Td (compiler prototype, native) Tj ET
+BT 0.090 0.100 0.120 rg /F1 13 Tf 357 226 Td (web layer, benchmark) Tj ET
+BT 0.090 0.100 0.120 rg /F1 13 Tf 357 208 Td (harness, and investor demo.) Tj ET
+1.000 1.000 1.000 rg 620 190 255 140 re f
+0.020 0.240 0.300 rg 620 325 255 5 re f
+BT 0.020 0.240 0.300 rg /F2 18 Tf 642 294 Td (Current need) Tj ET
+BT 0.090 0.100 0.120 rg /F1 13 Tf 642 262 Td (Pre-seed capital to bring in) Tj ET
+BT 0.090 0.100 0.120 rg /F1 13 Tf 642 244 Td (design, compiler, and GTM) Tj ET
+BT 0.090 0.100 0.120 rg /F1 13 Tf 642 226 Td (support around the working) Tj ET
+BT 0.090 0.100 0.120 rg /F1 13 Tf 642 208 Td (prototype.) Tj ET
+0.960 0.970 0.950 rg 335 105 540 55 re f
+BT 0.020 0.240 0.300 rg /F1 15 Tf 360 125 Td (Next hire focus: design, compiler engineering, and GTM support.) Tj ET
 endstream
 endobj
 23 0 obj
@@ -358,21 +369,21 @@ endobj
 << /Type /Page /Parent 2 0 R /MediaBox [0 0 960 540] /Resources << /Font << /F1 3 0 R /F2 4 0 R >> >> /Contents 26 0 R >>
 endobj
 26 0 obj
-<< /Length 914 >>
+<< /Length 900 >>
 stream
 0.985 0.982 0.965 rg 0 0 960 540 re f
 0.020 0.240 0.300 rg 0 530 960 10 re f
 0.950 0.080 0.420 rg 0 530 260 10 re f
 BT 0.950 0.080 0.420 rg /F2 13 Tf 56 485 Td (BUILD MORE WITH FEWER GENERATED TOKENS) Tj ET
 BT 0.090 0.100 0.120 rg /F2 30 Tf 56 442 Td (Kethic) Tj ET
-BT 0.440 0.460 0.500 rg /F1 16 Tf 56 398 Td (Micheal Ijaola | Founder, Kethic | Michealijaola@outlook.com |) Tj ET
+BT 0.440 0.460 0.500 rg /F1 16 Tf 56 398 Td (Micheal Ijaola | Founder, Kethic | micheal@kethic.org |) Tj ET
 BT 0.440 0.460 0.500 rg /F1 16 Tf 56 375 Td (calendly.com/daraijaola8/30min) Tj ET
 BT 0.440 0.460 0.500 rg /F2 11 Tf 56 25 Td (Kethic) Tj ET
 BT 0.440 0.460 0.500 rg /F1 11 Tf 872 25 Td (11) Tj ET
 1.000 1.000 1.000 rg 56 125 835 160 re f
 BT 0.090 0.100 0.120 rg /F1 19 Tf 88 240 Td (Micheal Ijaola) Tj ET
 BT 0.090 0.100 0.120 rg /F1 19 Tf 88 205 Td (Founder, Kethic) Tj ET
-BT 0.090 0.100 0.120 rg /F1 19 Tf 88 170 Td (Michealijaola@outlook.com) Tj ET
+BT 0.090 0.100 0.120 rg /F1 19 Tf 88 170 Td (micheal@kethic.org) Tj ET
 BT 0.090 0.100 0.120 rg /F1 19 Tf 88 135 Td (calendly.com/daraijaola8/30min) Tj ET
 endstream
 endobj
@@ -395,18 +406,18 @@ xref
 0000007771 00000 n 
 0000009467 00000 n 
 0000009605 00000 n 
-0000011251 00000 n 
-0000011389 00000 n 
-0000012918 00000 n 
-0000013056 00000 n 
-0000014636 00000 n 
-0000014774 00000 n 
-0000016032 00000 n 
-0000016170 00000 n 
-0000017717 00000 n 
-0000017855 00000 n 
+0000011414 00000 n 
+0000011552 00000 n 
+0000013081 00000 n 
+0000013219 00000 n 
+0000014910 00000 n 
+0000015048 00000 n 
+0000016831 00000 n 
+0000016969 00000 n 
+0000018516 00000 n 
+0000018654 00000 n 
 trailer
 << /Size 27 /Root 1 0 R >>
 startxref
-18820
+19605
 %%EOF

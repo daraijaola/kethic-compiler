@@ -52,13 +52,14 @@ Result:
 
 ## 6. Market
 
-AI code generation is already a multi-billion dollar market.
+Kethic starts with AI web generation, then expands into AI coding.
 
-- TAM: $8.5B AI code assistants market in 2025.
-- 2033 projection: $42.9B AI code assistants market.
-- Initial wedge: AI web builders and no-code tools.
+- TAM: $8.5B global AI code assistants market in 2025.
+- SAM: $1.2B AI web builders, no-code tools, and generated frontend workflows.
+- SOM: $12M first 24-month wedge from hosted builder and tooling.
 
 Source: Grand View Research AI Code Assistants Market, 2025-2033.
+SAM/SOM are founder estimates for the initial web-generation wedge.
 
 ## 7. Competition
 
@@ -72,16 +73,16 @@ Most tools improve prompting. Kethic changes the generated language.
 
 Start open source. Monetize the hosted builder.
 
-- Proof: publish compiler, benchmarks, examples, and AI guide.
-- Adoption: win AI builder, developer tool, and founder communities.
-- Revenue: hosted builder, team workspaces, and platform integrations.
+- 0-3 months: publish compiler, AI guide, benchmark page, and 10 demo templates.
+- 3-6 months: reach 1,000 developers/founders through AI builder communities and open-source demos.
+- 6-12 months: convert hosted users at $19-$49/month and pursue 3 platform integrations.
 
 ## 9. Team
 
 Founder building from compiler to product.
 
-- Micheal Ijaola: Founder, Kethic. Built the compiler prototype, native web layer, benchmark harness, and investor demo.
-- Current need: pre-seed capital to bring in design, compiler, and GTM support.
+- Micheal Ijaola: Founder and CEO. Built the compiler prototype, native web layer, benchmark harness, and investor demo.
+- Current need: pre-seed capital to bring in design, compiler, and GTM support around the working prototype.
 
 ## 10. Ask
 
@@ -101,6 +102,6 @@ Micheal Ijaola
 
 Founder, Kethic
 
-Michealijaola@outlook.com
+micheal@kethic.org
 
 https://calendly.com/daraijaola8/30min

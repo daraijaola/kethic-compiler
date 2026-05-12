@@ -82,14 +82,14 @@ SLIDES: tuple[Slide, ...] = (
     Slide(
         "market",
         "MARKET",
-        "AI code generation is already a multi-billion dollar market",
-        "Kethic targets the source layer underneath AI builders and coding agents.",
+        "Kethic starts with AI web generation, then expands into AI coding",
+        "We begin where token waste is easiest to prove: generated websites and app frontends.",
         (
-            Card("TAM", "AI code assistants market in 2025", "$8.5B"),
-            Card("2033", "Projected AI code assistants market", "$42.9B"),
-            Card("Initial wedge", "AI web builders and no-code tools", "Web"),
+            Card("TAM", "global AI code assistants market in 2025", "$8.5B"),
+            Card("SAM", "AI web builders, no-code tools, generated frontend workflows", "$1.2B"),
+            Card("SOM", "first 24-month wedge from hosted builder and tooling", "$12M"),
         ),
-        ("Source: Grand View Research AI Code Assistants Market, 2025-2033.",),
+        ("TAM source: Grand View Research AI Code Assistants Market, 2025-2033.", "SAM/SOM are founder estimates for the initial web-generation wedge."),
     ),
     Slide(
         "competition",
@@ -108,9 +108,9 @@ SLIDES: tuple[Slide, ...] = (
         "Open source the language. Monetize the hosted builder.",
         "",
         (
-            Card("1. Proof", "Publish compiler, benchmarks, examples, and AI guide."),
-            Card("2. Adoption", "Win AI builder, developer tool, and founder communities."),
-            Card("3. Revenue", "Hosted builder, team workspaces, and platform integrations."),
+            Card("0-3 months", "Publish compiler, AI guide, benchmark page, and 10 demo templates."),
+            Card("3-6 months", "Reach 1,000 developers/founders through AI builder communities and open-source demos."),
+            Card("6-12 months", "Convert hosted users at $19-$49/month and pursue 3 platform integrations."),
         ),
     ),
     Slide(
@@ -119,8 +119,8 @@ SLIDES: tuple[Slide, ...] = (
         "Founder building from compiler to product",
         "",
         (
-            Card("Micheal Ijaola", "Founder, Kethic. Built the compiler prototype, native web layer, benchmark harness, and investor demo."),
-            Card("Current need", "Pre-seed capital to bring in design, compiler, and GTM support."),
+            Card("Micheal Ijaola", "Founder and CEO. Built the compiler prototype, native web layer, benchmark harness, and investor demo."),
+            Card("Current need", "Pre-seed capital to bring in design, compiler, and GTM support around the working prototype."),
         ),
     ),
     Slide(
@@ -138,7 +138,7 @@ SLIDES: tuple[Slide, ...] = (
         "back",
         "BUILD MORE WITH FEWER GENERATED TOKENS",
         "Kethic",
-        "Micheal Ijaola | Founder, Kethic | Michealijaola@outlook.com | calendly.com/daraijaola8/30min",
+        "Micheal Ijaola | Founder, Kethic | micheal@kethic.org | calendly.com/daraijaola8/30min",
     ),
 )
 
@@ -304,6 +304,20 @@ def render_benchmark(slide: Slide, number: int) -> str:
     return out
 
 
+def render_team(slide: Slide, number: int) -> str:
+    out = base(slide, number)
+    out += rect(65, 105, 225, 225, WHITE)
+    out += rect(110, 188, 135, 135, TEAL)
+    out += text(143, 238, "MI", 42, True, WHITE)
+    out += text(100, 155, "Micheal Ijaola", 22, True)
+    out += text(100, 126, "Founder and CEO", 15, False, MUTED)
+    out += draw_card(335, 190, 255, 140, slide.cards[0])
+    out += draw_card(620, 190, 255, 140, slide.cards[1], accent=False)
+    out += rect(335, 105, 540, 55, (0.96, 0.97, 0.95))
+    out += text(360, 125, "Next hire focus: design, compiler engineering, and GTM support.", 15, False, TEAL)
+    return out
+
+
 def render_back(slide: Slide, number: int) -> str:
     out = base(slide, number)
     out += rect(MARGIN, 125, 835, 160, WHITE)
@@ -324,6 +338,8 @@ def render_slide(slide: Slide, number: int) -> str:
         return render_product(slide, number)
     if slide.kind == "benchmark":
         return render_benchmark(slide, number)
+    if slide.kind == "team":
+        return render_team(slide, number)
     if slide.kind == "back":
         return render_back(slide, number)
     return render_cards(slide, number)
