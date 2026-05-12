@@ -136,7 +136,7 @@ SLIDES: tuple[Slide, ...] = (
         (
             "Michael",
             "Founder, Kethic",
-            "michael@kethic.org",
+            "Michealijaola@outlook.com",
             "https://calendly.com/daraijaola8/30min",
         ),
     ),
@@ -191,7 +191,7 @@ def render_slide(slide: Slide, number: int) -> str:
         out += text(MARGIN, y, slide.accent, 20, False, (0.03, 0.22, 0.29))
         y -= 38
     if slide.metrics:
-        box_y = 130
+        box_y = 48
         box_w = 250
         gap = 28
         start_x = MARGIN
@@ -204,7 +204,7 @@ def render_slide(slide: Slide, number: int) -> str:
     body_y = min(y, 335)
     for item in slide.body:
         lines = wrap(item, 72)
-        bullet_prefix = "• "
+        bullet_prefix = "- "
         first = True
         for line in lines:
             prefix = bullet_prefix if first and len(slide.body) > 1 else "  "

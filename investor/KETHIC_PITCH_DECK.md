@@ -127,6 +127,6 @@ Michael
 
 Founder, Kethic
 
-michael@kethic.org
+Michealijaola@outlook.com
 
 https://calendly.com/daraijaola8/30min
