@@ -1,6 +1,6 @@
-# Kethic Pre-Seed Pitch Deck
+# Kethic Pre-Seed Pitch Deck V2
 
-## Slide 1 - Cover
+## 1. Cover
 
 Kethic
 
@@ -8,41 +8,31 @@ AI-native web language that cuts generated source by 90%+
 
 Nigeria | Pre-seed | Raising $50k
 
-## Slide 2 - Why Now
+## 2. Problem
 
-AI builders are becoming the new way software is made.
+AI builders still output expensive web code.
 
-Every generated page still comes out as verbose HTML, CSS, JavaScript, React, or Tailwind.
+The user asks for a page. The model pays to write thousands of tokens of HTML, CSS, JS, or React.
 
-Output tokens are the expensive part of AI code generation.
+- Cost: output tokens are the expensive part of generated software.
+- Latency: verbose source slows generation and repair loops.
+- Fragility: more generated code gives the model more surface to break.
 
-## Slide 3 - Problem
+## 3. Solution
 
-AI website builders waste tokens on code the user never asked to see.
+Kethic compresses intent before it becomes web code.
 
-- A simple landing page can require thousands of generated tokens.
-- Long generated code increases cost, latency, and repair loops.
-- Emerging-market builders are hit harder because compute cost matters more.
+AI writes compact Kethic. The compiler expands it into accessible HTML, responsive CSS, and runtime JavaScript.
 
-## Slide 4 - Solution
+## 4. Product
 
-Kethic lets AI write compact intent, then compiles it into real web code.
+A working compiler turns short Kethic into real websites.
 
-AI writes Kethic source.
+The prototype already supports pages, components, responsive layouts, forms, state, events, and interactions.
 
-Kethic compiler outputs accessible HTML, responsive CSS, and runtime JavaScript.
+## 5. Benchmark
 
-## Slide 5 - Product Proof
-
-The prototype is already working.
-
-- Compiler pipeline: lexer, parser, type checker, code generator, runtime.
-- Web layer: pages, components, navigation, forms, responsive layouts, state, events, interactions.
-- Quality checks: build, tests, and web quality validation pass locally.
-
-## Slide 6 - Benchmark
-
-Same website task. Same model. Kethic compiled successfully.
+Same website. Same model. 96%+ smaller generated source.
 
 React/Tailwind baseline:
 
@@ -60,70 +50,54 @@ Result:
 - 96.35% smaller source
 - 91.60% lower total tokens
 
-## Slide 7 - What Makes It Different
+## 6. Market
 
-Kethic is not a website builder UI.
+AI code generation is already a multi-billion dollar market.
 
-It is a language layer for AI software generation.
+- TAM: $8.5B AI code assistants market in 2025.
+- 2033 projection: $42.9B AI code assistants market.
+- Initial wedge: AI web builders and no-code tools.
 
-- AI generates less code.
-- Compiler expands compact patterns into production web output.
-- The same language can be used by ChatGPT, Claude, Gemini, Cursor, and hosted builders.
+Source: Grand View Research AI Code Assistants Market, 2025-2033.
 
-## Slide 8 - Market
+## 7. Competition
 
-AI code generation is moving from developer autocomplete to full app creation.
+Most tools improve prompting. Kethic changes the generated language.
 
-The cost problem grows as usage grows.
+- AI builders: great UX, but verbose platform code underneath.
+- React/Tailwind: powerful, but expensive for models to generate repeatedly.
+- Kethic: compact source plus compiler-enforced web output.
 
-Target users:
-
-- AI builder platforms
-- no-code and low-code tools
-- solo founders and SMEs
-- developer tooling teams
-- Global South builders where AI compute cost is a bigger barrier
-
-## Slide 9 - Competition
-
-Current AI builders generate verbose platform code.
-
-Kethic competes at the source layer.
-
-- Lovable/Bolt-style builders: product experience, but verbose generated code underneath.
-- React/Tailwind/HTML: powerful but token-heavy.
-- Token DSL experiments: compact but not focused on production-quality full websites.
-
-Kethic combines compression, compiler validation, and real web output.
-
-## Slide 10 - Go To Market
+## 8. Go To Market
 
 Start open source. Monetize the hosted builder.
 
-- Release the language, compiler, AI guide, benchmarks, and examples.
-- Build public demos showing token savings side by side.
-- Target AI builder communities, developer tool users, and Global South founders.
-- Hosted Kethic builder becomes the paid product after the language proves adoption.
+- Proof: publish compiler, benchmarks, examples, and AI guide.
+- Adoption: win AI builder, developer tool, and founder communities.
+- Revenue: hosted builder, team workspaces, and platform integrations.
 
-## Slide 11 - Funding
+## 9. Team
+
+Founder building from compiler to product.
+
+- Micheal Ijaola: Founder, Kethic. Built the compiler prototype, native web layer, benchmark harness, and investor demo.
+- Current need: pre-seed capital to bring in design, compiler, and GTM support.
+
+## 10. Ask
 
 We are raising $50k pre-seed.
 
-Use of funds:
+- Language: finish data, backend, and app primitives.
+- Proof: public benchmark demos and side-by-side output comparisons.
+- Launch: hosted Kethic builder and early user onboarding.
 
-- finish the language core;
-- build fetch/data and backend primitives;
-- publish public docs and benchmark demos;
-- launch the hosted Kethic builder;
-- onboard early users and contributors.
-
-## Slide 12 - Back Cover
+## 11. Back Cover
 
 Kethic
 
 Build more with fewer generated tokens.
 
-Michael
+Micheal Ijaola
 
 Founder, Kethic
 
