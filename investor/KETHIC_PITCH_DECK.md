@@ -102,6 +102,6 @@ Micheal Ijaola
 
 Founder, Kethic
 
-micheal@kethic.org
+Michealijaola@outlook.com
 
 https://calendly.com/daraijaola8/30min

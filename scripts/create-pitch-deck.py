@@ -138,7 +138,7 @@ SLIDES: tuple[Slide, ...] = (
         "back",
         "BUILD MORE WITH FEWER GENERATED TOKENS",
         "Kethic",
-        "Micheal Ijaola | Founder, Kethic | micheal@kethic.org | calendly.com/daraijaola8/30min",
+        "Micheal Ijaola | Founder, Kethic | Michealijaola@outlook.com | calendly.com/daraijaola8/30min",
     ),
 )
 

@@ -369,21 +369,21 @@ endobj
 << /Type /Page /Parent 2 0 R /MediaBox [0 0 960 540] /Resources << /Font << /F1 3 0 R /F2 4 0 R >> >> /Contents 26 0 R >>
 endobj
 26 0 obj
-<< /Length 900 >>
+<< /Length 914 >>
 stream
 0.985 0.982 0.965 rg 0 0 960 540 re f
 0.020 0.240 0.300 rg 0 530 960 10 re f
 0.950 0.080 0.420 rg 0 530 260 10 re f
 BT 0.950 0.080 0.420 rg /F2 13 Tf 56 485 Td (BUILD MORE WITH FEWER GENERATED TOKENS) Tj ET
 BT 0.090 0.100 0.120 rg /F2 30 Tf 56 442 Td (Kethic) Tj ET
-BT 0.440 0.460 0.500 rg /F1 16 Tf 56 398 Td (Micheal Ijaola | Founder, Kethic | micheal@kethic.org |) Tj ET
+BT 0.440 0.460 0.500 rg /F1 16 Tf 56 398 Td (Micheal Ijaola | Founder, Kethic | Michealijaola@outlook.com |) Tj ET
 BT 0.440 0.460 0.500 rg /F1 16 Tf 56 375 Td (calendly.com/daraijaola8/30min) Tj ET
 BT 0.440 0.460 0.500 rg /F2 11 Tf 56 25 Td (Kethic) Tj ET
 BT 0.440 0.460 0.500 rg /F1 11 Tf 872 25 Td (11) Tj ET
 1.000 1.000 1.000 rg 56 125 835 160 re f
 BT 0.090 0.100 0.120 rg /F1 19 Tf 88 240 Td (Micheal Ijaola) Tj ET
 BT 0.090 0.100 0.120 rg /F1 19 Tf 88 205 Td (Founder, Kethic) Tj ET
-BT 0.090 0.100 0.120 rg /F1 19 Tf 88 170 Td (micheal@kethic.org) Tj ET
+BT 0.090 0.100 0.120 rg /F1 19 Tf 88 170 Td (Michealijaola@outlook.com) Tj ET
 BT 0.090 0.100 0.120 rg /F1 19 Tf 88 135 Td (calendly.com/daraijaola8/30min) Tj ET
 endstream
 endobj
@@ -419,5 +419,5 @@ xref
 trailer
 << /Size 27 /Root 1 0 R >>
 startxref
-19605
+19619
 %%EOF
