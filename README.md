@@ -7,14 +7,15 @@ The compiler expands compact Kethic intent into standard HTML, CSS, JavaScript, 
 Current strategic direction:
 
 - reduce AI-generated source size compared with React, HTML/CSS, JavaScript, and backend boilerplate;
-- keep a readable Kethic syntax for humans and a compact syntax for AI output;
+- keep Kethic Core readable for humans while preserving compact aliases for lowest-token AI output;
 - benchmark token savings against equivalent production examples;
 - make the language open source while keeping hosted platform services commercial.
 
-Implemented web syntax now includes readable Kethic Native, compact aliases, and Semantic Macros V1. Start with:
+Implemented web syntax now includes Kethic Core, compact aliases, Namaru legacy compatibility, and Semantic Macros V1. Start with:
 
 - `docs/AI_GUIDE.md` for AI generation rules;
 - `docs/AI_PROMPT_CAPSULE.md` for the short reusable model prompt;
+- `docs/KETHIC_CORE_RENAME_PLAN.md` for the Core syntax migration plan;
 - `docs/COMPACT_SYNTAX.md` for compact syntax and macros;
 - `docs/STYLE_CORE_V1.md` for the first controlled CSS/style layer;
 - `docs/LAYOUT_CORE_V1.md` for the first layout primitives;

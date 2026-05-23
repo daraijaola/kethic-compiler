@@ -2,9 +2,9 @@
 
 Status: compact aliases plus Semantic Macros V1 are implemented.
 
-Compact Kethic is the AI-output mode of Kethic Native Web. It maps to the same Web AST as readable Kethic, but uses short regular aliases that are easier for AI models to emit correctly and cheaper in output tokens.
+Compact Kethic is the low-token alias mode of Kethic Core Web. It maps to the same Web AST as readable Kethic Core, but uses short regular aliases that are cheaper in output tokens.
 
-Readable Kethic remains valid. Compact Kethic does not replace the Namaru vocabulary; it is the compression layer.
+Kethic Core is now the public readable syntax. Compact Kethic does not replace Core; it is the compression layer. Namaru vocabulary remains a legacy compatibility layer.
 
 ## Why It Exists
 
@@ -22,27 +22,27 @@ Compact mode targets that directly:
 | Compact | Readable Kethic | Meaning |
 | --- | --- | --- |
 | `end` | `Tor` | close block |
-| `pg Name` | `Torvathar Name` | page root |
-| `sec Name` | `Shevva Name` | section |
+| `pg Name` | `page Name` | page root |
+| `sec Name` | `section Name` | section |
 | `box Name` | `Vakar Name` | container |
 | `nav Name` | `Rukshev Name` | navigation |
-| `foot` | `Durkel` | footer |
+| `foot` | `footer` | footer |
 | `link Target "Label"` | `Ovshev to:Target "Label"` | route link |
-| `rt "#id" Target` | `Rinshev "#id" receives Target` | route declaration |
+| `rt "#id" Target` | `route "#id" Target` | route declaration |
 | `mount "#app" Page` | `Umvator "#app" receives Page` | mount page |
-| `txt "Text"` | `Kelen "Text"` | text |
+| `txt "Text"` | `text "Text"` | text |
 | `h1 "Text"` through `h6 "Text"` | `Keltor level:N "Text"` | heading |
-| `btn "Label"` | `Umkar` with child `Kelen` | submit/button text |
-| `btn action "Label"` | `Umkar action:action` with child `Kelen` | action button |
+| `btn "Label"` | `button "Label"` | submit/button text |
+| `btn action "Label"` | `button action "Label"` | action button |
 | `form Name` | `Selvathar Name` | form |
-| `in name "Label" !` | `Enva name label:"Label" Torikh` | required input |
-| `area name "Label" rows:5 !` | `Kelrinva name label:"Label" rows:5 Torikh` | required textarea |
-| `msg field "Message"` | `Ikhen for:field "Message"` | validation/help message |
-| `cmp Name receives a, b` | `Selthar Name receives a, b` | component declaration |
+| `in name "Label" !` | `input name "Label" required` | required input |
+| `area name "Label" rows:5 !` | `textarea name "Label" rows:5 required` | required textarea |
+| `msg field "Message"` | `message field "Message"` | validation/help message |
+| `cmp Name receives a, b` | `component Name receives a, b` | component declaration |
 | `use Name "a", "b"` | `Umkel Name with "a", "b"` | component call |
 | `slot name` | `Umva name` | component slot |
-| `st name = value` | `Lumva name holds value` | reactive state |
-| `act name` | `Umrin name` | action block |
+| `st name = value` | `state name = value` | reactive state |
+| `act name` | `action name` | action block |
 | `set state = expr` | `state holds expr` | action state update |
 
 ## Example

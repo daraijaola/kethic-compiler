@@ -113,6 +113,63 @@ end
 mount "#app" Home
 `;
 
+const coreSample: string = `
+state count = 0
+
+action increment
+  set count = count plus 1
+end
+
+route "#hero" Hero
+route "#contact" Contact
+
+component ActionCard receives title, body
+  box ActionCard
+    h3 title
+    text body
+    slot actions
+  end
+end
+
+style Hero
+  pad 6
+  background "sand.50"
+  color "ink.900"
+  radius "soft"
+  shadow "raised"
+end
+
+page Home
+  nav Main
+    link Hero "Hero"
+    link Contact "Contact"
+  end
+  section Hero
+    h1 "Kethic"
+    text "AI-native source for generated websites."
+    use ActionCard "Compiler Primitives", "Readable syntax without verbose frontend output."
+      text "Count: {count}"
+      button "Enter"
+      button increment "Add"
+    end
+    section Contact
+      form Contact
+        input email "Email" required
+        textarea message "Message" rows:5 required
+        message email "Enter an email before sending."
+        message message "Write the message you want carried."
+        button "Send"
+      end
+    end
+  end
+  footer
+    text "Kethic Core web shell."
+  end
+end
+
+mount "#app" Home
+`;
+
 const macroSample: string = `
 st joins = 0
 
@@ -351,6 +408,28 @@ describe("WebCompiler", () => {
     expect(result.html).toContain('<input id="field-email" name="email" required aria-describedby="field-email-message">');
     expect(result.html).toContain('<textarea id="field-message" name="message" rows="5" required aria-describedby="field-message-message"></textarea>');
     expect(result.html).toContain('<footer class="kethic-footer">');
+    expect(result.runtime).toContain('"increment": () =>');
+  });
+
+  it("compiles Kethic Core aliases without using Namaru keywords", () => {
+    const result = new WebCompiler().compile(coreSample);
+
+    expect(result.html).toContain('<main id="app" class="kethic-home kethic-page">');
+    expect(result.html).toContain('<nav class="kethic-main kethic-navigation" aria-label="Main">');
+    expect(result.html).toContain('<section id="hero" class="kethic-hero kethic-section"');
+    expect(result.html).toContain("AI-native source for generated websites.");
+    expect(result.html).toContain("Compiler Primitives");
+    expect(result.html).toContain('data-kethic-template="Count: {count}"');
+    expect(result.html).toContain('data-kethic-action="increment"');
+    expect(result.html).toContain('<input id="field-email" name="email" required aria-describedby="field-email-message">');
+    expect(result.html).toContain('<textarea id="field-message" name="message" rows="5" required aria-describedby="field-message-message"></textarea>');
+    expect(result.html).toContain('<footer class="kethic-footer">');
+    expect(result.css).toContain(".kethic-hero {");
+    expect(result.css).toContain("padding: var(--sa-6);");
+    expect(result.css).toContain("background: var(--color-sand-50);");
+    expect(result.css).toContain("color: var(--color-ink-900);");
+    expect(result.css).toContain("border-radius: var(--radius-soft);");
+    expect(result.css).toContain("box-shadow: var(--shadow-raised);");
     expect(result.runtime).toContain('"increment": () =>');
   });
 

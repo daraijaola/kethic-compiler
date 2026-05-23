@@ -2,7 +2,7 @@
 
 This guide is the short model-facing contract for generating Kethic Web Macro source.
 
-Use it when an AI model is asked to build a website in Kethic. The goal is to output small valid Kethic that the compiler expands into accessible HTML, responsive CSS, and JavaScript runtime behavior.
+Use it when an AI model is asked to build a website in Kethic. The goal is to output small valid Kethic Core that the compiler expands into accessible HTML, responsive CSS, and JavaScript runtime behavior.
 
 ## Core Rule
 
@@ -12,38 +12,38 @@ Do not output Markdown fences, explanations, comments, HTML, CSS, JSX, JavaScrip
 
 ## Preferred Mode
 
-Use compact Kethic Web Macro mode for website generation.
+Use Kethic Core Web Macro mode for website generation.
 
-Readable Namaru keywords are valid, but compact mode is preferred because it reduces AI output tokens and avoids spelling mistakes in long terms.
+Compact aliases are still valid when the caller asks for the smallest possible source. Namaru legacy keywords remain compatible, but they are not the preferred public syntax.
 
 ## Minimal Page Shape
 
 ```keth
-st joins = 0
+state joins = 0
 
-act join
+action join
   set joins = joins plus 1
 end
 
-rt "#hero" Hero
-rt "#features" Features
-rt "#signup" Signup
+route "#hero" Hero
+route "#features" Features
+route "#signup" Signup
 
-pg Landing
+page Landing
   nav Main
     link Hero "Hero"
     link Features "Features"
     link Signup "Signup"
   end
-  hero "Kethic" "AI-native websites with fewer tokens." btn:join "Join waitlist"
+  hero "Kethic" "AI-native websites with fewer tokens." action:join "Join waitlist"
   features
     "Fast generation"
     "Accessible by default"
     "Compiled to real web code"
   end
   signup name email submit:"Join waitlist"
-  foot
-    txt "Built with Kethic."
+  footer
+    text "Built with Kethic."
   end
 end
 
@@ -55,39 +55,39 @@ mount "#app" Landing
 ### State
 
 ```keth
-st count = 0
+state count = 0
 ```
 
-Use `st` for reactive UI state.
+Use `state` for reactive UI state. `st` is the compact alias.
 
 ### Action
 
 ```keth
-act increment
+action increment
   set count = count plus 1
 end
 ```
 
-Use `act` for click actions. Use `set` to update state.
+Use `action` for event/update blocks. Use `set` to update state. `act` is the compact alias.
 
 ### Routes
 
 ```keth
-rt "#hero" Hero
-rt "#signup" Signup
+route "#hero" Hero
+route "#signup" Signup
 ```
 
-Every `link Target "Label"` should have a matching `rt "#id" Target`.
+Every `link Target "Label"` should have a matching `route "#id" Target`.
 
 ### Page
 
 ```keth
-pg Home
+page Home
   ...
 end
 ```
 
-Every website needs one `pg` block.
+Every website needs one `page` block. `pg` is the compact alias.
 
 ### Navigation
 
@@ -103,19 +103,19 @@ Use navigation when the page has sections.
 ### Section
 
 ```keth
-sec Hero
+section Hero
   h1 "Title"
-  txt "Supporting text."
+  text "Supporting text."
 end
 ```
 
-Use `sec` for ordinary sections.
+Use `section` for ordinary sections. `sec` is the compact alias.
 
 ### Hero Macro
 
 ```keth
 hero "Title" "Subtitle"
-hero "Title" "Subtitle" btn:join "Button label"
+hero "Title" "Subtitle" action:join "Button label"
 ```
 
 Use this instead of manually writing hero sections.
@@ -143,8 +143,8 @@ This expands into a labelled accessible form with required fields and validation
 ### Text
 
 ```keth
-txt "Plain text."
-txt "Count: {count}"
+text "Plain text."
+text "Count: {count}"
 ```
 
 Use `{stateName}` interpolation for reactive text.
@@ -152,17 +152,17 @@ Use `{stateName}` interpolation for reactive text.
 ### Button
 
 ```keth
-btn "Submit"
-btn join "Join waitlist"
+button "Submit"
+button join "Join waitlist"
 ```
 
-Use `btn actionName "Label"` for action buttons.
+Use `button actionName "Label"` for action buttons. `btn` is the compact alias.
 
 ### Footer
 
 ```keth
-foot
-  txt "Footer text."
+footer
+  text "Footer text."
 end
 ```
 
@@ -177,7 +177,7 @@ Every page should end with `mount`.
 ## Output Rules
 
 1. Use `end` to close every block.
-2. Do not use `Tor` in compact mode.
+2. Do not use `Tor` in Kethic Core.
 3. Use double quotes for all text.
 4. Keep names simple: `Hero`, `Features`, `Signup`, `Contact`, `Pricing`.
 5. Use action names in lower camel case: `join`, `submitForm`, `openMenu`.
@@ -193,7 +193,7 @@ Do not output:
 
 ```text
 ```keth
-pg Home
+page Home
 end
 ```
 ```
@@ -209,7 +209,7 @@ mount "#app" Home
 Do not create a link without a matching route:
 
 ```keth
-rt "#contact" Contact
+route "#contact" Contact
 link Contact "Contact"
 ```
 
@@ -251,7 +251,7 @@ The AI does not need to manually write these:
 Use this prompt when asking an AI to generate Kethic:
 
 ```text
-Use Kethic Web Macro mode. Output source only, no Markdown. Build a landing page with hero, features, signup form, navigation, footer, and mount.
+Use Kethic Core Web Macro mode. Output source only, no Markdown. Build a landing page with hero, features, signup form, navigation, footer, and mount.
 ```
 
 ## Best Repair Prompt

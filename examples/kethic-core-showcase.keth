@@ -1,0 +1,72 @@
+state count = 0
+
+action increment
+  set count = count plus 1
+end
+
+route "#hero" Hero
+route "#proof" Proof
+route "#contact" Contact
+
+style Hero
+  pad 6
+  background "night.950"
+  color "sand.50"
+  radius "soft"
+  shadow "raised"
+end
+
+style ProofGrid
+  gap 4
+  container wide
+end
+
+page KethicCoreShowcase
+  nav Main
+    link Hero "Hero"
+    link Proof "Proof"
+    link Contact "Contact"
+  end
+
+  section Hero
+    h1 "Kethic Core"
+    text "Readable AI-native source that compiles into real HTML, CSS, and JavaScript."
+    button increment "Run action"
+    text "Actions triggered: {count}"
+  end
+
+  section Proof
+    h2 "Compiler primitives, not verbose frontend output"
+    grid ProofGrid
+      box TokenProof
+        h3 "Compact"
+        text "AI writes source-level intent instead of repeating HTML and CSS boilerplate."
+      end
+      box WebProof
+        h3 "Standard output"
+        text "The compiler emits normal web files that can be hosted anywhere."
+      end
+      box QualityProof
+        h3 "Quality defaults"
+        text "Accessibility, responsive layout, forms, and runtime wiring are built in."
+      end
+    end
+  end
+
+  section Contact
+    h2 "Join the test list"
+    form Contact
+      input email "Email" required
+      textarea message "Message" rows:4 required
+      message email "Enter your email."
+      message message "Tell us what you want to build."
+      button "Send"
+    end
+  end
+
+  footer
+    text "Kethic Core keeps the language readable while preserving low-token generation."
+  end
+end
+
+mount "#app" KethicCoreShowcase

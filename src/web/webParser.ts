@@ -144,13 +144,28 @@ export class WebParser {
       return;
     }
 
+    if (line.startsWith("page ")) {
+      this.openContainerBlock(this.parseCompactPage(this.aliasKeyword(line, "page", "pg"), location));
+      return;
+    }
+
     if (line.startsWith("cmp ")) {
       this.openContainerBlock(this.parseCompactComponent(line, location));
       return;
     }
 
+    if (line.startsWith("component ")) {
+      this.openContainerBlock(this.parseCompactComponent(this.aliasKeyword(line, "component", "cmp"), location));
+      return;
+    }
+
     if (line.startsWith("sec ")) {
       this.openContainerBlock(this.parseCompactSection(line, location));
+      return;
+    }
+
+    if (line.startsWith("section ")) {
+      this.openContainerBlock(this.parseCompactSection(this.aliasKeyword(line, "section", "sec"), location));
       return;
     }
 
@@ -160,6 +175,11 @@ export class WebParser {
     }
 
     if (line === "foot") {
+      this.openContainerBlock(this.parseFooter(location));
+      return;
+    }
+
+    if (line === "footer") {
       this.openContainerBlock(this.parseFooter(location));
       return;
     }
@@ -199,6 +219,11 @@ export class WebParser {
       return;
     }
 
+    if (line.startsWith("button ")) {
+      this.addChild(this.parseCompactButton(this.aliasKeyword(line, "button", "btn"), location));
+      return;
+    }
+
     if (line.startsWith("show ")) {
       this.openContainerBlock(this.parseCompactConditional(line, location));
       return;
@@ -214,13 +239,28 @@ export class WebParser {
       return;
     }
 
+    if (line.startsWith("input ")) {
+      this.addChild(this.parseCompactInput(this.aliasKeyword(line, "input", "in"), location));
+      return;
+    }
+
     if (line.startsWith("area ")) {
       this.addChild(this.parseCompactTextarea(line, location));
       return;
     }
 
+    if (line.startsWith("textarea ")) {
+      this.addChild(this.parseCompactTextarea(this.aliasKeyword(line, "textarea", "area"), location));
+      return;
+    }
+
     if (line.startsWith("msg ")) {
       this.addChild(this.parseCompactValidationMessage(line, location));
+      return;
+    }
+
+    if (line.startsWith("message ")) {
+      this.addChild(this.parseCompactValidationMessage(this.aliasKeyword(line, "message", "msg"), location));
       return;
     }
 
@@ -239,8 +279,18 @@ export class WebParser {
       return;
     }
 
+    if (line.startsWith("state ")) {
+      this.addTopLevel(this.parseCompactState(this.aliasKeyword(line, "state", "st"), location));
+      return;
+    }
+
     if (line.startsWith("act ")) {
       this.stack.push({ mode: "action", node: this.parseCompactAction(line, location), updates: [] });
+      return;
+    }
+
+    if (line.startsWith("action ")) {
+      this.stack.push({ mode: "action", node: this.parseCompactAction(this.aliasKeyword(line, "action", "act"), location), updates: [] });
       return;
     }
 
@@ -254,6 +304,11 @@ export class WebParser {
       return;
     }
 
+    if (line.startsWith("text ")) {
+      this.addChild(this.parseCompactText(this.aliasKeyword(line, "text", "txt"), location));
+      return;
+    }
+
     if (line.startsWith("mount ")) {
       this.addTopLevel(this.parseCompactMount(line, location));
       return;
@@ -261,6 +316,11 @@ export class WebParser {
 
     if (line.startsWith("rt ")) {
       this.addTopLevel(this.parseCompactRoute(line, location));
+      return;
+    }
+
+    if (line.startsWith("route ")) {
+      this.addTopLevel(this.parseCompactRoute(this.aliasKeyword(line, "route", "rt"), location));
       return;
     }
 
@@ -517,9 +577,11 @@ export class WebParser {
   }
 
   private parseHeroMacro(line: string, location: WebSourceLocation): SectionNode {
-    const match: RegExpMatchArray | null = line.match(/^hero\s+"([^"]+)"\s+"([^"]+)"(?:\s+btn:([A-Za-z_][A-Za-z0-9_]*)\s+"([^"]+)")?$/);
+    const match: RegExpMatchArray | null = line.match(
+      /^hero\s+"([^"]+)"\s+"([^"]+)"(?:\s+(?:btn|action):([A-Za-z_][A-Za-z0-9_]*)\s+"([^"]+)")?$/,
+    );
     if (match === null) {
-      this.report(location, "hero", 'expected hero "Title" "Subtitle" or hero "Title" "Subtitle" btn:action "Label"');
+      this.report(location, "hero", 'expected hero "Title" "Subtitle" or hero "Title" "Subtitle" action:name "Label"');
       return { kind: WebNodeKind.Section, location, name: "Hero", children: [] };
     }
 
@@ -936,7 +998,7 @@ export class WebParser {
 
   private parseCompactInput(line: string, location: WebSourceLocation): InputNode {
     const match: RegExpMatchArray | null = line.match(
-      /^in\s+([A-Za-z_][A-Za-z0-9_]*)\s+"([^"]+)"(?:\s+!)?(?:\s+bind:([A-Za-z_][A-Za-z0-9_]*))?$/,
+      /^in\s+([A-Za-z_][A-Za-z0-9_]*)\s+"([^"]+)"(?:\s+(?:!|required))?(?:\s+bind:([A-Za-z_][A-Za-z0-9_]*))?$/,
     );
     if (match === null) {
       this.report(location, "in", 'expected in name "Label" ! bind:state');
@@ -948,7 +1010,7 @@ export class WebParser {
       location,
       name: match[1],
       label: match[2],
-      required: /\s!(?:\s|$)/.test(line),
+      required: /\s(?:!|required)(?:\s|$)/.test(line),
       binding: match[3] ?? null,
     };
   }
@@ -975,7 +1037,7 @@ export class WebParser {
 
   private parseCompactTextarea(line: string, location: WebSourceLocation): TextareaNode {
     const match: RegExpMatchArray | null = line.match(
-      /^area\s+([A-Za-z_][A-Za-z0-9_]*)\s+"([^"]+)"(?:\s+rows:(\d+))?(?:\s+!)?(?:\s+bind:([A-Za-z_][A-Za-z0-9_]*))?$/,
+      /^area\s+([A-Za-z_][A-Za-z0-9_]*)\s+"([^"]+)"(?:\s+rows:(\d+))?(?:\s+(?:!|required))?(?:\s+bind:([A-Za-z_][A-Za-z0-9_]*))?$/,
     );
     if (match === null) {
       this.report(location, "area", 'expected area name "Label" rows:5 ! bind:state');
@@ -988,7 +1050,7 @@ export class WebParser {
       name: match[1],
       label: match[2],
       rows: match[3] === undefined ? 4 : Number(match[3]),
-      required: /\s!(?:\s|$)/.test(line),
+      required: /\s(?:!|required)(?:\s|$)/.test(line),
       binding: match[4] ?? null,
     };
   }
@@ -1188,38 +1250,71 @@ export class WebParser {
     const aliases: ReadonlyMap<string, string> = new Map<string, string>([
       ["sarin", "Sarin"],
       ["savarin", "Savarin"],
+      ["pad", "Savarin"],
       ["ovsa", "Ovsa"],
+      ["margin", "Ovsa"],
       ["shevsa", "Shevsa"],
+      ["gap", "Shevsa"],
       ["vator", "Vator"],
+      ["width", "Vator"],
       ["torkar", "Torkar"],
+      ["height", "Torkar"],
       ["naktor", "Naktor"],
+      ["minwidth", "Naktor"],
       ["tornak", "Tornak"],
+      ["maxwidth", "Tornak"],
       ["lusel", "Lusel"],
       ["mirlu", "Mirlu"],
+      ["background", "Mirlu"],
       ["kellu", "Kellu"],
+      ["color", "Kellu"],
       ["kelsa", "Kelsa"],
+      ["font", "Kelsa"],
       ["keltorva", "Keltorva"],
+      ["weight", "Keltorva"],
       ["kelruksa", "Kelruksa"],
+      ["line", "Kelruksa"],
       ["kelshev", "Kelshev"],
+      ["aligntext", "Kelshev"],
       ["torkarva", "Torkarva"],
+      ["border", "Torkarva"],
       ["torlu", "Torlu"],
+      ["bordercolor", "Torlu"],
       ["torsa", "Torsa"],
+      ["borderwidth", "Torsa"],
       ["natorkar", "Natorkar"],
+      ["radius", "Natorkar"],
       ["mireshel", "Mireshel"],
+      ["shadow", "Mireshel"],
       ["luna", "Luna"],
+      ["opacity", "Luna"],
       ["vashev", "Vashev"],
+      ["overflow", "Vashev"],
       ["torshev", "Torshev"],
+      ["z", "Torshev"],
       ["torrin", "Torrin"],
+      ["position", "Torrin"],
       ["rintor", "Rintor"],
+      ["inset", "Rintor"],
       ["karum", "Karum"],
+      ["display", "Karum"],
       ["seltorkar", "Seltorkar"],
+      ["align", "Seltorkar"],
       ["rinshevsa", "Rinshevsa"],
+      ["justify", "Rinshevsa"],
       ["naruk", "Naruk"],
+      ["wrap", "Naruk"],
       ["vatornak", "Vatornak"],
+      ["container", "Vatornak"],
       ["karlu", "Karlu"],
+      ["ratio", "Karlu"],
     ]);
 
     return aliases.get(name.toLowerCase()) ?? name;
+  }
+
+  private aliasKeyword(line: string, from: string, to: string): string {
+    return `${to}${line.slice(from.length)}`;
   }
 
   private normalizeResponsiveKind(name: string, location: WebSourceLocation, keyword: string): "mobile" | "tablet" | "desktop" {

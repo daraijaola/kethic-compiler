@@ -1,0 +1,5 @@
+kethic_chars: 4051
+plain_chars: 15085
+kethic_est_output_tokens: 1013
+plain_est_output_tokens: 3771
+output_token_reduction_percent: 73.14

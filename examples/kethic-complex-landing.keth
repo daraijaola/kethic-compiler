@@ -1,0 +1,172 @@
+st demos = 0
+st email = ""
+st expanded = false
+
+act bookDemo
+  set demos = demos plus 1
+end
+
+act toggleProof
+  set expanded = not expanded
+end
+
+rt "#hero" Hero
+rt "#proof" Proof
+rt "#workflow" Workflow
+rt "#usecases" UseCases
+rt "#signup" Signup
+
+style Hero
+  savarin 6
+  mirlu "night.950"
+end
+
+style HeroShell
+  vatornak wide
+  shevsa 5
+end
+
+style HeroActions
+  shevsa 3
+  naruk true
+end
+
+style ProofGrid
+  shevsa 4
+  vatornak wide
+end
+
+style MetricCard
+  savarin 5
+  mirlu "glass.100"
+  torkarva soft
+  natorkar soft
+  mireshel raised
+end
+
+style WorkflowGrid
+  shevsa 4
+  vatornak wide
+end
+
+style UseCaseGrid
+  shevsa 4
+  vatornak wide
+end
+
+style Signup
+  savarin 6
+  mirlu "glass.100"
+  kellu "sand.50"
+end
+
+when mobile Hero
+  savarin 4
+end
+
+pg Landing
+  nav Main
+    link Hero "Atlas"
+    link Proof "Signal"
+    link Workflow "Journey"
+    link UseCases "Scenes"
+    link Signup "Reserve"
+  end
+  sec Hero
+    stack HeroShell
+      h1 "Night markets for impossible trips"
+      txt "Nocturne Atlas curates after-dark city routes, hidden tables, private galleries, and late-night stays into one cinematic travel plan."
+      row HeroActions
+        btn bookDemo "Reserve a route"
+        btn toggleProof "Reveal the signal"
+      end
+      txt "Routes reserved in this preview: {demos}"
+      show expanded
+        grid ProofGrid
+          box MetricCard
+            h2 "04:17"
+            txt "The hour our local curators open the hidden river market."
+          end
+          box MetricCard
+            h2 "18"
+            txt "Private rooms, listening bars, rooftops, and galleries in tonight's route."
+          end
+          box MetricCard
+            h2 "1"
+            txt "A single route that adapts as the night changes around you."
+          end
+        end
+      end
+    end
+  end
+  sec Proof
+    h2 "A city guide that behaves like a concierge"
+    grid ProofGrid
+      box MetricCard
+        h3 "Taste graph"
+        txt "Tell us your mood once. The route shifts between food, music, art, quiet streets, and high-energy rooms."
+      end
+      box MetricCard
+        h3 "Live pacing"
+        txt "If a venue fills up, the next stop changes without breaking the shape of the night."
+      end
+      box MetricCard
+        h3 "Local access"
+        txt "Every route is built from relationships with hosts, guides, chefs, collectors, and night drivers."
+      end
+    end
+  end
+  sec Workflow
+    h2 "The night unfolds in three movements"
+    grid WorkflowGrid
+      box MetricCard
+        h3 "Before sunset"
+        txt "Choose a city, mood, pace, and appetite. We assemble the opening route."
+      end
+      box MetricCard
+        h3 "After dark"
+        txt "Your phone becomes a quiet guide with timings, host names, and private arrival notes."
+      end
+      box MetricCard
+        h3 "Before dawn"
+        txt "The final stop is chosen by how the night actually went, not by a static itinerary."
+      end
+    end
+  end
+  sec UseCases
+    h2 "Built for people who want a stranger city"
+    grid UseCaseGrid
+      box MetricCard
+        h3 "Founders"
+        txt "Host investors in a city without defaulting to the same five hotel bars."
+      end
+      box MetricCard
+        h3 "Collectors"
+        txt "Move through private galleries, listening rooms, and late-night studios."
+      end
+      box MetricCard
+        h3 "Couples"
+        txt "Book a route that feels planned, intimate, and impossible to copy."
+      end
+      box MetricCard
+        h3 "Teams"
+        txt "Replace generic offsites with a night that turns into a shared story."
+      end
+    end
+  end
+  sec Signup
+    h2 "Reserve the first route"
+    txt "Leave your email and our city desk will send the first private Nocturne Atlas drop."
+    form SignupForm
+      in email "Email" ! bind:email
+      msg email "Enter the email where we should send your route."
+      btn bookDemo "Request route"
+    end
+    txt "Current email: {email}"
+  end
+  foot
+    txt "Nocturne Atlas - private routes for people who travel after dark."
+  end
+end
+
+mount "#app" Landing

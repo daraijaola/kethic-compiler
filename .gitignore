@@ -3,6 +3,8 @@ dist/
 dist-demo/
 dist-web/
 dist-modules/
+dist-complex-html/
+dist-complex-kethic/
 coverage/
 *.log
 .env
