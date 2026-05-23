@@ -9,14 +9,12 @@
   },
   "scripts": {
     "build": "tsc",
-    "test": "vitest run",
     "benchmark:ai": "node scripts/benchmark-ai-compression.cjs",
     "quality:web": "node scripts/check-web-quality.cjs",
     "compile": "ts-node src/cli.ts compile"
   },
   "devDependencies": {
     "ts-node": "^10.9.2",
-    "typescript": "^5.8.3",
-    "vitest": "^3.1.2"
+    "typescript": "^5.8.3"
   }
 }

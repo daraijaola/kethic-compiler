@@ -17,51 +17,51 @@ rt "#usecases" UseCases
 rt "#signup" Signup
 
 style Hero
-  savarin 6
-  mirlu "night.950"
+  pad 6
+  background "night.950"
 end
 
 style HeroShell
-  vatornak wide
-  shevsa 5
+  container wide
+  gap 5
 end
 
 style HeroActions
-  shevsa 3
-  naruk true
+  gap 3
+  wrap true
 end
 
 style ProofGrid
-  shevsa 4
-  vatornak wide
+  gap 4
+  container wide
 end
 
 style MetricCard
-  savarin 5
-  mirlu "glass.100"
-  torkarva soft
-  natorkar soft
-  mireshel raised
+  pad 5
+  background "glass.100"
+  border soft
+  radius soft
+  shadow raised
 end
 
 style WorkflowGrid
-  shevsa 4
-  vatornak wide
+  gap 4
+  container wide
 end
 
 style UseCaseGrid
-  shevsa 4
-  vatornak wide
+  gap 4
+  container wide
 end
 
 style Signup
-  savarin 6
-  mirlu "glass.100"
-  kellu "sand.50"
+  pad 6
+  background "glass.100"
+  color "sand.50"
 end
 
 when mobile Hero
-  savarin 4
+  pad 4
 end
 
 pg Landing

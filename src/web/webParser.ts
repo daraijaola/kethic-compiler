@@ -33,7 +33,7 @@ import {
 import { WebCompilerError, WebDiagnostic } from "./diagnostics";
 
 /**
- * OpenBlock tracks nested Native web blocks until a closing Tor appears.
+ * OpenBlock tracks nested Kethic web blocks until a closing end appears.
  */
 type OpenBlock =
   | {
@@ -55,7 +55,7 @@ type OpenBlock =
   | { readonly mode: "action"; readonly node: ActionNode; readonly updates: StateUpdateNode[] };
 
 /**
- * WebParser parses the first static Kethic Native web slice.
+ * WebParser parses Kethic Core and Compact web source.
  */
 export class WebParser {
   private readonly diagnostics: WebDiagnostic[] = [];
@@ -77,7 +77,7 @@ export class WebParser {
 
     if (this.stack.length > 0) {
       const open: OpenBlock = this.stack[this.stack.length - 1];
-      this.report(open.node.location, open.node.kind, "block was not closed with Tor");
+      this.report(open.node.location, open.node.kind, "block was not closed with end");
     }
 
     if (this.pendingFeatures !== null) {
@@ -102,7 +102,7 @@ export class WebParser {
     const location: WebSourceLocation = { line: lineNumber, column: 1 };
 
     if (this.pendingFeatures !== null) {
-      if (line === "Tor" || line === "end") {
+      if (line === "end") {
         this.finishFeaturesMacro();
         return;
       }
@@ -119,7 +119,7 @@ export class WebParser {
       return;
     }
 
-    if (line === "Tor" || line === "end") {
+    if (line === "end") {
       this.closeBlock(location);
       return;
     }
@@ -339,152 +339,12 @@ export class WebParser {
       return;
     }
 
-    if (line.startsWith("Torvathar ")) {
-      this.openContainerBlock(this.parsePage(line, location));
-      return;
-    }
-
-    if (line.startsWith("Selthar ")) {
-      this.openContainerBlock(this.parseComponent(line, location));
-      return;
-    }
-
-    if (line.startsWith("Shevva ")) {
-      this.openContainerBlock(this.parseSection(line, location));
-      return;
-    }
-
-    if (line.startsWith("Rukshev ")) {
-      this.openContainerBlock(this.parseNavigation(line, location));
-      return;
-    }
-
-    if (line === "Durkel") {
-      this.openContainerBlock(this.parseFooter(location));
-      return;
-    }
-
-    if (line.startsWith("Ovshev ")) {
-      this.addChild(this.parseLink(line, location));
-      return;
-    }
-
-    if (line.startsWith("Vakar ")) {
-      this.openContainerBlock(this.parseContainer(line, location));
-      return;
-    }
-
-    if (line.startsWith("Rukdur ")) {
-      this.openContainerBlock(this.parseLayoutContainer(line, location, "Rukdur", "stack"));
-      return;
-    }
-
-    if (line.startsWith("Rinruk ")) {
-      this.openContainerBlock(this.parseLayoutContainer(line, location, "Rinruk", "row"));
-      return;
-    }
-
-    if (line.startsWith("Selrukkar ")) {
-      this.openContainerBlock(this.parseLayoutContainer(line, location, "Selrukkar", "grid"));
-      return;
-    }
-
-    if (line.startsWith("Torum ")) {
-      this.openContainerBlock(this.parseLayoutContainer(line, location, "Torum", "center"));
-      return;
-    }
-
-    if (line.startsWith("Umkar")) {
-      this.openContainerBlock(this.parseButton(line, location));
-      return;
-    }
-
-    if (line.startsWith("Umralu ")) {
-      this.openContainerBlock(this.parseConditional(line, location));
-      return;
-    }
-
-    if (line.startsWith("Selvathar ")) {
-      this.openContainerBlock(this.parseForm(line, location));
-      return;
-    }
-
-    if (line.startsWith("Enva ")) {
-      this.addChild(this.parseInput(line, location));
-      return;
-    }
-
-    if (line.startsWith("Kelrinva ")) {
-      this.addChild(this.parseTextarea(line, location));
-      return;
-    }
-
-    if (line.startsWith("Ikhen ")) {
-      this.addChild(this.parseValidationMessage(line, location));
-      return;
-    }
-
-    if (line.startsWith("Umkel ")) {
-      this.openContainerBlock(this.parseComponentUse(line, location));
-      return;
-    }
-
-    if (line.startsWith("Umva ")) {
-      this.addChild(this.parseSlot(line, location));
-      return;
-    }
-
-    if (line.startsWith("Tharsel ")) {
-      this.stack.push({ mode: "style", node: this.parseStyleBlock(line, location), declarations: [] });
-      return;
-    }
-
-    if (line.startsWith("Ikhna ")) {
-      this.stack.push({ mode: "style", node: this.parseResponsiveStyleBlock(line, location), declarations: [] });
-      return;
-    }
-
-    if (line.startsWith("Lumva ")) {
-      this.addTopLevel(this.parseState(line, location));
-      return;
-    }
-
-    if (line.startsWith("Umrin ")) {
-      this.stack.push({ mode: "action", node: this.parseAction(line, location), updates: [] });
-      return;
-    }
-
-    if (line.startsWith("Keltor ")) {
-      this.addChild(this.parseHeading(line, location));
-      return;
-    }
-
-    if (line.startsWith("Kelen ")) {
-      this.addChild(this.parseText(line, location));
-      return;
-    }
-
-    if (line.startsWith("Umvator ")) {
-      this.addTopLevel(this.parseMount(line, location));
-      return;
-    }
-
-    if (line.startsWith("Rinshev ")) {
-      this.addTopLevel(this.parseRoute(line, location));
-      return;
-    }
-
     if (this.isInsideStyleBlock()) {
       this.addStyleDeclaration(this.parseStyleDeclaration(line, location));
       return;
     }
 
-    if (this.isInsideActionBlock()) {
-      this.addStateUpdate(this.parseStateUpdate(line, location));
-      return;
-    }
-
-    this.report(location, "WebParser", `unsupported Native web syntax "${line}"`);
+    this.report(location, "WebParser", `unsupported Kethic web syntax "${line}"`);
   }
 
   /**
@@ -513,7 +373,7 @@ export class WebParser {
     const open: OpenBlock | undefined = this.stack.pop();
 
     if (open === undefined) {
-      this.report(location, "Tor", "closing word has no open web block");
+      this.report(location, "end", "closing word has no open web block");
       return;
     }
 
@@ -678,13 +538,13 @@ export class WebParser {
   }
 
   /**
-   * addStyleDeclaration attaches one declaration to the current Tharsel block.
+   * addStyleDeclaration attaches one declaration to the current style block.
    */
   private addStyleDeclaration(node: StyleDeclarationNode): void {
     const open: OpenBlock | undefined = this.stack[this.stack.length - 1];
 
     if (open === undefined || open.mode !== "style") {
-      this.report(node.location, node.name, "style declaration must appear inside Tharsel");
+      this.report(node.location, node.name, "style declaration must appear inside style");
       return;
     }
 
@@ -695,31 +555,19 @@ export class WebParser {
     const open: OpenBlock | undefined = this.stack[this.stack.length - 1];
 
     if (open === undefined || open.mode !== "action") {
-      this.report(node.location, "Umrin", "state update must appear inside Umrin");
+      this.report(node.location, "action", "state update must appear inside action");
       return;
     }
 
     open.updates.push(node);
   }
 
-  private parsePage(line: string, location: WebSourceLocation): PageNode {
-    return { kind: WebNodeKind.Page, location, name: this.requiredName(line, "Torvathar", location), children: [] };
-  }
-
   private parseCompactPage(line: string, location: WebSourceLocation): PageNode {
     return { kind: WebNodeKind.Page, location, name: this.requiredName(line, "pg", location), children: [] };
   }
 
-  private parseSection(line: string, location: WebSourceLocation): SectionNode {
-    return { kind: WebNodeKind.Section, location, name: this.requiredName(line, "Shevva", location), children: [] };
-  }
-
   private parseCompactSection(line: string, location: WebSourceLocation): SectionNode {
     return { kind: WebNodeKind.Section, location, name: this.requiredName(line, "sec", location), children: [] };
-  }
-
-  private parseNavigation(line: string, location: WebSourceLocation): NavigationNode {
-    return { kind: WebNodeKind.Navigation, location, name: this.requiredName(line, "Rukshev", location), children: [] };
   }
 
   private parseCompactNavigation(line: string, location: WebSourceLocation): NavigationNode {
@@ -728,21 +576,6 @@ export class WebParser {
 
   private parseFooter(location: WebSourceLocation): FooterNode {
     return { kind: WebNodeKind.Footer, location, children: [] };
-  }
-
-  private parseLink(line: string, location: WebSourceLocation): LinkNode {
-    const match: RegExpMatchArray | null = line.match(/^Ovshev\s+to:(?:"([^"]+)"|([A-Za-z_][A-Za-z0-9_]*))\s+(.+)$/);
-    if (match === null) {
-      this.report(location, "Ovshev", 'expected Ovshev to:RouteName "Label" or Ovshev to:"#path" "Label"');
-      return { kind: WebNodeKind.Link, location, target: "", label: "" };
-    }
-
-    return {
-      kind: WebNodeKind.Link,
-      location,
-      target: match[1] ?? match[2],
-      label: this.parseValue(match[3], location, "Ovshev"),
-    };
   }
 
   private parseCompactLink(line: string, location: WebSourceLocation): LinkNode {
@@ -760,44 +593,16 @@ export class WebParser {
     };
   }
 
-  private parseContainer(line: string, location: WebSourceLocation): ContainerNode {
-    return { kind: WebNodeKind.Container, location, name: this.requiredName(line, "Vakar", location), children: [] };
-  }
-
   private parseCompactContainer(line: string, location: WebSourceLocation): ContainerNode {
     return { kind: WebNodeKind.Container, location, name: this.requiredName(line, "box", location), children: [] };
-  }
-
-  private parseLayoutContainer(line: string, location: WebSourceLocation, keyword: string, layout: "stack" | "row" | "grid" | "center"): ContainerNode {
-    return { kind: WebNodeKind.Container, location, name: this.requiredName(line, keyword, location), layout, children: [] };
   }
 
   private parseCompactLayoutContainer(line: string, location: WebSourceLocation, layout: "stack" | "row" | "grid" | "center"): ContainerNode {
     return { kind: WebNodeKind.Container, location, name: this.requiredName(line, layout, location), layout, children: [] };
   }
 
-  private parseForm(line: string, location: WebSourceLocation): FormNode {
-    return { kind: WebNodeKind.Form, location, name: this.requiredName(line, "Selvathar", location), children: [] };
-  }
-
   private parseCompactForm(line: string, location: WebSourceLocation): FormNode {
     return { kind: WebNodeKind.Form, location, name: this.requiredName(line, "form", location), children: [] };
-  }
-
-  private parseComponent(line: string, location: WebSourceLocation): ComponentNode {
-    const match: RegExpMatchArray | null = line.match(/^Selthar\s+([A-Za-z_][A-Za-z0-9_]*)(?:\s+receives\s+(.+))?$/);
-    if (match === null) {
-      this.report(location, "Selthar", "expected Selthar Name or Selthar Name receives prop, other");
-      return { kind: WebNodeKind.Component, location, name: "", parameters: [], children: [] };
-    }
-
-    return {
-      kind: WebNodeKind.Component,
-      location,
-      name: match[1],
-      parameters: match[2] === undefined ? [] : this.parseNameList(match[2], location, "Selthar"),
-      children: [],
-    };
   }
 
   private parseCompactComponent(line: string, location: WebSourceLocation): ComponentNode {
@@ -816,36 +621,11 @@ export class WebParser {
     };
   }
 
-  private parseStyleBlock(line: string, location: WebSourceLocation): StyleBlockNode {
-    return {
-      kind: WebNodeKind.StyleBlock,
-      location,
-      target: this.requiredName(line, "Tharsel", location),
-      declarations: [],
-    };
-  }
-
   private parseCompactStyleBlock(line: string, location: WebSourceLocation): StyleBlockNode {
     return {
       kind: WebNodeKind.StyleBlock,
       location,
       target: this.requiredName(line, "style", location),
-      declarations: [],
-    };
-  }
-
-  private parseResponsiveStyleBlock(line: string, location: WebSourceLocation): StyleBlockNode {
-    const match: RegExpMatchArray | null = line.match(/^Ikhna\s+([A-Za-z_][A-Za-z0-9_]*)\s+([A-Za-z_][A-Za-z0-9_]*)$/);
-    if (match === null) {
-      this.report(location, "Ikhna", "expected Ikhna Navasa Target");
-      return { kind: WebNodeKind.StyleBlock, location, target: "", responsive: "mobile", declarations: [] };
-    }
-
-    return {
-      kind: WebNodeKind.StyleBlock,
-      location,
-      target: match[2],
-      responsive: this.normalizeResponsiveKind(match[1], location, "Ikhna"),
       declarations: [],
     };
   }
@@ -866,21 +646,6 @@ export class WebParser {
     };
   }
 
-  private parseState(line: string, location: WebSourceLocation): StateNode {
-    const match: RegExpMatchArray | null = line.match(/^Lumva\s+([A-Za-z_][A-Za-z0-9_]*)\s+holds\s+(.+)$/);
-    if (match === null) {
-      this.report(location, "Lumva", "expected Lumva name holds value");
-      return { kind: WebNodeKind.State, location, name: "", initialValue: { kind: "literal", value: false } };
-    }
-
-    return {
-      kind: WebNodeKind.State,
-      location,
-      name: match[1],
-      initialValue: this.parseExpression(match[2], location, "Lumva"),
-    };
-  }
-
   private parseCompactState(line: string, location: WebSourceLocation): StateNode {
     const match: RegExpMatchArray | null = line.match(/^st\s+([A-Za-z_][A-Za-z0-9_]*)\s*=\s*(.+)$/);
     if (match === null) {
@@ -896,27 +661,8 @@ export class WebParser {
     };
   }
 
-  private parseAction(line: string, location: WebSourceLocation): ActionNode {
-    return { kind: WebNodeKind.Action, location, name: this.requiredName(line, "Umrin", location), updates: [] };
-  }
-
   private parseCompactAction(line: string, location: WebSourceLocation): ActionNode {
     return { kind: WebNodeKind.Action, location, name: this.requiredName(line, "act", location), updates: [] };
-  }
-
-  private parseStateUpdate(line: string, location: WebSourceLocation): StateUpdateNode {
-    const match: RegExpMatchArray | null = line.match(/^([A-Za-z_][A-Za-z0-9_]*)\s+holds\s+(.+)$/);
-    if (match === null) {
-      this.report(location, "Umrin", "expected stateName holds expression");
-      return { kind: WebNodeKind.StateUpdate, location, stateName: "", value: { kind: "literal", value: false } };
-    }
-
-    return {
-      kind: WebNodeKind.StateUpdate,
-      location,
-      stateName: match[1],
-      value: this.parseExpression(match[2], location, "Umrin"),
-    };
   }
 
   private parseCompactStateUpdate(line: string, location: WebSourceLocation): StateUpdateNode {
@@ -931,23 +677,6 @@ export class WebParser {
       location,
       stateName: match[1],
       value: this.parseExpression(match[2], location, "set"),
-    };
-  }
-
-  private parseButton(line: string, location: WebSourceLocation): ButtonNode {
-    const actionMatch: RegExpMatchArray | null = line.match(
-      /^Umkar(?:\s+action:([A-Za-z_][A-Za-z0-9_]*))?(?:\s+disabled:([A-Za-z_][A-Za-z0-9_]*))?$/,
-    );
-    if (actionMatch === null) {
-      this.report(location, "Umkar", 'expected Umkar, Umkar action:name, or Umkar action:name disabled:state');
-    }
-
-    return {
-      kind: WebNodeKind.Button,
-      location,
-      action: actionMatch?.[1] ?? null,
-      disabledWhen: actionMatch?.[2] ?? null,
-      children: [],
     };
   }
 
@@ -969,31 +698,8 @@ export class WebParser {
     };
   }
 
-  private parseConditional(line: string, location: WebSourceLocation): ConditionalNode {
-    return { kind: WebNodeKind.Conditional, location, stateName: this.requiredName(line, "Umralu", location), children: [] };
-  }
-
   private parseCompactConditional(line: string, location: WebSourceLocation): ConditionalNode {
     return { kind: WebNodeKind.Conditional, location, stateName: this.requiredName(line, "show", location), children: [] };
-  }
-
-  private parseInput(line: string, location: WebSourceLocation): InputNode {
-    const match: RegExpMatchArray | null = line.match(
-      /^Enva\s+([A-Za-z_][A-Za-z0-9_]*)(?:\s+label:"([^"]+)")?(?:\s+Torikh)?(?:\s+bind:([A-Za-z_][A-Za-z0-9_]*))?$/,
-    );
-    if (match === null) {
-      this.report(location, "Enva", 'expected Enva name label:"Label" Torikh bind:state');
-      return { kind: WebNodeKind.Input, location, name: "", label: "", required: false, binding: null };
-    }
-
-    return {
-      kind: WebNodeKind.Input,
-      location,
-      name: match[1],
-      label: match[2] ?? "",
-      required: /\sTorikh(?:\s|$)/.test(line),
-      binding: match[3] ?? null,
-    };
   }
 
   private parseCompactInput(line: string, location: WebSourceLocation): InputNode {
@@ -1012,26 +718,6 @@ export class WebParser {
       label: match[2],
       required: /\s(?:!|required)(?:\s|$)/.test(line),
       binding: match[3] ?? null,
-    };
-  }
-
-  private parseTextarea(line: string, location: WebSourceLocation): TextareaNode {
-    const match: RegExpMatchArray | null = line.match(
-      /^Kelrinva\s+([A-Za-z_][A-Za-z0-9_]*)(?:\s+label:"([^"]+)")?(?:\s+rows:(\d+))?(?:\s+Torikh)?(?:\s+bind:([A-Za-z_][A-Za-z0-9_]*))?$/,
-    );
-    if (match === null) {
-      this.report(location, "Kelrinva", 'expected Kelrinva name label:"Label" rows:6 Torikh bind:state');
-      return { kind: WebNodeKind.Textarea, location, name: "", label: "", rows: 4, required: false, binding: null };
-    }
-
-    return {
-      kind: WebNodeKind.Textarea,
-      location,
-      name: match[1],
-      label: match[2] ?? "",
-      rows: match[3] === undefined ? 4 : Number(match[3]),
-      required: /\sTorikh(?:\s|$)/.test(line),
-      binding: match[4] ?? null,
     };
   }
 
@@ -1055,21 +741,6 @@ export class WebParser {
     };
   }
 
-  private parseValidationMessage(line: string, location: WebSourceLocation): ValidationMessageNode {
-    const match: RegExpMatchArray | null = line.match(/^Ikhen\s+for:([A-Za-z_][A-Za-z0-9_]*)\s+(.+)$/);
-    if (match === null) {
-      this.report(location, "Ikhen", 'expected Ikhen for:fieldName "Message"');
-      return { kind: WebNodeKind.ValidationMessage, location, fieldName: "", message: "" };
-    }
-
-    return {
-      kind: WebNodeKind.ValidationMessage,
-      location,
-      fieldName: match[1],
-      message: this.parseValue(match[2], location, "Ikhen"),
-    };
-  }
-
   private parseCompactValidationMessage(line: string, location: WebSourceLocation): ValidationMessageNode {
     const match: RegExpMatchArray | null = line.match(/^msg\s+([A-Za-z_][A-Za-z0-9_]*)\s+"([^"]+)"$/);
     if (match === null) {
@@ -1082,22 +753,6 @@ export class WebParser {
       location,
       fieldName: match[1],
       message: match[2],
-    };
-  }
-
-  private parseComponentUse(line: string, location: WebSourceLocation): ComponentUseNode {
-    const match: RegExpMatchArray | null = line.match(/^Umkel\s+([A-Za-z_][A-Za-z0-9_]*)(?:\s+with\s+(.+))?$/);
-    if (match === null) {
-      this.report(location, "Umkel", "expected Umkel ComponentName or Umkel ComponentName with value, other");
-      return { kind: WebNodeKind.ComponentUse, location, name: "", arguments: [], children: [] };
-    }
-
-    return {
-      kind: WebNodeKind.ComponentUse,
-      location,
-      name: match[1],
-      arguments: match[2] === undefined ? [] : this.parseValueList(match[2], location, "Umkel"),
-      children: [],
     };
   }
 
@@ -1117,27 +772,8 @@ export class WebParser {
     };
   }
 
-  private parseSlot(line: string, location: WebSourceLocation): SlotNode {
-    return { kind: WebNodeKind.Slot, location, name: this.requiredName(line, "Umva", location) };
-  }
-
   private parseCompactSlot(line: string, location: WebSourceLocation): SlotNode {
     return { kind: WebNodeKind.Slot, location, name: this.requiredName(line, "slot", location) };
-  }
-
-  private parseHeading(line: string, location: WebSourceLocation): HeadingNode {
-    const match: RegExpMatchArray | null = line.match(/^Keltor\s+level:([1-6])\s+(.+)$/);
-    if (match === null) {
-      this.report(location, "Keltor", 'expected Keltor level:1 "Text"');
-      return { kind: WebNodeKind.Heading, location, level: 1, value: { kind: "literal", value: "" } };
-    }
-
-    return {
-      kind: WebNodeKind.Heading,
-      location,
-      level: Number(match[1]),
-      value: this.parseContentValue(match[2], location, "Keltor"),
-    };
   }
 
   private parseCompactHeading(line: string, location: WebSourceLocation): HeadingNode {
@@ -1155,34 +791,11 @@ export class WebParser {
     };
   }
 
-  private parseText(line: string, location: WebSourceLocation): TextNode {
-    return {
-      kind: WebNodeKind.Text,
-      location,
-      value: this.parseContentValue(line.slice("Kelen ".length).trim(), location, "Kelen"),
-    };
-  }
-
   private parseCompactText(line: string, location: WebSourceLocation): TextNode {
     return {
       kind: WebNodeKind.Text,
       location,
       value: this.parseContentValue(line.slice("txt ".length).trim(), location, "txt"),
-    };
-  }
-
-  private parseMount(line: string, location: WebSourceLocation): WebTopLevelNode {
-    const match: RegExpMatchArray | null = line.match(/^Umvator\s+(.+?)\s+receives\s+([A-Za-z_][A-Za-z0-9_]*)$/);
-    if (match === null) {
-      this.report(location, "Umvator", 'expected Umvator "#app" receives PageName');
-      return { kind: WebNodeKind.Mount, location, selector: "#app", pageName: "" };
-    }
-
-    return {
-      kind: WebNodeKind.Mount,
-      location,
-      selector: this.parseValue(match[1], location, "Umvator"),
-      pageName: match[2],
     };
   }
 
@@ -1198,21 +811,6 @@ export class WebParser {
       location,
       selector: this.parseValue(match[1], location, "mount"),
       pageName: match[2],
-    };
-  }
-
-  private parseRoute(line: string, location: WebSourceLocation): RouteNode {
-    const match: RegExpMatchArray | null = line.match(/^Rinshev\s+"([^"]+)"\s+receives\s+([A-Za-z_][A-Za-z0-9_]*)$/);
-    if (match === null) {
-      this.report(location, "Rinshev", 'expected Rinshev "#path" receives SectionName');
-      return { kind: WebNodeKind.Route, location, path: "", target: "" };
-    }
-
-    return {
-      kind: WebNodeKind.Route,
-      location,
-      path: match[1],
-      target: match[2],
     };
   }
 
@@ -1234,7 +832,7 @@ export class WebParser {
   private parseStyleDeclaration(line: string, location: WebSourceLocation): StyleDeclarationNode {
     const match: RegExpMatchArray | null = line.match(/^([A-Za-z][A-Za-z0-9]*)\s+(.+)$/);
     if (match === null) {
-      this.report(location, "Tharsel", `expected style declaration, received "${line}"`);
+      this.report(location, "style", `expected style declaration, received "${line}"`);
       return { kind: WebNodeKind.StyleDeclaration, location, name: "", value: "" };
     }
 
@@ -1248,69 +846,38 @@ export class WebParser {
 
   private normalizeStyleName(name: string): string {
     const aliases: ReadonlyMap<string, string> = new Map<string, string>([
-      ["sarin", "Sarin"],
-      ["savarin", "Savarin"],
-      ["pad", "Savarin"],
-      ["ovsa", "Ovsa"],
-      ["margin", "Ovsa"],
-      ["shevsa", "Shevsa"],
-      ["gap", "Shevsa"],
-      ["vator", "Vator"],
-      ["width", "Vator"],
-      ["torkar", "Torkar"],
-      ["height", "Torkar"],
-      ["naktor", "Naktor"],
-      ["minwidth", "Naktor"],
-      ["tornak", "Tornak"],
-      ["maxwidth", "Tornak"],
-      ["lusel", "Lusel"],
-      ["mirlu", "Mirlu"],
-      ["background", "Mirlu"],
-      ["kellu", "Kellu"],
-      ["color", "Kellu"],
-      ["kelsa", "Kelsa"],
-      ["font", "Kelsa"],
-      ["keltorva", "Keltorva"],
-      ["weight", "Keltorva"],
-      ["kelruksa", "Kelruksa"],
-      ["line", "Kelruksa"],
-      ["kelshev", "Kelshev"],
-      ["aligntext", "Kelshev"],
-      ["torkarva", "Torkarva"],
-      ["border", "Torkarva"],
-      ["torlu", "Torlu"],
-      ["bordercolor", "Torlu"],
-      ["torsa", "Torsa"],
-      ["borderwidth", "Torsa"],
-      ["natorkar", "Natorkar"],
-      ["radius", "Natorkar"],
-      ["mireshel", "Mireshel"],
-      ["shadow", "Mireshel"],
-      ["luna", "Luna"],
-      ["opacity", "Luna"],
-      ["vashev", "Vashev"],
-      ["overflow", "Vashev"],
-      ["torshev", "Torshev"],
-      ["z", "Torshev"],
-      ["torrin", "Torrin"],
-      ["position", "Torrin"],
-      ["rintor", "Rintor"],
-      ["inset", "Rintor"],
-      ["karum", "Karum"],
-      ["display", "Karum"],
-      ["seltorkar", "Seltorkar"],
-      ["align", "Seltorkar"],
-      ["rinshevsa", "Rinshevsa"],
-      ["justify", "Rinshevsa"],
-      ["naruk", "Naruk"],
-      ["wrap", "Naruk"],
-      ["vatornak", "Vatornak"],
-      ["container", "Vatornak"],
-      ["karlu", "Karlu"],
-      ["ratio", "Karlu"],
+      ["pad", "pad"],
+      ["margin", "margin"],
+      ["gap", "gap"],
+      ["width", "width"],
+      ["height", "height"],
+      ["minwidth", "minWidth"],
+      ["maxwidth", "maxWidth"],
+      ["background", "background"],
+      ["color", "color"],
+      ["font", "font"],
+      ["weight", "weight"],
+      ["line", "line"],
+      ["aligntext", "alignText"],
+      ["border", "border"],
+      ["bordercolor", "borderColor"],
+      ["borderwidth", "borderWidth"],
+      ["radius", "radius"],
+      ["shadow", "shadow"],
+      ["opacity", "opacity"],
+      ["overflow", "overflow"],
+      ["z", "z"],
+      ["position", "position"],
+      ["inset", "inset"],
+      ["display", "display"],
+      ["align", "align"],
+      ["justify", "justify"],
+      ["wrap", "wrap"],
+      ["container", "container"],
+      ["ratio", "ratio"],
     ]);
 
-    return aliases.get(name.toLowerCase()) ?? name;
+    return aliases.get(name.toLowerCase()) ?? `__unsupported_${name}`;
   }
 
   private aliasKeyword(line: string, from: string, to: string): string {
@@ -1321,11 +888,8 @@ export class WebParser {
     const normalized: string = name.toLowerCase();
     const aliases: ReadonlyMap<string, "mobile" | "tablet" | "desktop"> = new Map<string, "mobile" | "tablet" | "desktop">([
       ["mobile", "mobile"],
-      ["navasa", "mobile"],
       ["tablet", "tablet"],
-      ["rinvasa", "tablet"],
       ["desktop", "desktop"],
-      ["torvasa", "desktop"],
     ]);
     const responsive: "mobile" | "tablet" | "desktop" | undefined = aliases.get(normalized);
 

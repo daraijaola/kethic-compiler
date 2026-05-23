@@ -96,7 +96,7 @@ export class HtmlGenerator {
   private findPage(program: WebProgramNode): PageNode {
     const page: PageNode | undefined = program.body.find((node) => node.kind === WebNodeKind.Page) as PageNode | undefined;
     if (page === undefined) {
-      throw new Error("Web program has no Torvathar page.");
+      throw new Error("Web program has no page.");
     }
 
     return page;

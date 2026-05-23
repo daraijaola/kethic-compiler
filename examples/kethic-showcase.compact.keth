@@ -33,11 +33,11 @@ pg KethicShowcase
   end
   sec System
     h2 "The Native Web Shape"
-    use PrincipleCard "Sealed Components", "Selthar creates reusable interface patterns with scoped structure."
+    use PrincipleCard "Reusable Components", "Components create reusable interface patterns with scoped structure."
       txt "Components compile into safe HTML without exposing Kethic source."
     end
-    use PrincipleCard "Living State", "Lumva stores reactive interface values and wakes the visible surface when changed."
-      txt "The counter above is controlled by a Kethic Umrin action."
+    use PrincipleCard "Living State", "State stores reactive interface values and updates the visible surface when changed."
+      txt "The counter above is controlled by a Kethic action."
     end
     use PrincipleCard "Accessible Forms", "Forms and inputs compile into labeled controls."
       txt "The contact rite below uses required fields and accessible validation text."

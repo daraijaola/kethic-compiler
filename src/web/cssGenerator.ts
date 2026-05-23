@@ -1,7 +1,7 @@
 import { StyleBlockNode, StyleDeclarationNode, WebNodeKind, WebProgramNode } from "./ast";
 
 /**
- * CssGenerator emits scoped CSS from Kethic Tharsel declarations.
+ * CssGenerator emits scoped CSS from Kethic style declarations.
  */
 export class CssGenerator {
   /**
@@ -111,67 +111,63 @@ export class CssGenerator {
 
   private generateDeclaration(declaration: StyleDeclarationNode): string {
     switch (declaration.name) {
-      case "Sarin":
+      case "pad":
         return `    padding: ${this.space(declaration.value)};`;
-      case "Savarin":
-        return `    padding: ${this.space(declaration.value)};`;
-      case "Ovsa":
+      case "margin":
         return `    margin: ${this.space(declaration.value)};`;
-      case "Shevsa":
+      case "gap":
         return `    gap: ${this.space(declaration.value)};`;
-      case "Vator":
+      case "width":
         return `    inline-size: ${this.size(declaration.value)};`;
-      case "Torkar":
+      case "height":
         return `    block-size: ${this.size(declaration.value)};`;
-      case "Naktor":
+      case "minWidth":
         return `    min-inline-size: ${this.size(declaration.value)};`;
-      case "Tornak":
+      case "maxWidth":
         return `    max-inline-size: ${this.size(declaration.value)};`;
-      case "Lusel":
+      case "color":
         return `    color: ${this.color(declaration.value)};`;
-      case "Mirlu":
+      case "background":
         return `    background: ${this.color(declaration.value)};`;
-      case "Kellu":
-        return `    color: ${this.color(declaration.value)};`;
-      case "Kelsa":
+      case "font":
         return `    font-size: ${this.fontSize(declaration.value)};`;
-      case "Keltorva":
+      case "weight":
         return `    font-weight: ${this.fontWeight(declaration.value)};`;
-      case "Kelruksa":
+      case "line":
         return `    line-height: ${this.lineHeight(declaration.value)};`;
-      case "Kelshev":
+      case "alignText":
         return `    text-align: ${declaration.value};`;
-      case "Torkarva":
+      case "border":
         return `    border: ${this.border(declaration.value)};`;
-      case "Torlu":
+      case "borderColor":
         return `    border-color: ${this.color(declaration.value)};`;
-      case "Torsa":
+      case "borderWidth":
         return `    border-width: ${this.borderWidth(declaration.value)};`;
-      case "Natorkar":
+      case "radius":
         return `    border-radius: ${this.radius(declaration.value)};`;
-      case "Mireshel":
+      case "shadow":
         return `    box-shadow: ${this.shadow(declaration.value)};`;
-      case "Luna":
+      case "opacity":
         return `    opacity: ${declaration.value};`;
-      case "Vashev":
+      case "overflow":
         return `    overflow: ${declaration.value};`;
-      case "Torshev":
+      case "z":
         return `    z-index: ${this.layer(declaration.value)};`;
-      case "Torrin":
+      case "position":
         return `    position: ${this.position(declaration.value)};`;
-      case "Rintor":
+      case "inset":
         return `    inset: ${this.space(declaration.value)};`;
-      case "Karum":
+      case "display":
         return `    display: ${declaration.value};`;
-      case "Seltorkar":
+      case "align":
         return `    align-items: ${this.alignment(declaration.value)};`;
-      case "Rinshevsa":
+      case "justify":
         return `    justify-content: ${this.distribution(declaration.value)};`;
-      case "Naruk":
+      case "wrap":
         return `    flex-wrap: ${this.wrap(declaration.value)};`;
-      case "Vatornak":
+      case "container":
         return `    max-inline-size: ${this.size(declaration.value)};\n    margin-inline: auto;\n    padding-inline: var(--sa-4);`;
-      case "Karlu":
+      case "ratio":
         return `    aspect-ratio: ${declaration.value};`;
       default:
         return "";

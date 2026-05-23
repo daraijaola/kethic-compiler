@@ -30,37 +30,35 @@ import {
 import { WebDiagnostic } from "./diagnostics";
 
 const SUPPORTED_STYLE_ATTRIBUTES: ReadonlySet<string> = new Set<string>([
-  "Sarin",
-  "Savarin",
-  "Ovsa",
-  "Shevsa",
-  "Vator",
-  "Torkar",
-  "Naktor",
-  "Tornak",
-  "Lusel",
-  "Mirlu",
-  "Kellu",
-  "Kelsa",
-  "Keltorva",
-  "Kelruksa",
-  "Kelshev",
-  "Torkarva",
-  "Torlu",
-  "Torsa",
-  "Natorkar",
-  "Mireshel",
-  "Luna",
-  "Vashev",
-  "Torshev",
-  "Torrin",
-  "Rintor",
-  "Karum",
-  "Seltorkar",
-  "Rinshevsa",
-  "Naruk",
-  "Vatornak",
-  "Karlu",
+  "pad",
+  "margin",
+  "gap",
+  "width",
+  "height",
+  "minWidth",
+  "maxWidth",
+  "background",
+  "color",
+  "font",
+  "weight",
+  "line",
+  "alignText",
+  "border",
+  "borderColor",
+  "borderWidth",
+  "radius",
+  "shadow",
+  "opacity",
+  "overflow",
+  "z",
+  "position",
+  "inset",
+  "display",
+  "align",
+  "justify",
+  "wrap",
+  "container",
+  "ratio",
 ]);
 
 /**
@@ -152,7 +150,7 @@ export class WebTypeChecker {
 
   private registerPage(node: PageNode): void {
     if (this.pages.has(node.name)) {
-      this.report(node, "Torvathar", `page "${node.name}" is already declared`);
+      this.report(node, "page", `page "${node.name}" is already declared`);
       return;
     }
 
@@ -162,7 +160,7 @@ export class WebTypeChecker {
 
   private registerComponent(node: ComponentNode): void {
     if (this.components.has(node.name)) {
-      this.report(node, "Selthar", `component "${node.name}" is already declared`);
+      this.report(node, "component", `component "${node.name}" is already declared`);
       return;
     }
 
@@ -171,7 +169,7 @@ export class WebTypeChecker {
 
   private registerState(node: StateNode): void {
     if (this.states.has(node.name)) {
-      this.report(node, "Lumva", `state "${node.name}" is already declared`);
+      this.report(node, "state", `state "${node.name}" is already declared`);
       return;
     }
 
@@ -180,7 +178,7 @@ export class WebTypeChecker {
 
   private registerAction(node: ActionNode): void {
     if (this.actions.has(node.name)) {
-      this.report(node, "Umrin", `action "${node.name}" is already declared`);
+      this.report(node, "action", `action "${node.name}" is already declared`);
       return;
     }
 
@@ -189,12 +187,12 @@ export class WebTypeChecker {
 
   private registerRoute(node: RouteNode): void {
     if (this.routesByTarget.has(node.target)) {
-      this.report(node, "Rinshev", `route target "${node.target}" is already declared`);
+      this.report(node, "route", `route target "${node.target}" is already declared`);
       return;
     }
 
     if (this.routePaths.has(node.path)) {
-      this.report(node, "Rinshev", `route path "${node.path}" is already declared`);
+      this.report(node, "route", `route path "${node.path}" is already declared`);
       return;
     }
 
@@ -207,7 +205,7 @@ export class WebTypeChecker {
 
     for (const parameter of node.parameters) {
       if (seenParameters.has(parameter)) {
-        this.report(node, "Selthar", `parameter "${parameter}" is duplicated`);
+        this.report(node, "component", `parameter "${parameter}" is duplicated`);
       }
 
       seenParameters.add(parameter);
@@ -218,21 +216,21 @@ export class WebTypeChecker {
 
   private checkMount(node: MountNode): void {
     if (!node.selector.startsWith("#")) {
-      this.report(node, "Umvator", "mount target must be an id selector such as \"#app\"");
+      this.report(node, "mount", "mount target must be an id selector such as \"#app\"");
     }
 
     if (!this.pages.has(node.pageName)) {
-      this.report(node, "Umvator", `page "${node.pageName}" does not exist`);
+      this.report(node, "mount", `page "${node.pageName}" does not exist`);
     }
   }
 
   private checkState(node: StateNode): void {
-    this.checkExpression(node.initialValue, node, "Lumva");
+    this.checkExpression(node.initialValue, node, "state");
   }
 
   private checkAction(node: ActionNode): void {
     if (node.updates.length === 0) {
-      this.report(node, "Umrin", `action "${node.name}" has no state updates`);
+      this.report(node, "action", `action "${node.name}" has no state updates`);
     }
 
     for (const update of node.updates) {
@@ -242,15 +240,15 @@ export class WebTypeChecker {
 
   private checkStateUpdate(node: StateUpdateNode): void {
     if (!this.states.has(node.stateName)) {
-      this.report(node, "Umrin", `state "${node.stateName}" does not exist`);
+      this.report(node, "action", `state "${node.stateName}" does not exist`);
     }
 
-    this.checkExpression(node.value, node, "Umrin");
+    this.checkExpression(node.value, node, "action");
   }
 
   private checkStyleBlock(node: StyleBlockNode): void {
     if (node.declarations.length === 0) {
-      this.report(node, "Tharsel", `style block "${node.target}" has no declarations`);
+      this.report(node, "style", `style block "${node.target}" has no declarations`);
     }
 
     for (const declaration of node.declarations) {
@@ -311,18 +309,18 @@ export class WebTypeChecker {
 
   private checkHeading(node: HeadingNode, currentComponent: ComponentNode | null): void {
     if (node.value.value.trim().length === 0) {
-      this.report(node, "Keltor", "heading text cannot be empty");
+      this.report(node, "h", "heading text cannot be empty");
     }
 
-    this.checkValueReference(node, "Keltor", node.value, currentComponent);
+    this.checkValueReference(node, "h", node.value, currentComponent);
   }
 
   private checkText(node: TextNode, currentComponent: ComponentNode | null): void {
-    this.checkValueReference(node, "Kelen", node.value, currentComponent);
+    this.checkValueReference(node, "text", node.value, currentComponent);
     if (node.value.kind === "literal") {
       for (const stateName of this.extractInterpolatedStateNames(node.value.value)) {
         if (!this.states.has(stateName)) {
-          this.report(node, "Kelen", `state "${stateName}" does not exist`);
+          this.report(node, "text", `state "${stateName}" does not exist`);
         }
       }
     }
@@ -331,15 +329,15 @@ export class WebTypeChecker {
   private checkButton(node: ButtonNode): void {
     const hasText: boolean = node.children.some((child: WebChildNode) => child.kind === WebNodeKind.Text);
     if (!hasText) {
-      this.report(node, "Umkar", "button must contain Kelen text in Web Phase 2");
+      this.report(node, "button", "button must contain text in Web Phase 2");
     }
 
     if (node.action !== null && !this.actions.has(node.action)) {
-      this.report(node, "Umkar", `action "${node.action}" does not exist`);
+      this.report(node, "button", `action "${node.action}" does not exist`);
     }
 
     if (node.disabledWhen !== null && !this.states.has(node.disabledWhen)) {
-      this.report(node, "Umkar", `disabled state "${node.disabledWhen}" does not exist`);
+      this.report(node, "button", `disabled state "${node.disabledWhen}" does not exist`);
     }
   }
 
@@ -352,13 +350,13 @@ export class WebTypeChecker {
   private checkNavigation(node: NavigationNode): void {
     const links: LinkNode[] = node.children.filter((child: WebChildNode): child is LinkNode => child.kind === WebNodeKind.Link);
     if (links.length === 0) {
-      this.report(node, "Rukshev", `navigation "${node.name}" must contain at least one Ovshev link`);
+      this.report(node, "nav", `navigation "${node.name}" must contain at least one link`);
     }
   }
 
   private checkLink(node: LinkNode): void {
     if (node.label.trim().length === 0) {
-      this.report(node, "Ovshev", "link label cannot be empty");
+      this.report(node, "link", "link label cannot be empty");
     }
 
     if (this.isLiteralHref(node.target)) {
@@ -366,14 +364,14 @@ export class WebTypeChecker {
     }
 
     if (!this.routesByTarget.has(node.target)) {
-      this.report(node, "Ovshev", `route target "${node.target}" does not exist`);
+      this.report(node, "link", `route target "${node.target}" does not exist`);
     }
   }
 
   private checkFooter(node: FooterNode): void {
     const hasText: boolean = node.children.some((child: WebChildNode) => child.kind === WebNodeKind.Text);
     if (!hasText) {
-      this.report(node, "Durkel", "footer must contain Kelen text in this web phase");
+      this.report(node, "footer", "footer must contain text in this web phase");
     }
   }
 
@@ -383,7 +381,7 @@ export class WebTypeChecker {
 
     for (const child of node.children) {
       if (child.kind === WebNodeKind.Input || child.kind === WebNodeKind.Textarea) {
-        const keyword: string = child.kind === WebNodeKind.Input ? "Enva" : "Kelrinva";
+        const keyword: string = child.kind === WebNodeKind.Input ? "input" : "textarea";
 
         if (fields.has(child.name)) {
           this.report(child, keyword, `field "${child.name}" is already declared in this form`);
@@ -407,7 +405,7 @@ export class WebTypeChecker {
 
     for (const message of messages) {
       if (!fields.has(message.fieldName)) {
-        this.report(message, "Ikhen", `field "${message.fieldName}" does not exist in this form`);
+        this.report(message, "message", `field "${message.fieldName}" does not exist in this form`);
       }
     }
 
@@ -432,11 +430,11 @@ export class WebTypeChecker {
 
   private checkRoute(node: RouteNode): void {
     if (!this.isLiteralHref(node.path)) {
-      this.report(node, "Rinshev", `route path "${node.path}" must start with /, #, http://, https://, or mailto:`);
+      this.report(node, "route", `route path "${node.path}" must start with /, #, http://, https://, or mailto:`);
     }
 
     if (!this.sectionTargets.has(node.target) && !this.pages.has(node.target)) {
-      this.report(node, "Rinshev", `route target "${node.target}" does not exist`);
+      this.report(node, "route", `route target "${node.target}" does not exist`);
     }
   }
 

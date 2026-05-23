@@ -299,7 +299,7 @@ function usage(): string {
     "  kethic compile examples/native-core.keth --native",
     "  kethic compile examples/milestone1.keth --out dist/milestone1.js",
     "  kethic compile examples/app.keth --out-dir dist",
-    "  kethic web examples/web-home.keth --out-dir dist-web",
+    "  kethic web examples/kethic-core-showcase.keth --out-dir dist-web",
   ].join("\n");
 }
 

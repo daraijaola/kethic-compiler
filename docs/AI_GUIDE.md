@@ -177,7 +177,7 @@ Every page should end with `mount`.
 ## Output Rules
 
 1. Use `end` to close every block.
-2. Do not use `Tor` in Kethic Core.
+2. Use `end` to close Kethic Core blocks.
 3. Use double quotes for all text.
 4. Keep names simple: `Hero`, `Features`, `Signup`, `Contact`, `Pricing`.
 5. Use action names in lower camel case: `join`, `submitForm`, `openMenu`.

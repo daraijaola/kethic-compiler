@@ -11,11 +11,10 @@ Current strategic direction:
 - benchmark token savings against equivalent production examples;
 - make the language open source while keeping hosted platform services commercial.
 
-Implemented web syntax now includes Kethic Core, compact aliases, Namaru legacy compatibility, and Semantic Macros V1. Start with:
+Implemented web syntax now includes Kethic Core, compact aliases, and Semantic Macros V1. Start with:
 
 - `docs/AI_GUIDE.md` for AI generation rules;
 - `docs/AI_PROMPT_CAPSULE.md` for the short reusable model prompt;
-- `docs/KETHIC_CORE_RENAME_PLAN.md` for the Core syntax migration plan;
 - `docs/COMPACT_SYNTAX.md` for compact syntax and macros;
 - `docs/STYLE_CORE_V1.md` for the first controlled CSS/style layer;
 - `docs/LAYOUT_CORE_V1.md` for the first layout primitives;

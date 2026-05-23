@@ -125,7 +125,7 @@ export interface BinaryExpression {
 }
 
 /**
- * PageNode represents Torvathar, the page/document root.
+ * PageNode represents the page/document root.
  */
 export interface PageNode extends WebNode {
   readonly kind: WebNodeKind.Page;
@@ -134,7 +134,7 @@ export interface PageNode extends WebNode {
 }
 
 /**
- * SectionNode represents Shevva, a semantic page region.
+ * SectionNode represents a semantic page region.
  */
 export interface SectionNode extends WebNode {
   readonly kind: WebNodeKind.Section;
@@ -143,7 +143,7 @@ export interface SectionNode extends WebNode {
 }
 
 /**
- * ContainerNode represents Vakar, a neutral layout vessel.
+ * ContainerNode represents a neutral layout container.
  */
 export interface ContainerNode extends WebNode {
   readonly kind: WebNodeKind.Container;
@@ -153,7 +153,7 @@ export interface ContainerNode extends WebNode {
 }
 
 /**
- * TextNode represents Kelen, a paragraph or inline text offering.
+ * TextNode represents paragraph or inline text.
  */
 export interface TextNode extends WebNode {
   readonly kind: WebNodeKind.Text;
@@ -161,7 +161,7 @@ export interface TextNode extends WebNode {
 }
 
 /**
- * HeadingNode represents Keltor, a semantic heading.
+ * HeadingNode represents a semantic heading.
  */
 export interface HeadingNode extends WebNode {
   readonly kind: WebNodeKind.Heading;
@@ -170,7 +170,7 @@ export interface HeadingNode extends WebNode {
 }
 
 /**
- * LinkNode represents Ovshev, a safe path across an interface boundary.
+ * LinkNode represents a safe path across an interface boundary.
  */
 export interface LinkNode extends WebNode {
   readonly kind: WebNodeKind.Link;
@@ -179,7 +179,7 @@ export interface LinkNode extends WebNode {
 }
 
 /**
- * ButtonNode represents Umkar, an action trigger.
+ * ButtonNode represents an action trigger.
  */
 export interface ButtonNode extends WebNode {
   readonly kind: WebNodeKind.Button;
@@ -189,7 +189,7 @@ export interface ButtonNode extends WebNode {
 }
 
 /**
- * ConditionalNode represents Umralu/show, a visibility gate driven by Lumva state.
+ * ConditionalNode represents a visibility gate driven by state.
  */
 export interface ConditionalNode extends WebNode {
   readonly kind: WebNodeKind.Conditional;
@@ -207,7 +207,7 @@ export interface NavigationNode extends WebNode {
 }
 
 /**
- * FooterNode represents Durkel, the returning declaration at the page edge.
+ * FooterNode represents the page edge/footer.
  */
 export interface FooterNode extends WebNode {
   readonly kind: WebNodeKind.Footer;
@@ -224,7 +224,7 @@ export interface FormNode extends WebNode {
 }
 
 /**
- * InputNode represents Enva, a single-line answer vessel.
+ * InputNode represents a single-line field.
  */
 export interface InputNode extends WebNode {
   readonly kind: WebNodeKind.Input;
@@ -235,7 +235,7 @@ export interface InputNode extends WebNode {
 }
 
 /**
- * TextareaNode represents Kelrinva, a long speech-carrying vessel.
+ * TextareaNode represents a long text field.
  */
 export interface TextareaNode extends WebNode {
   readonly kind: WebNodeKind.Textarea;
@@ -247,7 +247,7 @@ export interface TextareaNode extends WebNode {
 }
 
 /**
- * ValidationMessageNode represents Ikhen, a test-answer for a field.
+ * ValidationMessageNode represents validation/help text for a field.
  */
 export interface ValidationMessageNode extends WebNode {
   readonly kind: WebNodeKind.ValidationMessage;
@@ -256,7 +256,7 @@ export interface ValidationMessageNode extends WebNode {
 }
 
 /**
- * ComponentNode represents Selthar, a sealed reusable interface pattern.
+ * ComponentNode represents a reusable interface pattern.
  */
 export interface ComponentNode extends WebNode {
   readonly kind: WebNodeKind.Component;
@@ -284,7 +284,7 @@ export interface SlotNode extends WebNode {
 }
 
 /**
- * StyleBlockNode represents Tharsel, a sealed style block.
+ * StyleBlockNode represents a style block.
  */
 export interface StyleBlockNode extends WebNode {
   readonly kind: WebNodeKind.StyleBlock;
@@ -303,7 +303,7 @@ export interface StyleDeclarationNode extends WebNode {
 }
 
 /**
- * RouteNode represents Rinshev, a declared route/path to a page region.
+ * RouteNode represents a declared route/path to a page region.
  */
 export interface RouteNode extends WebNode {
   readonly kind: WebNodeKind.Route;
@@ -312,7 +312,7 @@ export interface RouteNode extends WebNode {
 }
 
 /**
- * MountNode represents Umvator, the render target for a page.
+ * MountNode represents the render target for a page.
  */
 export interface MountNode extends WebNode {
   readonly kind: WebNodeKind.Mount;
@@ -321,7 +321,7 @@ export interface MountNode extends WebNode {
 }
 
 /**
- * StateNode represents Lumva, reactive UI state.
+ * StateNode represents reactive UI state.
  */
 export interface StateNode extends WebNode {
   readonly kind: WebNodeKind.State;
@@ -330,7 +330,7 @@ export interface StateNode extends WebNode {
 }
 
 /**
- * ActionNode represents Umrin, an event handler that updates Lumva state.
+ * ActionNode represents an event handler that updates state.
  */
 export interface ActionNode extends WebNode {
   readonly kind: WebNodeKind.Action;
@@ -339,7 +339,7 @@ export interface ActionNode extends WebNode {
 }
 
 /**
- * StateUpdateNode represents one state update inside Umrin.
+ * StateUpdateNode represents one state update inside an action.
  */
 export interface StateUpdateNode extends WebNode {
   readonly kind: WebNodeKind.StateUpdate;
