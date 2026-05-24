@@ -1,0 +1,42 @@
+data features
+  item "Compact source" "The AI writes one repeat instruction instead of rebuilding the same card structure."
+  item "Reusable content" "Rows can be edited, reused, or later loaded from external data without changing layout code."
+  item "Compiler expansion" "Kethic turns each row into full semantic HTML using the selected component."
+  item "Brand aware" "The same repeated content inherits the active Brand Profile visual system."
+  item "Standard output" "The generated site is still plain HTML, CSS, and JavaScript."
+  item "Lower growth curve" "Adding more cards grows data, not repeated interface syntax."
+end
+
+cmp FeatureCard receives title, body
+  box MetricCard
+    h3 title
+    txt body
+  end
+end
+
+rt "#hero" Hero
+rt "#features" Features
+
+pg RepeaterDemo
+  nav Main
+    link Hero "Start"
+    link Features "Features"
+  end
+  sec Hero
+    stack HeroShell
+      h1 "Repeaters make longer pages stay short"
+      txt "Kethic V1.1 separates repeated content rows from repeated interface structure."
+    end
+  end
+  sec Features
+    h2 "Six cards from one repeat line"
+    grid FeatureGrid
+      repeat FeatureCard from features
+    end
+  end
+  foot
+    txt "Repeater proof - one component pattern, many rendered sections."
+  end
+end
+
+mount "#app" RepeaterDemo

@@ -5,6 +5,8 @@ import {
   ComponentUseNode,
   ConditionalNode,
   ContainerNode,
+  DataItemNode,
+  DataNode,
   FooterNode,
   FormNode,
   StateNode,
@@ -16,6 +18,7 @@ import {
   NavigationNode,
   PageNode,
   RouteNode,
+  RepeatNode,
   SectionNode,
   SlotNode,
   StyleBlockNode,
@@ -52,7 +55,8 @@ type OpenBlock =
       readonly children: WebChildNode[];
     }
   | { readonly mode: "style"; readonly node: StyleBlockNode; readonly declarations: StyleDeclarationNode[] }
-  | { readonly mode: "action"; readonly node: ActionNode; readonly updates: StateUpdateNode[] };
+  | { readonly mode: "action"; readonly node: ActionNode; readonly updates: StateUpdateNode[] }
+  | { readonly mode: "data"; readonly node: DataNode; readonly items: DataItemNode[] };
 
 /**
  * WebParser parses Kethic Core and Compact web source.
@@ -124,6 +128,11 @@ export class WebParser {
       return;
     }
 
+    if (this.isInsideDataBlock() && line.startsWith("item ")) {
+      this.addDataItem(this.parseDataItem(line, location));
+      return;
+    }
+
     if (line.startsWith("hero ")) {
       this.addChild(this.parseHeroMacro(line, location));
       return;
@@ -156,6 +165,11 @@ export class WebParser {
 
     if (line.startsWith("component ")) {
       this.openContainerBlock(this.parseCompactComponent(this.aliasKeyword(line, "component", "cmp"), location));
+      return;
+    }
+
+    if (line.startsWith("data ")) {
+      this.stack.push({ mode: "data", node: this.parseDataBlock(line, location), items: [] });
       return;
     }
 
@@ -266,6 +280,16 @@ export class WebParser {
 
     if (line.startsWith("use ")) {
       this.openContainerBlock(this.parseCompactComponentUse(line, location));
+      return;
+    }
+
+    if (line.startsWith("repeat ")) {
+      this.addChild(this.parseRepeat(line, location));
+      return;
+    }
+
+    if (line.startsWith("rep ")) {
+      this.addChild(this.parseRepeat(this.aliasKeyword(line, "rep", "repeat"), location));
       return;
     }
 
@@ -387,6 +411,11 @@ export class WebParser {
       return;
     }
 
+    if (open.mode === "data") {
+      this.addTopLevel({ ...open.node, items: open.items });
+      return;
+    }
+
     const closedNode:
       | PageNode
       | SectionNode
@@ -434,6 +463,17 @@ export class WebParser {
     }
 
     open.children.push(node);
+  }
+
+  private addDataItem(node: DataItemNode): void {
+    const open: OpenBlock | undefined = this.stack[this.stack.length - 1];
+
+    if (open === undefined || open.mode !== "data") {
+      this.report(node.location, "item", "item must appear inside data");
+      return;
+    }
+
+    open.items.push(node);
   }
 
   private parseHeroMacro(line: string, location: WebSourceLocation): SectionNode {
@@ -621,6 +661,24 @@ export class WebParser {
     };
   }
 
+  private parseDataBlock(line: string, location: WebSourceLocation): DataNode {
+    return { kind: WebNodeKind.Data, location, name: this.requiredName(line, "data", location), items: [] };
+  }
+
+  private parseDataItem(line: string, location: WebSourceLocation): DataItemNode {
+    const rawValues: string = line.slice("item ".length).trim();
+    if (rawValues.length === 0) {
+      this.report(location, "item", "expected at least one item value");
+      return { kind: WebNodeKind.DataItem, location, values: [] };
+    }
+
+    return {
+      kind: WebNodeKind.DataItem,
+      location,
+      values: this.parseValueList(rawValues, location, "item"),
+    };
+  }
+
   private parseCompactStyleBlock(line: string, location: WebSourceLocation): StyleBlockNode {
     return {
       kind: WebNodeKind.StyleBlock,
@@ -772,6 +830,21 @@ export class WebParser {
     };
   }
 
+  private parseRepeat(line: string, location: WebSourceLocation): RepeatNode {
+    const match: RegExpMatchArray | null = line.match(/^repeat\s+([A-Za-z_][A-Za-z0-9_]*)\s+from\s+([A-Za-z_][A-Za-z0-9_]*)$/);
+    if (match === null) {
+      this.report(location, "repeat", "expected repeat ComponentName from dataName");
+      return { kind: WebNodeKind.Repeat, location, componentName: "", dataName: "" };
+    }
+
+    return {
+      kind: WebNodeKind.Repeat,
+      location,
+      componentName: match[1],
+      dataName: match[2],
+    };
+  }
+
   private parseCompactSlot(line: string, location: WebSourceLocation): SlotNode {
     return { kind: WebNodeKind.Slot, location, name: this.requiredName(line, "slot", location) };
   }
@@ -916,7 +989,21 @@ export class WebParser {
   }
 
   private parseValueList(raw: string, location: WebSourceLocation, keyword: string): WebValue[] {
-    return raw.split(",").map((value: string) => this.parseContentValue(value, location, keyword));
+    const values: WebValue[] = [];
+    const pattern: RegExp = /"([^"]*)"|([^,\s][^,]*?)(?=,\s*|$)/g;
+    let match: RegExpExecArray | null = pattern.exec(raw);
+
+    while (match !== null) {
+      const value: string = match[1] !== undefined ? `"${match[1]}"` : match[2].trim();
+      values.push(this.parseContentValue(value, location, keyword));
+      match = pattern.exec(raw);
+    }
+
+    if (values.length === 0) {
+      this.report(location, keyword, "expected one or more values");
+    }
+
+    return values;
   }
 
   private requiredName(line: string, keyword: string, location: WebSourceLocation): string {
@@ -1027,6 +1114,11 @@ export class WebParser {
   private isInsideActionBlock(): boolean {
     const open: OpenBlock | undefined = this.stack[this.stack.length - 1];
     return open !== undefined && open.mode === "action";
+  }
+
+  private isInsideDataBlock(): boolean {
+    const open: OpenBlock | undefined = this.stack[this.stack.length - 1];
+    return open !== undefined && open.mode === "data";
   }
 
   private report(location: WebSourceLocation, keyword: string, message: string): void {

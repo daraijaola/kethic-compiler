@@ -19,6 +19,9 @@ export enum WebNodeKind {
   ValidationMessage = "ValidationMessage",
   Component = "Component",
   ComponentUse = "ComponentUse",
+  Repeat = "Repeat",
+  Data = "Data",
+  DataItem = "DataItem",
   Slot = "Slot",
   StyleBlock = "StyleBlock",
   StyleDeclaration = "StyleDeclaration",
@@ -56,7 +59,7 @@ export interface WebProgramNode extends WebNode {
 /**
  * WebTopLevelNode lists declarations allowed at the top level.
  */
-export type WebTopLevelNode = PageNode | ComponentNode | StyleBlockNode | RouteNode | MountNode | StateNode | ActionNode;
+export type WebTopLevelNode = PageNode | ComponentNode | StyleBlockNode | RouteNode | MountNode | StateNode | ActionNode | DataNode;
 
 /**
  * WebChildNode lists nodes that can render inside page/component content.
@@ -76,6 +79,7 @@ export type WebChildNode =
   | TextareaNode
   | ValidationMessageNode
   | ComponentUseNode
+  | RepeatNode
   | SlotNode;
 
 /**
@@ -273,6 +277,32 @@ export interface ComponentUseNode extends WebNode {
   readonly name: string;
   readonly arguments: readonly WebValue[];
   readonly children: readonly WebChildNode[];
+}
+
+/**
+ * RepeatNode renders one component for every row in a data block.
+ */
+export interface RepeatNode extends WebNode {
+  readonly kind: WebNodeKind.Repeat;
+  readonly componentName: string;
+  readonly dataName: string;
+}
+
+/**
+ * DataNode stores compact reusable content rows for repeaters.
+ */
+export interface DataNode extends WebNode {
+  readonly kind: WebNodeKind.Data;
+  readonly name: string;
+  readonly items: readonly DataItemNode[];
+}
+
+/**
+ * DataItemNode stores one row of values used by a repeater.
+ */
+export interface DataItemNode extends WebNode {
+  readonly kind: WebNodeKind.DataItem;
+  readonly values: readonly WebValue[];
 }
 
 /**

@@ -1,0 +1,19 @@
+Repeater V1 local proof
+
+Source:
+- examples/repeater-demo.keth
+
+Measurements:
+- Kethic source characters: 1,282
+- Compiled HTML/CSS characters: 8,647
+- Rendered repeated cards: 6
+- Source-to-output reduction: 85.17%
+
+What it proves:
+- Six rendered feature cards are produced from one component pattern and one repeat line.
+- Repeated interface structure is no longer duplicated in the page body.
+- This is the mechanism that later powers features, FAQs, pricing tiers, testimonials, stats, and similar repeated website sections.
+
+Verification commands:
+- npm run build
+- node dist/src/cli.js web examples/repeater-demo.keth --out-dir dist-repeater

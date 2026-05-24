@@ -4,6 +4,8 @@ import {
   ComponentUseNode,
   ConditionalNode,
   ContainerNode,
+  DataNode,
+  DataItemNode,
   FooterNode,
   FormNode,
   HeadingNode,
@@ -12,6 +14,7 @@ import {
   MountNode,
   NavigationNode,
   PageNode,
+  RepeatNode,
   RouteNode,
   SectionNode,
   StateNode,
@@ -40,6 +43,7 @@ interface RenderContext {
  */
 export class HtmlGenerator {
   private readonly components: Map<string, ComponentNode> = new Map<string, ComponentNode>();
+  private readonly dataBlocks: Map<string, DataNode> = new Map<string, DataNode>();
   private readonly stateValues: Map<string, string> = new Map<string, string>();
   private readonly routes: Map<string, string> = new Map<string, string>();
   private readonly usedIds: Set<string> = new Set<string>();
@@ -51,12 +55,17 @@ export class HtmlGenerator {
    */
   public generate(program: WebProgramNode): string {
     this.components.clear();
+    this.dataBlocks.clear();
     this.stateValues.clear();
     this.routes.clear();
     this.usedIds.clear();
     for (const node of program.body) {
       if (node.kind === WebNodeKind.Component) {
         this.components.set(node.name, node);
+      }
+
+      if (node.kind === WebNodeKind.Data) {
+        this.dataBlocks.set(node.name, node);
       }
 
       if (node.kind === WebNodeKind.Route) {
@@ -144,6 +153,8 @@ export class HtmlGenerator {
         return this.renderValidationMessage(node, depth);
       case WebNodeKind.ComponentUse:
         return this.renderComponentUse(node, depth, context);
+      case WebNodeKind.Repeat:
+        return this.renderRepeat(node, depth, context);
       case WebNodeKind.Slot:
         return this.renderSlot(node, depth, context);
       default:
@@ -265,6 +276,48 @@ export class HtmlGenerator {
 
     return [
       `${this.indent(depth)}<div class="${this.componentClassName(component.name)} kethic-component" data-kethic-component="${this.escapeHtml(component.name)}">`,
+      inner,
+      `${this.indent(depth)}</div>`,
+    ].join("\n");
+  }
+
+  private renderRepeat(node: RepeatNode, depth: number, context: RenderContext): string {
+    const component: ComponentNode | undefined = this.components.get(node.componentName);
+    const data: DataNode | undefined = this.dataBlocks.get(node.dataName);
+
+    if (component === undefined || data === undefined) {
+      return "";
+    }
+
+    return data.items
+      .map((item: DataItemNode, index: number) => this.renderRepeatedItem(component, item, index, depth, context))
+      .join("\n");
+  }
+
+  private renderRepeatedItem(
+    component: ComponentNode,
+    item: DataItemNode,
+    index: number,
+    depth: number,
+    context: RenderContext,
+  ): string {
+    const values: Map<string, string> = new Map<string, string>();
+    for (let valueIndex: number = 0; valueIndex < component.parameters.length; valueIndex += 1) {
+      values.set(component.parameters[valueIndex], this.resolveValue(item.values[valueIndex], context));
+    }
+
+    const componentContext: RenderContext = {
+      values,
+      slotChildren: [],
+      validationMessages: context.validationMessages,
+      insideForm: context.insideForm,
+    };
+    const inner: string = component.children
+      .map((child: WebChildNode) => this.renderChild(child, depth + 1, componentContext))
+      .join("\n");
+
+    return [
+      `${this.indent(depth)}<div class="${this.componentClassName(component.name)} kethic-component" data-kethic-component="${this.escapeHtml(component.name)}" data-kethic-repeat="${this.escapeHtml(String(index + 1))}">`,
       inner,
       `${this.indent(depth)}</div>`,
     ].join("\n");

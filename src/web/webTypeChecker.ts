@@ -4,6 +4,7 @@ import {
   ComponentNode,
   ComponentUseNode,
   ConditionalNode,
+  DataNode,
   FooterNode,
   FormNode,
   HeadingNode,
@@ -12,6 +13,7 @@ import {
   MountNode,
   NavigationNode,
   PageNode,
+  RepeatNode,
   RouteNode,
   StateNode,
   StateUpdateNode,
@@ -68,6 +70,7 @@ export class WebTypeChecker {
   private readonly diagnostics: WebDiagnostic[] = [];
   private readonly pages: Map<string, PageNode> = new Map<string, PageNode>();
   private readonly components: Map<string, ComponentNode> = new Map<string, ComponentNode>();
+  private readonly dataBlocks: Map<string, DataNode> = new Map<string, DataNode>();
   private readonly states: Map<string, StateNode> = new Map<string, StateNode>();
   private readonly actions: Map<string, ActionNode> = new Map<string, ActionNode>();
   private readonly routesByTarget: Map<string, RouteNode> = new Map<string, RouteNode>();
@@ -81,6 +84,7 @@ export class WebTypeChecker {
     this.diagnostics.length = 0;
     this.pages.clear();
     this.components.clear();
+    this.dataBlocks.clear();
     this.states.clear();
     this.actions.clear();
     this.routesByTarget.clear();
@@ -94,6 +98,10 @@ export class WebTypeChecker {
 
       if (node.kind === WebNodeKind.Component) {
         this.registerComponent(node);
+      }
+
+      if (node.kind === WebNodeKind.Data) {
+        this.registerData(node);
       }
 
       if (node.kind === WebNodeKind.State) {
@@ -123,6 +131,9 @@ export class WebTypeChecker {
         return;
       case WebNodeKind.Component:
         this.checkComponent(node);
+        return;
+      case WebNodeKind.Data:
+        this.checkData(node);
         return;
       case WebNodeKind.StyleBlock:
         this.checkStyleBlock(node);
@@ -165,6 +176,15 @@ export class WebTypeChecker {
     }
 
     this.components.set(node.name, node);
+  }
+
+  private registerData(node: DataNode): void {
+    if (this.dataBlocks.has(node.name)) {
+      this.report(node, "data", `data "${node.name}" is already declared`);
+      return;
+    }
+
+    this.dataBlocks.set(node.name, node);
   }
 
   private registerState(node: StateNode): void {
@@ -282,6 +302,10 @@ export class WebTypeChecker {
 
       if (child.kind === WebNodeKind.ComponentUse) {
         this.checkComponentUse(child);
+      }
+
+      if (child.kind === WebNodeKind.Repeat) {
+        this.checkRepeat(child);
       }
 
       if (child.kind === WebNodeKind.Navigation) {
@@ -425,6 +449,37 @@ export class WebTypeChecker {
         "Umkel",
         `component "${node.name}" expected ${component.parameters.length} arguments but received ${node.arguments.length}`,
       );
+    }
+  }
+
+  private checkRepeat(node: RepeatNode): void {
+    const component: ComponentNode | undefined = this.components.get(node.componentName);
+    const data: DataNode | undefined = this.dataBlocks.get(node.dataName);
+
+    if (component === undefined) {
+      this.report(node, "repeat", `component "${node.componentName}" does not exist`);
+      return;
+    }
+
+    if (data === undefined) {
+      this.report(node, "repeat", `data "${node.dataName}" does not exist`);
+      return;
+    }
+
+    for (const item of data.items) {
+      if (item.values.length !== component.parameters.length) {
+        this.report(
+          item,
+          "item",
+          `component "${component.name}" expected ${component.parameters.length} values but data "${data.name}" item has ${item.values.length}`,
+        );
+      }
+    }
+  }
+
+  private checkData(node: DataNode): void {
+    if (node.items.length === 0) {
+      this.report(node, "data", `data "${node.name}" has no items`);
     }
   }
 

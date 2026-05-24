@@ -3,6 +3,8 @@ dist/
 dist-demo/
 dist-web/
 dist-brand/
+dist-repeater/
+dist-repeater-branded/
 dist-modules/
 dist-complex-html/
 dist-complex-kethic/
