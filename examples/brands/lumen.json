@@ -1,0 +1,9 @@
+{
+  "name": "Lumen Pantry",
+  "palette": "lumen",
+  "type": "editorial",
+  "surface": "paper",
+  "radius": "soft",
+  "motion": "still",
+  "density": "balanced"
+}

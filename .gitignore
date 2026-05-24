@@ -2,6 +2,7 @@ node_modules/
 dist/
 dist-demo/
 dist-web/
+dist-brand/
 dist-modules/
 dist-complex-html/
 dist-complex-kethic/

@@ -1,4 +1,5 @@
 export * from "./ast";
+export * from "./brandProfile";
 export * from "./cssGenerator";
 export * from "./diagnostics";
 export * from "./htmlGenerator";

@@ -1,0 +1,80 @@
+st demos = 0
+st email = ""
+
+act book
+  set demos = demos plus 1
+end
+
+rt "#hero" Hero
+rt "#proof" Proof
+rt "#plans" Plans
+rt "#join" Join
+
+pg BrandDemo
+  nav Main
+    link Hero "Start"
+    link Proof "Proof"
+    link Plans "Plans"
+    link Join "Join"
+  end
+  sec Hero
+    stack HeroShell
+      h1 "A premium launch page from tiny Kethic source"
+      txt "This page keeps content in the source and moves the repeated visual identity into a reusable brand profile."
+      row HeroActions
+        btn book "Book preview"
+        link Plans "View plans"
+      end
+      txt "Preview requests: {demos}"
+    end
+  end
+  sec Proof
+    h2 "The compiler carries the heavy design work"
+    grid ProofGrid
+      box MetricCard
+        h3 "Compact page"
+        txt "The AI writes structure, copy, state, and calls to known interface primitives."
+      end
+      box MetricCard
+        h3 "Reusable brand"
+        txt "Colors, spacing, surfaces, typography, motion, radius, and component feel are paid once."
+      end
+      box MetricCard
+        h3 "Standard output"
+        txt "Kethic still compiles to plain HTML, CSS, and JavaScript that can be hosted anywhere."
+      end
+    end
+  end
+  sec Plans
+    h2 "One source can become several visual products"
+    grid PlanGrid
+      box MetricCard
+        h3 "Launch"
+        txt "Hero, proof blocks, pricing, signup, and footer for public product pages."
+      end
+      box MetricCard
+        h3 "Campaign"
+        txt "Fast branded pages for ads, waitlists, demos, and investor updates."
+      end
+      box MetricCard
+        h3 "App shell"
+        txt "Reusable layouts that stay consistent across product rooms and dashboards."
+      end
+    end
+  end
+  sec Join
+    h2 "Request early access"
+    txt "Leave an email and the demo can reuse the same source with another brand profile."
+    form Signup
+      in email "Email" ! bind:email
+      msg email "Use the address where we should send access."
+      btn book "Join waitlist"
+    end
+    txt "Email entered: {email}"
+  end
+  foot
+    txt "Brand Profile V1 - compact source, reusable identity, standard web output."
+  end
+end
+
+mount "#app" BrandDemo

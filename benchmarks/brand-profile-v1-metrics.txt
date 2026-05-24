@@ -1,0 +1,23 @@
+Brand Profile V1 local proof
+
+Source:
+- Kethic page source: examples/brand-profile-demo.keth
+- Brand profiles: examples/brands/nocturne.json, examples/brands/lumen.json, examples/brands/forge.json
+
+Measurements:
+- Kethic page source characters: 2,150
+- Brand profile characters: 160-162 each, generated once per brand
+- Nocturne compiled output characters: 12,816
+- Per-page source-to-output reduction: 83.22%
+
+Meaning:
+- The brand profile is paid once and reused.
+- Per-page AI output stays focused on content and structure.
+- The compiler carries the repeated visual complexity into full HTML/CSS/JS.
+
+Verification:
+- npm run build
+- npm run quality:web
+- node dist/src/cli.js web examples/brand-profile-demo.keth --out-dir dist-brand/nocturne --brand examples/brands/nocturne.json
+- node dist/src/cli.js web examples/brand-profile-demo.keth --out-dir dist-brand/lumen --brand examples/brands/lumen.json
+- node dist/src/cli.js web examples/brand-profile-demo.keth --out-dir dist-brand/forge --brand examples/brands/forge.json

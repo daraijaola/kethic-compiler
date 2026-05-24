@@ -375,7 +375,7 @@ export class HtmlGenerator {
   }
 
   private componentClassName(name: string): string {
-    return `kethic-selthar-${name.replace(/[^A-Za-z0-9_-]/g, "-").toLowerCase()}`;
+    return `kethic-component-${name.replace(/[^A-Za-z0-9_-]/g, "-").toLowerCase()}`;
   }
 
   private hrefFor(target: string): string {

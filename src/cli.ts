@@ -4,6 +4,7 @@ import { CompiledModule, ModuleGraphCompiler, ModuleGraphDiagnostic, ModuleGraph
 import { NativeParser } from "./native";
 import { Parser, ProgramNode } from "./parser";
 import { TypeChecker, TypeCheckDiagnostic } from "./typechecker";
+import { normalizeBrandProfile, ResolvedBrandProfile } from "./web/brandProfile";
 import { WebCompiler, WebCompileResult } from "./web";
 
 /**
@@ -53,6 +54,7 @@ interface CompileCommand {
 interface WebCommand {
   readonly inputPath: string;
   readonly outputDirectory: string;
+  readonly brandPath: string | null;
 }
 
 /**
@@ -168,6 +170,7 @@ function parseWebCommand(args: readonly string[]): WebCommand {
 
   const inputPath: string = args[1];
   let outputDirectory: string | null = null;
+  let brandPath: string | null = null;
   let index: number = 2;
 
   while (index < args.length) {
@@ -183,6 +186,16 @@ function parseWebCommand(args: readonly string[]): WebCommand {
       continue;
     }
 
+    if (current === "--brand") {
+      if (index + 1 >= args.length) {
+        throw new Error("Expected brand profile path after --brand.\n\n" + usage());
+      }
+
+      brandPath = args[index + 1];
+      index += 2;
+      continue;
+    }
+
     throw new Error(`Unknown option "${current}".\n\n${usage()}`);
   }
 
@@ -190,7 +203,7 @@ function parseWebCommand(args: readonly string[]): WebCommand {
     throw new Error("Expected --out-dir for web output.\n\n" + usage());
   }
 
-  return { inputPath, outputDirectory };
+  return { inputPath, outputDirectory, brandPath };
 }
 
 /**
@@ -248,8 +261,10 @@ function runGraphCompile(absoluteInput: string, absoluteOutputDirectory: string,
 function runWebCompile(command: WebCommand): void {
   const absoluteInput: string = path.resolve(command.inputPath);
   const absoluteOutputDirectory: string = path.resolve(command.outputDirectory);
+  const brandProfile: ResolvedBrandProfile | undefined =
+    command.brandPath === null ? undefined : readBrandProfile(path.resolve(command.brandPath));
   const source: string = fs.readFileSync(absoluteInput, "utf8");
-  const result: WebCompileResult = new WebCompiler().compile(source);
+  const result: WebCompileResult = new WebCompiler().compile(source, { brandProfile });
   const htmlPath: string = path.join(absoluteOutputDirectory, "index.html");
   const cssPath: string = path.join(absoluteOutputDirectory, "styles.css");
   const runtimePath: string = path.join(absoluteOutputDirectory, "runtime.js");
@@ -264,6 +279,12 @@ function runWebCompile(command: WebCommand): void {
     fs.writeFileSync(runtimePath, result.runtime + "\n", "utf8");
     process.stdout.write(`Wrote ${runtimePath}\n`);
   }
+}
+
+function readBrandProfile(absoluteBrandPath: string): ResolvedBrandProfile {
+  const source: string = fs.readFileSync(absoluteBrandPath, "utf8");
+
+  return normalizeBrandProfile(JSON.parse(source));
 }
 
 /**
@@ -292,7 +313,7 @@ function usage(): string {
     "Usage:",
     "  kethic compile <input.keth> [--out output.js] [--native]",
     "  kethic compile <input.keth> --out-dir dist",
-    "  kethic web <input.keth> --out-dir dist-web",
+    "  kethic web <input.keth> --out-dir dist-web [--brand brand.json]",
     "",
     "Examples:",
     "  kethic compile examples/milestone1.keth",
@@ -300,6 +321,7 @@ function usage(): string {
     "  kethic compile examples/milestone1.keth --out dist/milestone1.js",
     "  kethic compile examples/app.keth --out-dir dist",
     "  kethic web examples/kethic-core-showcase.keth --out-dir dist-web",
+    "  kethic web examples/brand-profile-demo.keth --out-dir dist-web --brand examples/brands/nocturne.json",
   ].join("\n");
 }
 

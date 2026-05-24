@@ -1,0 +1,9 @@
+{
+  "name": "Forge Desk",
+  "palette": "forge",
+  "type": "technical",
+  "surface": "metal",
+  "radius": "sharp",
+  "motion": "kinetic",
+  "density": "dense"
+}
