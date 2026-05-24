@@ -1,0 +1,23 @@
+External Data V1 local proof
+
+Source:
+- examples/external-data-demo.keth
+- examples/data/features.json
+
+Measurements:
+- Kethic page source characters: 730
+- External data characters: 643
+- Compiled HTML/CSS characters: 8,690
+- Rendered repeated cards: 6
+- Page-source-to-output reduction: 91.60%
+- Source-plus-data-to-output reduction: 84.20%
+
+Meaning:
+- The per-page Kethic source becomes much smaller because repeated content rows move outside the page source.
+- The data file can be reused, edited by humans, loaded from user documents, or generated once and reused.
+- This is the strongest current path toward longer websites with lower AI output growth.
+
+Verification:
+- npm run build
+- node dist/src/cli.js web examples/external-data-demo.keth --out-dir dist-external-data
+- node dist/src/cli.js web examples/external-data-demo.keth --out-dir dist-external-data-branded --brand examples/brands/forge.json

@@ -5,6 +5,8 @@ dist-web/
 dist-brand/
 dist-repeater/
 dist-repeater-branded/
+dist-external-data/
+dist-external-data-branded/
 dist-modules/
 dist-complex-html/
 dist-complex-kethic/

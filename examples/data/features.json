@@ -1,0 +1,10 @@
+{
+  "items": [
+    ["Compact source", "The AI writes one repeat instruction instead of rebuilding the same card structure."],
+    ["Reusable content", "Rows can be edited, reused, or later produced from user documents without changing layout code."],
+    ["Compiler expansion", "Kethic turns each row into full semantic HTML using the selected component."],
+    ["Brand aware", "The same repeated content inherits the active Brand Profile visual system."],
+    ["Standard output", "The generated site is still plain HTML, CSS, and JavaScript."],
+    ["Lower growth curve", "Adding more cards grows data, not repeated interface syntax."]
+  ]
+}

@@ -4,6 +4,7 @@ import { CompiledModule, ModuleGraphCompiler, ModuleGraphDiagnostic, ModuleGraph
 import { NativeParser } from "./native";
 import { Parser, ProgramNode } from "./parser";
 import { TypeChecker, TypeCheckDiagnostic } from "./typechecker";
+import { WebValue } from "./web/ast";
 import { normalizeBrandProfile, ResolvedBrandProfile } from "./web/brandProfile";
 import { WebCompiler, WebCompileResult } from "./web";
 
@@ -264,7 +265,10 @@ function runWebCompile(command: WebCommand): void {
   const brandProfile: ResolvedBrandProfile | undefined =
     command.brandPath === null ? undefined : readBrandProfile(path.resolve(command.brandPath));
   const source: string = fs.readFileSync(absoluteInput, "utf8");
-  const result: WebCompileResult = new WebCompiler().compile(source, { brandProfile });
+  const result: WebCompileResult = new WebCompiler().compile(source, {
+    brandProfile,
+    dataLoader: (sourcePath: string) => readExternalData(path.resolve(path.dirname(absoluteInput), sourcePath)),
+  });
   const htmlPath: string = path.join(absoluteOutputDirectory, "index.html");
   const cssPath: string = path.join(absoluteOutputDirectory, "styles.css");
   const runtimePath: string = path.join(absoluteOutputDirectory, "runtime.js");
@@ -285,6 +289,35 @@ function readBrandProfile(absoluteBrandPath: string): ResolvedBrandProfile {
   const source: string = fs.readFileSync(absoluteBrandPath, "utf8");
 
   return normalizeBrandProfile(JSON.parse(source));
+}
+
+function readExternalData(absoluteDataPath: string): readonly (readonly WebValue[])[] {
+  const raw: unknown = JSON.parse(fs.readFileSync(absoluteDataPath, "utf8"));
+  const rows: unknown = isRecord(raw) && Array.isArray(raw.items) ? raw.items : raw;
+
+  if (!Array.isArray(rows)) {
+    throw new Error(`External data ${absoluteDataPath} must be an array or an object with an items array.`);
+  }
+
+  return rows.map((row: unknown): readonly WebValue[] => {
+    if (Array.isArray(row)) {
+      return row.map((value: unknown) => literalValue(value));
+    }
+
+    if (isRecord(row) && Array.isArray(row.values)) {
+      return row.values.map((value: unknown) => literalValue(value));
+    }
+
+    throw new Error(`External data ${absoluteDataPath} items must be arrays or objects with a values array.`);
+  });
+}
+
+function literalValue(value: unknown): WebValue {
+  return { kind: "literal", value: String(value) };
+}
+
+function isRecord(value: unknown): value is { readonly items?: unknown; readonly values?: unknown } {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
 /**

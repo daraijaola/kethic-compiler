@@ -294,6 +294,7 @@ export interface RepeatNode extends WebNode {
 export interface DataNode extends WebNode {
   readonly kind: WebNodeKind.Data;
   readonly name: string;
+  readonly sourcePath?: string;
   readonly items: readonly DataItemNode[];
 }
 

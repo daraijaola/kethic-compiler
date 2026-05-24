@@ -1,0 +1,35 @@
+data features from "data/features.json"
+
+cmp FeatureCard receives title, body
+  box MetricCard
+    h3 title
+    txt body
+  end
+end
+
+rt "#hero" Hero
+rt "#features" Features
+
+pg ExternalDataDemo
+  nav Main
+    link Hero "Start"
+    link Features "Features"
+  end
+  sec Hero
+    stack HeroShell
+      h1 "External data keeps the page source tiny"
+      txt "Kethic can load repeated content from JSON while the page source only describes structure."
+    end
+  end
+  sec Features
+    h2 "Six cards from external data"
+    grid FeatureGrid
+      repeat FeatureCard from features
+    end
+  end
+  foot
+    txt "External Data V1 - structure in Kethic, rows in JSON, output in standard web files."
+  end
+end
+
+mount "#app" ExternalDataDemo

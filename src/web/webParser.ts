@@ -169,7 +169,13 @@ export class WebParser {
     }
 
     if (line.startsWith("data ")) {
-      this.stack.push({ mode: "data", node: this.parseDataBlock(line, location), items: [] });
+      const dataNode: DataNode = this.parseDataBlock(line, location);
+      if (dataNode.sourcePath !== undefined) {
+        this.addTopLevel(dataNode);
+        return;
+      }
+
+      this.stack.push({ mode: "data", node: dataNode, items: [] });
       return;
     }
 
@@ -662,6 +668,17 @@ export class WebParser {
   }
 
   private parseDataBlock(line: string, location: WebSourceLocation): DataNode {
+    const externalMatch: RegExpMatchArray | null = line.match(/^data\s+([A-Za-z_][A-Za-z0-9_]*)\s+from\s+"([^"]+)"$/);
+    if (externalMatch !== null) {
+      return {
+        kind: WebNodeKind.Data,
+        location,
+        name: externalMatch[1],
+        sourcePath: externalMatch[2],
+        items: [],
+      };
+    }
+
     return { kind: WebNodeKind.Data, location, name: this.requiredName(line, "data", location), items: [] };
   }
 
