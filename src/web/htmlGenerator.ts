@@ -25,8 +25,10 @@ import {
   WebChildNode,
   WebNodeKind,
   WebProgramNode,
+  WebSectionRole,
   WebValue,
 } from "./ast";
+import { ResolvedBrandProfile } from "./brandProfile";
 
 /**
  * RenderContext carries component parameters and slot content during rendering.
@@ -48,7 +50,10 @@ export class HtmlGenerator {
   private readonly routes: Map<string, string> = new Map<string, string>();
   private readonly usedIds: Set<string> = new Set<string>();
 
-  public constructor(private readonly includeRuntime: boolean) {}
+  public constructor(
+    private readonly includeRuntime: boolean,
+    private readonly brandProfile?: ResolvedBrandProfile,
+  ) {}
 
   /**
    * generate emits one complete HTML document.
@@ -166,8 +171,9 @@ export class HtmlGenerator {
     const id: string = this.reserveId(this.idFor(node.name));
     const inner: string = node.children.map((child: WebChildNode) => this.renderChild(child, depth + 1, context)).join("\n");
     const roleClass: string = node.role === undefined ? "" : ` kethic-section-${node.role}`;
+    const variantClass: string = node.role === undefined ? "" : ` ${this.variantClass(node.role)}`;
     return [
-      `${this.indent(depth)}<section id="${id}" class="${this.className(node.name)}${roleClass} kethic-section">`,
+      `${this.indent(depth)}<section id="${id}" class="${this.className(node.name)}${roleClass}${variantClass} kethic-section">`,
       inner,
       `${this.indent(depth)}</section>`,
     ].join("\n");
@@ -426,6 +432,37 @@ export class HtmlGenerator {
 
   private className(name: string): string {
     return `kethic-${name.replace(/[^A-Za-z0-9_-]/g, "-").toLowerCase()}`;
+  }
+
+  private variantClass(role: WebSectionRole): string {
+    return `kethic-variant-${role}-${this.variantName(role)}`;
+  }
+
+  private variantName(role: WebSectionRole): string {
+    const variants: ReadonlyMap<WebSectionRole, readonly string[]> = new Map<WebSectionRole, readonly string[]>([
+      ["hero", ["centered", "split", "editorial"]],
+      ["features", ["grid", "list", "tiles"]],
+      ["proof", ["band", "cards", "numbers"]],
+      ["pricing", ["cards", "table", "spotlight"]],
+      ["faq", ["list", "columns", "boxed"]],
+      ["cta", ["centered", "panel", "split"]],
+      ["content", ["plain", "narrow", "split"]],
+    ]);
+    const choices: readonly string[] = variants.get(role) ?? ["plain"];
+    const seed: number = this.brandProfile?.seed ?? 0;
+    const roleSeed: number = this.hashString(role);
+
+    return choices[(seed + roleSeed) % choices.length];
+  }
+
+  private hashString(value: string): number {
+    let hash: number = 2166136261;
+    for (let index: number = 0; index < value.length; index += 1) {
+      hash ^= value.charCodeAt(index);
+      hash = Math.imul(hash, 16777619);
+    }
+
+    return hash >>> 0;
   }
 
   private componentClassName(name: string): string {

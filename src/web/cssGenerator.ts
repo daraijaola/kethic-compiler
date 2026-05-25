@@ -75,6 +75,7 @@ export class CssGenerator {
       "  .kethic-section-features, .kethic-section-proof { background: rgb(255 255 255 / 0.035); border-block: 1px solid rgb(255 255 255 / 0.08); }",
       "  .kethic-section-cta { background: linear-gradient(135deg, rgb(255 93 115 / 0.16), rgb(78 231 248 / 0.1)); border-block: 1px solid rgb(255 255 255 / 0.12); }",
       "  .kethic-section-faq .kethic-layout-grid, .kethic-section-pricing .kethic-layout-grid { grid-template-columns: repeat(auto-fit, minmax(min(20rem, 100%), 1fr)); }",
+      ...this.generateVariantCss(false),
       "  .kethic-navigation { position: sticky; inset-block-start: 0; z-index: 10; display: flex; gap: var(--sa-3); align-items: center; padding: var(--sa-3) var(--sa-6); background: rgb(16 16 28 / 0.68); backdrop-filter: blur(18px); border-block-end: 1px solid rgb(255 255 255 / 0.12); }",
       "  .kethic-link { color: rgb(255 255 255 / 0.82); font-weight: 750; text-decoration: none; }",
       "  .kethic-link:hover { color: var(--color-cyan-300); }",
@@ -195,6 +196,7 @@ export class CssGenerator {
       "  .kethic-section-features, .kethic-section-proof { background: color-mix(in oklab, var(--color-surface), transparent 55%); border-block: 1px solid var(--color-border); }",
       "  .kethic-section-cta { background: color-mix(in oklab, var(--color-accent), transparent 86%); border-block: 1px solid var(--color-border); }",
       "  .kethic-section-faq .kethic-layout-grid, .kethic-section-pricing .kethic-layout-grid { grid-template-columns: repeat(auto-fit, minmax(min(20rem, 100%), 1fr)); }",
+      ...this.generateVariantCss(true),
       "  .kethic-navigation { position: sticky; inset-block-start: 0; z-index: 10; display: flex; gap: var(--sa-3); align-items: center; padding: var(--sa-3) var(--sa-6); background: color-mix(in oklab, var(--color-page), transparent 20%); backdrop-filter: blur(18px); border-block-end: 1px solid var(--color-border); }",
       "  .kethic-link { color: var(--color-muted); font-weight: 750; text-decoration: none; transition: color var(--motion-fast) ease, transform var(--motion-fast) ease; }",
       "  .kethic-link:hover { color: var(--color-accent); transform: translateY(-1px); }",
@@ -242,6 +244,40 @@ export class CssGenerator {
     }
 
     return [`@media ${this.mediaQuery(block.responsive)} {`, ...styleBlock.split("\n").map((line: string) => `  ${line}`), "}"].join("\n");
+  }
+
+  private generateVariantCss(branded: boolean): string[] {
+    const surface: string = branded ? "var(--color-surface)" : "rgb(255 255 255 / 0.08)";
+    const border: string = branded ? "var(--color-border)" : "rgb(255 255 255 / 0.12)";
+    const accent: string = branded ? "var(--color-accent)" : "var(--color-cyan-300)";
+    const highlight: string = branded ? "var(--color-highlight)" : "var(--color-coral-500)";
+
+    return [
+      "  .kethic-variant-hero-centered { text-align: center; place-items: center; }",
+      "  .kethic-variant-hero-centered .kethic-container { margin-inline: auto; align-items: center; }",
+      "  .kethic-variant-hero-centered h1, .kethic-variant-hero-centered p { margin-inline: auto; }",
+      "  .kethic-variant-hero-split { grid-template-columns: minmax(0, 1fr) minmax(16rem, 0.72fr); }",
+      `  .kethic-variant-hero-split::before { content: ''; position: absolute; inset: 18% 8vw auto auto; inline-size: min(27rem, 34vw); aspect-ratio: 4 / 3; border: 1px solid ${border}; border-radius: var(--radius-soft); background: linear-gradient(135deg, ${surface}, color-mix(in oklab, ${accent}, transparent 72%)); box-shadow: var(--shadow-raised); }`,
+      `  .kethic-variant-hero-editorial { border-block-end: 1px solid ${border}; }`,
+      "  .kethic-variant-hero-editorial h1 { max-inline-size: 16ch; }",
+      `  .kethic-variant-hero-editorial p:first-of-type { border-inline-start: 3px solid ${accent}; padding-inline-start: var(--sa-4); }`,
+      "  .kethic-variant-features-grid .kethic-layout-grid { grid-template-columns: repeat(auto-fit, minmax(min(18rem, 100%), 1fr)); }",
+      "  .kethic-variant-features-list .kethic-layout-grid { grid-template-columns: 1fr; max-inline-size: 58rem; }",
+      `  .kethic-variant-features-list .kethic-metriccard { min-block-size: auto; display: grid; grid-template-columns: minmax(8rem, 0.35fr) 1fr; gap: var(--sa-4); align-items: start; }`,
+      "  .kethic-variant-features-tiles .kethic-layout-grid { grid-template-columns: repeat(auto-fit, minmax(min(14rem, 100%), 1fr)); }",
+      `  .kethic-variant-features-tiles .kethic-metriccard { border-radius: calc(var(--radius-soft) * 0.8); box-shadow: var(--shadow-low); }`,
+      `  .kethic-variant-proof-band { background: linear-gradient(135deg, color-mix(in oklab, ${accent}, transparent 88%), color-mix(in oklab, ${highlight}, transparent 90%)); }`,
+      "  .kethic-variant-proof-band .kethic-layout-grid { grid-template-columns: repeat(auto-fit, minmax(min(13rem, 100%), 1fr)); }",
+      "  .kethic-variant-proof-cards .kethic-metriccard { min-block-size: 12rem; }",
+      "  .kethic-variant-proof-numbers .kethic-metriccard h2 { font-size: clamp(3rem, 8vw, 6.2rem); }",
+      "  .kethic-variant-cta-centered { text-align: center; }",
+      "  .kethic-variant-cta-centered h2, .kethic-variant-cta-centered p { margin-inline: auto; }",
+      `  .kethic-variant-cta-panel .kethic-container, .kethic-variant-cta-panel .kethic-form { padding: var(--sa-5); border: 1px solid ${border}; border-radius: var(--radius-soft); background: ${surface}; box-shadow: var(--shadow-low); }`,
+      "  .kethic-variant-cta-split .kethic-layout-row, .kethic-variant-cta-split .kethic-container { align-items: center; justify-content: space-between; }",
+      "  .kethic-variant-faq-list .kethic-layout-grid { grid-template-columns: 1fr; max-inline-size: 58rem; }",
+      `  .kethic-variant-faq-boxed .kethic-metriccard { background: ${surface}; }`,
+      "  .kethic-variant-pricing-spotlight .kethic-metriccard:nth-child(2), .kethic-variant-pricing-spotlight .kethic-component:nth-child(2) .kethic-metriccard { transform: translateY(-0.75rem); border-color: var(--color-accent); }",
+    ];
   }
 
   private generateDeclaration(declaration: StyleDeclarationNode): string {

@@ -8,6 +8,7 @@ dist-repeater-branded/
 dist-external-data/
 dist-external-data-branded/
 dist-clean-roles/
+dist-variants-*/
 dist-modules/
 dist-complex-html/
 dist-complex-kethic/

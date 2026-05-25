@@ -1,0 +1,24 @@
+Visual Variants V1 local proof
+
+Source:
+- examples/clean-roles-demo.keth
+- examples/brands/nocturne.json
+- examples/brands/lumen.json
+- examples/brands/forge.json
+
+Same source, different brand profiles:
+- Nocturne: hero-editorial, features-grid, proof-cards, cta-panel
+- Lumen: hero-centered, features-list, proof-numbers, cta-split
+- Forge: hero-split, features-tiles, proof-band, cta-centered
+
+What it proves:
+- Section roles can now receive deterministic visual variants.
+- Visual variety comes from the compiler and brand profile seed.
+- Kethic source does not need extra Tailwind/CSS-like output to get different section treatments.
+
+Verification:
+- npm run build
+- npm run quality:web
+- node dist/src/cli.js web examples/clean-roles-demo.keth --out-dir dist-variants-nocturne --brand examples/brands/nocturne.json
+- node dist/src/cli.js web examples/clean-roles-demo.keth --out-dir dist-variants-lumen --brand examples/brands/lumen.json
+- node dist/src/cli.js web examples/clean-roles-demo.keth --out-dir dist-variants-forge --brand examples/brands/forge.json

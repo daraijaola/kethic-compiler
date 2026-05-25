@@ -48,7 +48,7 @@ export class WebCompiler {
 
     return {
       ast,
-      html: new HtmlGenerator(runtime.length > 0).generate(ast),
+      html: new HtmlGenerator(runtime.length > 0, options.brandProfile).generate(ast),
       css: new CssGenerator(options.brandProfile).generate(ast),
       runtime,
     };
