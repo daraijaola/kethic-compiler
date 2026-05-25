@@ -1,0 +1,27 @@
+Kethic Public Site V0
+
+Source:
+- examples/kethic-public-site.keth
+- examples/brands/kethic.json
+- examples/data/kethic-features.json
+- examples/data/kethic-proof.json
+
+Purpose:
+- Dogfood Kethic by building the first public Kethic website with Kethic itself.
+- Use the current V1 stack: Brand Profile, external data, repeaters, section roles, and visual variants.
+
+Measurements:
+- Kethic page source characters: 2,288
+- Brand profile characters: 158
+- External data characters: 1,025
+- Compiled HTML/CSS characters: 17,893
+- Repeated rendered components: 9
+- Page-source-to-output reduction: 87.21%
+- Source-plus-brand-plus-data-to-output reduction: 80.60%
+- Variant classes: hero-split, features-tiles, proof-band, content-narrow, cta-centered
+
+Verification:
+- npm run build
+- npm run quality:web
+- npm run quality:visual
+- node dist/src/cli.js web examples/kethic-public-site.keth --out-dir dist-kethic-site --brand examples/brands/kethic.json

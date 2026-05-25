@@ -1,0 +1,83 @@
+data features from "data/kethic-features.json"
+data proof from "data/kethic-proof.json"
+
+cmp FeatureCard receives title, body
+  box MetricCard
+    h3 title
+    txt body
+  end
+end
+
+cmp ProofCard receives value, body
+  box MetricCard
+    h3 "Proof"
+    h2 value
+    txt body
+  end
+end
+
+rt "#hero" Hero
+rt "#features" Features
+rt "#proof" Proof
+rt "#how" How
+rt "#join" Join
+
+pg KethicSite
+  nav Main
+    link Hero "Kethic"
+    link Features "Features"
+    link Proof "Proof"
+    link How "How"
+    link Join "Join"
+  end
+  sec Hero hero
+    stack HeroShell
+      h1 "AI-native web source that stays small"
+      txt "Kethic lets AI describe websites in compact source, then a compiler expands it into standard HTML, CSS, and JavaScript."
+      row HeroActions
+        link Proof "View proof"
+        link Features "Explore system"
+      end
+      txt "Current focus: shorter generated source, reusable design identity, and clean website output."
+    end
+  end
+  sec Features features
+    h2 "The compiler carries the repeated work"
+    grid FeatureGrid
+      repeat FeatureCard from features
+    end
+  end
+  sec Proof proof
+    h2 "Early benchmarks show the shape of the advantage"
+    grid ProofGrid
+      repeat ProofCard from proof
+    end
+  end
+  sec How content
+    h2 "Kethic separates what AI should write from what the compiler should know"
+    grid FeatureGrid
+      box MetricCard
+        h3 "1. Source"
+        txt "The AI writes compact structure: sections, components, state, repeaters, and data references."
+      end
+      box MetricCard
+        h3 "2. Profile"
+        txt "A reusable brand profile controls visual identity, density, motion, radius, surface, and palette."
+      end
+      box MetricCard
+        h3 "3. Output"
+        txt "The compiler expands everything into clean browser files with roles, variants, accessibility hooks, and responsive CSS."
+      end
+    end
+  end
+  sec Join cta
+    h2 "Built for AI builders that need lower output cost"
+    txt "Kethic is a compiler-first path toward longer, cleaner generated websites with less repeated model output."
+    link "https://github.com/daraijaola/kethic-compiler" "View repository"
+  end
+  foot
+    txt "Kethic - compact source, reusable identity, standard web output."
+  end
+end
+
+mount "#app" KethicSite

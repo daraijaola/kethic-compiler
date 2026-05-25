@@ -1,0 +1,10 @@
+{
+  "items": [
+    ["Compact source", "AI emits short Kethic instead of repeating full HTML, CSS, JavaScript, or Tailwind classes."],
+    ["Brand profile", "Design identity is generated once and reused across pages instead of being re-written every time."],
+    ["Repeaters", "Repeated UI like features, proof cards, FAQs, and pricing can render from reusable data rows."],
+    ["External data", "Content can live in JSON, user docs, or CMS exports while page source stays focused on structure."],
+    ["Visual roles", "Sections carry small role hints like hero, features, proof, and CTA so the compiler can choose better defaults."],
+    ["Standard output", "Kethic still compiles to ordinary HTML, CSS, and JavaScript that can be hosted anywhere."]
+  ]
+}
