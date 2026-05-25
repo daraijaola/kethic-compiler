@@ -101,6 +101,11 @@ export type WebLayoutKind = "stack" | "row" | "grid" | "center";
 export type WebResponsiveKind = "mobile" | "tablet" | "desktop";
 
 /**
+ * WebSectionRole gives the compiler design context without verbose source.
+ */
+export type WebSectionRole = "hero" | "features" | "proof" | "pricing" | "faq" | "cta" | "content";
+
+/**
  * WebExpression is the small expression model used by Web Phase 3 runtime actions.
  */
 export type WebExpression = LiteralExpression | IdentifierExpression | UnaryExpression | BinaryExpression;
@@ -143,6 +148,7 @@ export interface PageNode extends WebNode {
 export interface SectionNode extends WebNode {
   readonly kind: WebNodeKind.Section;
   readonly name: string;
+  readonly role?: WebSectionRole;
   readonly children: readonly WebChildNode[];
 }
 

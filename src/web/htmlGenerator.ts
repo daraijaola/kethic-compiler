@@ -165,8 +165,9 @@ export class HtmlGenerator {
   private renderSection(node: SectionNode, depth: number, context: RenderContext): string {
     const id: string = this.reserveId(this.idFor(node.name));
     const inner: string = node.children.map((child: WebChildNode) => this.renderChild(child, depth + 1, context)).join("\n");
+    const roleClass: string = node.role === undefined ? "" : ` kethic-section-${node.role}`;
     return [
-      `${this.indent(depth)}<section id="${id}" class="${this.className(node.name)} kethic-section">`,
+      `${this.indent(depth)}<section id="${id}" class="${this.className(node.name)}${roleClass} kethic-section">`,
       inner,
       `${this.indent(depth)}</section>`,
     ].join("\n");

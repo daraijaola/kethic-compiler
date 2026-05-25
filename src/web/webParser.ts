@@ -29,6 +29,7 @@ import {
   WebChildNode,
   WebNodeKind,
   WebProgramNode,
+  WebSectionRole,
   WebSourceLocation,
   WebTopLevelNode,
   WebValue,
@@ -488,7 +489,7 @@ export class WebParser {
     );
     if (match === null) {
       this.report(location, "hero", 'expected hero "Title" "Subtitle" or hero "Title" "Subtitle" action:name "Label"');
-      return { kind: WebNodeKind.Section, location, name: "Hero", children: [] };
+      return { kind: WebNodeKind.Section, location, name: "Hero", role: "hero", children: [] };
     }
 
     const children: WebChildNode[] = [
@@ -506,14 +507,14 @@ export class WebParser {
       });
     }
 
-    return { kind: WebNodeKind.Section, location, name: "Hero", children };
+    return { kind: WebNodeKind.Section, location, name: "Hero", role: "hero", children };
   }
 
   private parseSignupMacro(line: string, location: WebSourceLocation): SectionNode {
     const match: RegExpMatchArray | null = line.match(/^signup\s+(.+?)\s+submit:"([^"]+)"$/);
     if (match === null) {
       this.report(location, "signup", 'expected signup name email submit:"Join"');
-      return { kind: WebNodeKind.Section, location, name: "Signup", children: [] };
+      return { kind: WebNodeKind.Section, location, name: "Signup", role: "cta", children: [] };
     }
 
     const fieldNames: string[] = match[1].split(/\s+/).filter((name: string) => name.length > 0);
@@ -547,6 +548,7 @@ export class WebParser {
       kind: WebNodeKind.Section,
       location,
       name: "Signup",
+      role: "cta",
       children: [{ kind: WebNodeKind.Form, location, name: "Signup", children: formChildren }],
     };
   }
@@ -580,7 +582,7 @@ export class WebParser {
     ];
 
     this.pendingFeatures = null;
-    this.addChild({ kind: WebNodeKind.Section, location, name: "Features", children });
+    this.addChild({ kind: WebNodeKind.Section, location, name: "Features", role: "features", children });
   }
 
   /**
@@ -613,7 +615,14 @@ export class WebParser {
   }
 
   private parseCompactSection(line: string, location: WebSourceLocation): SectionNode {
-    return { kind: WebNodeKind.Section, location, name: this.requiredName(line, "sec", location), children: [] };
+    const match: RegExpMatchArray | null = line.match(/^sec\s+([A-Za-z_][A-Za-z0-9_]*)(?:\s+([A-Za-z_][A-Za-z0-9_]*))?$/);
+    if (match === null) {
+      this.report(location, "sec", "expected sec Name or sec Name role");
+      return { kind: WebNodeKind.Section, location, name: "", children: [] };
+    }
+
+    const role: WebSectionRole | undefined = match[2] === undefined ? undefined : this.normalizeSectionRole(match[2], location);
+    return { kind: WebNodeKind.Section, location, name: match[1], role, children: [] };
   }
 
   private parseCompactNavigation(line: string, location: WebSourceLocation): NavigationNode {
@@ -989,6 +998,29 @@ export class WebParser {
     }
 
     return responsive;
+  }
+
+  private normalizeSectionRole(name: string, location: WebSourceLocation): WebSectionRole {
+    const normalized: string = name.toLowerCase();
+    const roles: ReadonlyMap<string, WebSectionRole> = new Map<string, WebSectionRole>([
+      ["hero", "hero"],
+      ["features", "features"],
+      ["feature", "features"],
+      ["proof", "proof"],
+      ["pricing", "pricing"],
+      ["price", "pricing"],
+      ["faq", "faq"],
+      ["cta", "cta"],
+      ["content", "content"],
+    ]);
+    const role: WebSectionRole | undefined = roles.get(normalized);
+
+    if (role === undefined) {
+      this.report(location, "sec", `unsupported section role "${name}"`);
+      return "content";
+    }
+
+    return role;
   }
 
   private parseNameList(raw: string, location: WebSourceLocation, keyword: string): string[] {

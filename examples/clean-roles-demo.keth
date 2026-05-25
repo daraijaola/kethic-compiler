@@ -1,0 +1,68 @@
+data features from "data/features.json"
+
+cmp FeatureCard receives title, body
+  box MetricCard
+    h3 title
+    txt body
+  end
+end
+
+rt "#hero" Hero
+rt "#features" Features
+rt "#proof" Proof
+rt "#join" Join
+
+pg CleanRolesDemo
+  nav Main
+    link Hero "Start"
+    link Features "Features"
+    link Proof "Proof"
+    link Join "Join"
+  end
+  sec Hero hero
+    stack HeroShell
+      h1 "Clean websites from compact source"
+      txt "Section roles give the compiler enough context to produce calmer spacing, stronger hierarchy, and better defaults without making the source verbose."
+      row HeroActions
+        btn "View proof"
+        link Features "Explore features"
+      end
+    end
+  end
+  sec Features features
+    h2 "The compiler understands repeated product sections"
+    grid FeatureGrid
+      repeat FeatureCard from features
+    end
+  end
+  sec Proof proof
+    h2 "The page stays compact while output grows"
+    grid ProofGrid
+      box MetricCard
+        h3 "Page source"
+        h2 "1 file"
+        txt "The Kethic source describes structure and intent."
+      end
+      box MetricCard
+        h3 "Content rows"
+        h2 "JSON"
+        txt "Repeated copy can be reused or edited outside the page."
+      end
+      box MetricCard
+        h3 "Output"
+        h2 "HTML"
+        txt "The compiler expands everything into standard web files."
+      end
+    end
+  end
+  sec Join cta
+    h2 "Ready for the public Kethic site"
+    txt "This is the clean baseline before we chase premium variants."
+    btn "Start building"
+  end
+  foot
+    txt "Clean Roles V1 - section context without source bloat."
+  end
+end
+
+mount "#app" CleanRolesDemo

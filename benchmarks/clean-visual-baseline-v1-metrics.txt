@@ -1,0 +1,27 @@
+Clean Visual Baseline V1 local proof
+
+Source:
+- examples/clean-roles-demo.keth
+- examples/data/features.json
+
+What changed:
+- Section role syntax: sec Name role
+- Generated role classes: kethic-section-hero, kethic-section-features, kethic-section-proof, kethic-section-cta
+- Cleaner default heading scale, spacing, cards, buttons, and mobile behavior
+
+Measurements:
+- Kethic page source characters: 1,647
+- External data characters: 643
+- Compiled HTML/CSS characters: 12,800
+- Generated role classes: 4
+- Page-source-to-output reduction: 87.13%
+- Source-plus-data-to-output reduction: 82.11%
+
+Why it matters:
+- The compiler now has design context from one short word.
+- Kethic output should look cleaner without requiring verbose CSS or Tailwind-like source.
+
+Verification:
+- npm run build
+- npm run quality:web
+- node dist/src/cli.js web examples/clean-roles-demo.keth --out-dir dist-clean-roles --brand examples/brands/nocturne.json
