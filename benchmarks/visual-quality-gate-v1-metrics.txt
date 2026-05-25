@@ -1,0 +1,26 @@
+Visual Quality Gate V1
+
+Command:
+- npm run quality:visual
+
+Current checked sources:
+- examples/clean-roles-demo.keth with Nocturne, Lumen, and Forge brand profiles
+- examples/external-data-demo.keth with Forge brand profile
+
+Current checks:
+- mounted page exists
+- multiple sections exist
+- exactly one h1 exists
+- navigation exists
+- mobile media rules exist
+- focus-visible rules exist
+- card styling exists
+- duplicate ids are rejected
+- required section role classes exist
+- required visual variant classes exist
+- repeated component instances render
+- different brand profiles produce distinct variant sets
+
+Why it matters:
+- This protects Kethic from merely compiling broken or generic pages.
+- The checker gives us a minimum presentability gate before building the public Kethic website.

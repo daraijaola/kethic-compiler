@@ -48,6 +48,21 @@ The HTML generator now reserves ids as it emits them. If an id is already used, 
 
 This is the kind of quality gate Kethic needs. The language should save AI output tokens, but the compiler must also protect the final website from common bugs that AI-generated HTML often misses.
 
+## Visual Quality Gate
+
+```text
+npm run quality:visual
+```
+
+This second gate checks Kethic-specific visual structure:
+
+- section role classes exist for role-based demos;
+- visual variant classes exist for each role;
+- different brand profiles produce distinct variant sets;
+- repeated components render from repeater data;
+- generated pages have one `h1`;
+- navigation, focus-visible styles, card styles, mobile rules, and duplicate-id safety are present.
+
 ## Next Quality Gates
 
 The next layer should add browser-level verification:
