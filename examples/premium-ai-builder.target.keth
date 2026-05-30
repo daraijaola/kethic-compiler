@@ -1,0 +1,35 @@
+# Target source for Premium Macros V1.
+# This file is intentionally a language target for the next compiler slice.
+# It should become compilable after Ayush implements premium macro support.
+
+hero ProductHero
+  title "The compact source language for AI-built websites"
+  body "Kethic lets AI write shorter web source, then compiles it into standard HTML, CSS, and JavaScript."
+  primary "View benchmark" "#benchmark"
+  secondary "How it works" "#how"
+end
+
+featureGrid CoreBenefits
+  item "Compact source" "The model writes structure and intent instead of repeating frontend code."
+  item "Compiler expansion" "Kethic turns compact source into complete browser files."
+  item "Reusable identity" "Brand profiles keep pages visually consistent without repeated style output."
+end
+
+showcase CompilerFlow
+  title "The model writes less. The compiler builds more."
+  before "React/Tailwind generation repeats layout, classes, breakpoints, and style decisions."
+  after "Kethic captures the page intent once and expands it deterministically."
+end
+
+metrics Benchmark
+  label "Recorded benchmark"
+  item "5,224" "React/Tailwind completion tokens"
+  item "198" "Kethic completion tokens"
+  item "90%" "Target lower generated output"
+end
+
+cta FounderCall
+  title "Building an AI builder? Talk to the founder."
+  body "Kethic is preparing its next compiler sprint and benchmark suite."
+  primary "Email Micheal" "mailto:Michealijaola@outlook.com"
+end
