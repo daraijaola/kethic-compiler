@@ -1,0 +1,82 @@
+data features from "data/premium-current-features.json"
+data proof from "data/premium-current-proof.json"
+data steps from "data/premium-current-steps.json"
+
+cmp FeatureCard receives title, body
+  box MetricCard
+    h3 title
+    txt body
+  end
+end
+
+cmp ProofCard receives value, body
+  box MetricCard
+    h2 value
+    txt body
+  end
+end
+
+cmp StepCard receives title, body
+  box MetricCard
+    h3 title
+    txt body
+  end
+end
+
+rt "#hero" Hero
+rt "#features" Features
+rt "#proof" Proof
+rt "#how" How
+rt "#join" Join
+
+pg PremiumCurrentKethic
+  nav Main
+    link Hero "Kethic"
+    link Features "System"
+    link Proof "Proof"
+    link How "How"
+    link Join "Contact"
+  end
+  sec Hero hero
+    stack HeroShell
+      h1 "The compact source language for AI-built websites"
+      txt "Kethic lets an AI describe a page in short source, then the compiler expands it into standard HTML, CSS, and JavaScript."
+      row HeroActions
+        link Proof "View proof"
+        link How "How it works"
+      end
+      txt "Current V1 focus: premium website output, reusable brand identity, and lower generated model output for Clovoc."
+    end
+  end
+  sec Features features
+    h2 "The compiler carries the repeated web work"
+    grid FeatureGrid
+      repeat FeatureCard from features
+    end
+  end
+  sec Proof proof
+    h2 "Early benchmarks show why the source layer matters"
+    grid ProofGrid
+      repeat ProofCard from proof
+    end
+  end
+  sec How content
+    h2 "Kethic separates page intent from frontend repetition"
+    grid FeatureGrid
+      repeat StepCard from steps
+    end
+  end
+  sec Join cta
+    h2 "The next sprint is premium output"
+    txt "The goal is not just compression. Kethic has to generate beautiful, mobile-safe websites from compact source."
+    row HeroActions
+      link "mailto:Michealijaola@outlook.com" "Email Micheal"
+      link "https://github.com/daraijaola/kethic-compiler" "View GitHub"
+    end
+  end
+  foot
+    txt "Kethic - compact source language for AI-built websites."
+  end
+end
+
+mount "#app" PremiumCurrentKethic

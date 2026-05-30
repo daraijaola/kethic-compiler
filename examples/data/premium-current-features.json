@@ -1,0 +1,8 @@
+{
+  "items": [
+    ["Compact source", "The model writes sections, components, repeaters, and page intent instead of repeating low-level frontend code."],
+    ["Compiler expansion", "Kethic expands that compact source into complete browser files with semantic HTML and responsive CSS."],
+    ["Reusable identity", "Brand profiles keep visual decisions outside every page so Clovoc can generate more with less repeated output."],
+    ["Premium direction", "The next Kethic slice adds richer section macros, stronger visual recipes, and stricter quality gates."]
+  ]
+}
