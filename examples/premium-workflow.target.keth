@@ -1,0 +1,10 @@
+# Target source for Premium Workflow Recipe V1.
+# This is intentionally a language target for the next compiler slice.
+
+workflow BuildFlow
+  title "From compact source to real web output"
+  mode "source-to-output"
+  step "Write" "The model emits short Kethic source for structure, content, and intent."
+  step "Compile" "Kethic expands that source through reusable layout and brand recipes."
+  step "Ship" "The result is normal HTML, CSS, and JavaScript the browser can inspect."
+end
