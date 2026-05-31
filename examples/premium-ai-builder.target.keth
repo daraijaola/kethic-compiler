@@ -10,9 +10,12 @@ hero ProductHero
 end
 
 featureGrid CoreBenefits
-  item "Compact source" "The model writes structure and intent instead of repeating frontend code."
-  item "Compiler expansion" "Kethic turns compact source into complete browser files."
-  item "Reusable identity" "Brand profiles keep pages visually consistent without repeated style output."
+  title "The compiler carries the repeated web work"
+  layout "bento"
+  item "Compact source" "The model writes page intent instead of frontend repetition." span "large"
+  item "Compiler expansion" "Kethic expands compact source into standard web files."
+  item "Reusable identity" "Brand profiles keep visual decisions outside every page."
+  item "Quality gates" "Kethic checks responsive structure, accessibility, and non-generic output."
 end
 
 showcase CompilerFlow
