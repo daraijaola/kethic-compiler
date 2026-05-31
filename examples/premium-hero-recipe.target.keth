@@ -1,0 +1,11 @@
+# Target source for Premium Hero Recipe V1.
+# This is not expected to compile until the premium hero macro is implemented.
+
+hero ProductHero
+  title "The compact source language for AI-built websites"
+  body "Kethic lets AI write shorter web source, then compiles it into standard HTML, CSS, and JavaScript."
+  visual "compiler-panel"
+  proof "around 90% lower generated output"
+  primary "View benchmark" "#benchmark"
+  secondary "How it works" "#how"
+end
