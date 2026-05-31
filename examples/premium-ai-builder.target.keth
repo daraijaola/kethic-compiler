@@ -17,15 +17,17 @@ end
 
 showcase CompilerFlow
   title "The model writes less. The compiler builds more."
-  before "React/Tailwind generation repeats layout, classes, breakpoints, and style decisions."
+  before "React/Tailwind repeats layout, classes, breakpoints, and style decisions."
   after "Kethic captures the page intent once and expands it deterministically."
+  visual "source-compare"
 end
 
 metrics Benchmark
-  label "Recorded benchmark"
-  item "5,224" "React/Tailwind completion tokens"
-  item "198" "Kethic completion tokens"
-  item "90%" "Target lower generated output"
+  label "Recorded React/Tailwind comparison"
+  model "gpt-5.2"
+  baseline "5,224" "React/Tailwind completion tokens"
+  kethic "198" "Kethic completion tokens"
+  reduction "90%" "public target lower generated output"
 end
 
 cta FounderCall

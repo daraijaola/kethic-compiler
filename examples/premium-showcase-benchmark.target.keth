@@ -1,0 +1,17 @@
+# Target source for Premium Showcase and Benchmark Recipe V1.
+# This is not expected to compile until showcase/metrics premium macros are implemented.
+
+showcase CompilerFlow
+  title "The model writes less. The compiler builds more."
+  before "React/Tailwind repeats layout, classes, breakpoints, and style decisions."
+  after "Kethic captures the page intent once and expands it deterministically."
+  visual "source-compare"
+end
+
+metrics Benchmark
+  label "Recorded React/Tailwind comparison"
+  model "gpt-5.2"
+  baseline "5,224" "React/Tailwind completion tokens"
+  kethic "198" "Kethic completion tokens"
+  reduction "90%" "public target lower generated output"
+end
